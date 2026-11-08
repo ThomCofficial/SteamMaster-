@@ -114,7 +114,7 @@ private:
     std::size_t audioCursor_=0, peakCursor_=0, postCursor_=0, audioLatency_=0, postLatency_=0;
     FIRHalfBand2x detector2x_{}, detector4x_{}, detector8x_{}, post2x_{}, post4x_{}, post8x_{}, meter2x_{}, meter4x_{}, meter8x_{};
     Smoother inputGain_{}, ceiling_{}, bypass_{}, lookahead_{}, link_{}, postMix_{};
-    Stereo gain_ {1.0,1.0}, postGain_{1.0,1.0}, reductionDb_{};
+    Stereo gain_ {1.0,1.0}, postGain_{1.0,1.0}, reductionDb_{}, prePostEffectiveGain_{1.0,1.0};
     std::array<std::size_t,2> releaseHold_{}, postHold_{};
     std::uint64_t safetyClipEvents_=0;
     double fs_=48000.0, outputTruePeak_=0.0, ceilingHard_=1.0;

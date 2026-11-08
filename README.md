@@ -70,3 +70,7 @@ CI includes Windows/Linux Debug/Release and Linux AddressSanitizer/UndefinedBeha
 - The emergency guard is a fault-containment measure, **not guaranteed hearing protection** or an output true-peak ceiling when the limiter is bypassed.
 
 Review `docs/ARCHITECTURE.md`, `docs/CONTROL_AUDIT.md`, `docs/V03_TEST_REPORT.md` before VST3 integration.
+
+## v0.6 metering correction
+
+Limiter `gainReductionDb()` now reports the effective gain attenuation from both the main and post-correction stages, including smooth bypass/post-stage crossfades. It excludes the user threshold's intentional input pre-gain. A new metering test checks finite and stereo-linked readings, active reduction, bypass recovery and reset at 44.1/48/96/192 kHz. No GUI work or parameter additions. This is DSP telemetry only; peak ceiling certification and host integration remain outstanding.

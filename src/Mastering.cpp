@@ -199,7 +199,7 @@ void MasterLimiter::set(const LimiterParameters& p) noexcept {
 }
 void MasterLimiter::reset() noexcept {
     audioBuffer_.fill({});dryBuffer_.fill({});peakBuffer_.fill({});postBuffer_.fill({});
-    audioCursor_=peakCursor_=postCursor_=0;gain_={1.,1.};postGain_={1.,1.};reductionDb_={};outputTruePeak_=0.;
+    audioCursor_=peakCursor_=postCursor_=0;gain_={1.,1.};postGain_={1.,1.};reductionDb_={};prePostEffectiveGain_={1.,1.};outputTruePeak_=0.;
     releaseHold_.fill(0);postHold_.fill(0);safetyClipEvents_=0;
     detector2x_.reset();detector4x_.reset();detector8x_.reset();
     meter2x_.reset();meter4x_.reset();meter8x_.reset();
@@ -263,6 +263,12 @@ Stereo MasterLimiter::postTruePeakGuard(Stereo input,double ceiling) noexcept {
     const auto delayed=postBuffer_[read];
     if(++postCursor_==kCapacity)postCursor_=0;
     const double mix=postMix_.next();
+    // Meter the actual applied attenuation of BOTH gain-control stages.
+    // The bypass crossfade and post-stage crossfade are accounted for; the
+    // threshold's pre-gain is deliberately excluded (it is not reduction).
+    const double finalL=clamp(prePostEffectiveGain_.l*(1.-mix+mix*postGain_.l),1.e-15,1.);
+    const double finalR=clamp(prePostEffectiveGain_.r*(1.-mix+mix*postGain_.r),1.e-15,1.);
+    reductionDb_={-gainToDb(finalL),-gainToDb(finalR)};
     return {delayed.l*(1.-mix+mix*postGain_.l),
             delayed.r*(1.-mix+mix*postGain_.r)};
 }
@@ -327,13 +333,13 @@ Stereo MasterLimiter::process(Stereo input) noexcept {
     track(wantL,gain_.l,releaseHold_[0]);
     track(wantR,gain_.r,releaseHold_[1]);
     gain_.l=clamp(gain_.l,0.,1.);gain_.r=clamp(gain_.r,0.,1.);
-    reductionDb_={-gainToDb(gain_.l),-gainToDb(gain_.r)};
     audioBuffer_[audioCursor_]=driven;
     dryBuffer_[audioCursor_]=input;
     const auto delayedIndex=(audioCursor_+kCapacity-(audioLatency_%kCapacity))%kCapacity;
     const Stereo delayed=audioBuffer_[delayedIndex];
     const Stereo dry=dryBuffer_[delayedIndex];
     const double en=bypass_.next();
+    prePostEffectiveGain_={1.-en+en*gain_.l,1.-en+en*gain_.r};
     Stereo wet{delayed.l*gain_.l,delayed.r*gain_.r};
     // Last-resort sample-domain guard: count every intervention so clipping
     // cannot masquerade as successful transparent gain reduction. Not TP proof.
