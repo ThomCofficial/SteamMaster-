@@ -1,3 +1,13 @@
+# SteamMaster DSP v1.3 — Dangerous BAX EQ response refinement
+
+**DSP-only engineering checkpoint. No VST3 binary or GUI changes.**
+
+v1.3 replaces the generic Q=0.707 Bax EQ shelf biquads with independently authored **first-order analog-prototype Baxandall shelves** using symmetric pole/zero placement, 12 ms smoothed gain/frequency automation, and sample-exact unity gain. The approved low/high selector positions, per-row Mid/Side or Left/Right processing, 12 dB/oct HPF/LPF and bypass/output controls are preserved. Added a 96 kHz modeled-response CSV, a response exporter, and tests at 44.1/48/96/192 kHz.
+
+**Not measurement-matched:** faceplate-to-corner mapping is based on the manufacturer's description of broad shoulders, not privately held hardware traces. The hardware's very low published distortion supports remaining clean rather than adding arbitrary saturation. Ultrasonic cutoff modeling above Nyquist and real hardware listening comparisons remain open. Details and source URLs: [Bax v1.3 research and tests](docs/V13_BAX_HARDWARE_AUDIT.md).
+
+---
+
 # SteamMaster DSP v1.0 — reference-informed hardware voicing
 
 This repository contains standalone C++ DSP engines and tests for the nine-module SteamMaster mastering chain. **No VST3 or GUI yet; no UI changes in v1.0.**

@@ -19,7 +19,8 @@ template <typename E> unsigned index(E e) noexcept {return std::min(7u,static_ca
 } // namespace
 
 void Baxandall::Row::prepare(double fs) noexcept {
-    hpf_.prepare(fs);lowShelf_.prepare(fs);highShelf_.prepare(fs);lpf_.prepare(fs);
+    hpf_.prepare(fs);lpf_.prepare(fs);
+    lowShelf_.prepare(fs,BaxShelf::Band::Low);highShelf_.prepare(fs,BaxShelf::Band::High);
     for(auto* x:{&hpfMix_,&lpfMix_,&bypass_,&output_})x->prepare(fs,.012);
     hpfMix_.reset(0.);lpfMix_.reset(0.);bypass_.reset(1.);output_.reset(0.);
 }
@@ -27,10 +28,8 @@ void Baxandall::Row::set(const BaxRowParameters& p,double fs) noexcept {
     const double hp=hpfPositions[index(p.hpf)], lp=lpfPositions[index(p.lpf)];
     hpf_.configure(TptEQ::Mode::HighPass,hp>0. ? hp:24.,.7071067811865);
     hpfMix_.set(hp>0.?1.:0.);
-    lowShelf_.configure(TptEQ::Mode::LowShelf,lowPositions[index(p.lowFrequency)],.7071067811865,
-                        quantHalf(p.lowGainDb,-5.,5.));
-    highShelf_.configure(TptEQ::Mode::HighShelf,highPositions[index(p.highFrequency)],.7071067811865,
-                         quantHalf(p.highGainDb,-5.,5.));
+    lowShelf_.set(lowPositions[index(p.lowFrequency)],quantHalf(p.lowGainDb,-5.,5.));
+    highShelf_.set(highPositions[index(p.highFrequency)],quantHalf(p.highGainDb,-5.,5.));
     // Frequencies beyond representable Nyquist are effectively OUT at this sample rate;
     // never silently substitute a different labelled knob position.
     lpf_.configure(TptEQ::Mode::LowPass,lp>0.?std::min(lp,.45*fs):12000.,.7071067811865);
@@ -45,7 +44,8 @@ double Baxandall::Row::run(double x) noexcept {
     Stereo in{x,x};
     auto hp=hpf_.process(in);
     auto a=blend(in,hp,hpfMix_.next());
-    a=lowShelf_.process(a);a=highShelf_.process(a);
+    a.l=highShelf_.process(lowShelf_.process(a.l));
+    a.r=a.l;
     auto lp=lpf_.process(a);
     a=blend(a,lp,lpfMix_.next());
     const double y=a.l*dbToGain(output_.next());

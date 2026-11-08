@@ -1,5 +1,6 @@
 #pragma once
 #include "steammaster/DSP.hpp"
+#include "steammaster/BaxShelf.hpp"
 #include <array>
 #include <atomic>
 #include <cstddef>
@@ -41,7 +42,8 @@ private:
         void set(const BaxRowParameters& p, double sampleRate) noexcept;
         void reset() noexcept;
         double run(double input) noexcept;  // scalar channel packed into LEFT
-        TptEQ hpf_, lowShelf_, highShelf_, lpf_;
+        TptEQ hpf_, lpf_;
+        BaxShelf lowShelf_, highShelf_;
         Smoother hpfMix_, lpfMix_, bypass_, output_;
     };
     std::array<Row,2> ms_{}, lr_{};
