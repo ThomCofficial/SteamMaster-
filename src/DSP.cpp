@@ -423,7 +423,11 @@ Stereo Exciter::Pole::low(Stereo x) noexcept {
 void Exciter::prepare(double fs) noexcept {
     Module::prepare(fs);lowDrive_.prepare(fs,.010);highDrive_.prepare(fs,.010);output_.prepare(fs,.010);
     crossover_.prepare(fs);lowTone_.prepare(fs);highTone_.prepare(fs);dcRemoval_.prepare(fs);
-    for(unsigned i=0;i<4;++i) tapeCoeff_[i]=std::exp(-1./(std::max(8000.,fs)*static_cast<double>(1u<<i)*.012));
+    for(unsigned i=0;i<4;++i) {
+        const double rate=std::max(8000.,fs)*static_cast<double>(1u<<i);
+        tapeCoeff_[i]=std::exp(-1./(rate*.009));
+        transformerCoeff_[i]=std::exp(-1./(rate*.0025));
+    }
     setWetLatency(OversampledProcessor::kLatency);
     lowSaturator_.prepare(fs);highSaturator_.prepare(fs);
     inputDelay_.prepare(OversampledProcessor::kLatency);
@@ -443,36 +447,78 @@ void Exciter::set(const ExciterParameters& p) noexcept {
 }
 void Exciter::reset() noexcept {
     crossover_.reset();lowTone_.reset();highTone_.reset();dcRemoval_.reset();
-    for(auto& row:tapeMemory_) for(auto& v:row)v={};
+    for(auto& row:voiceStates_) for(auto& v:row)v={};
+    for(std::size_t i=0;i<modeWeights_.size();++i)
+        modeWeights_[i].reset(i==static_cast<std::size_t>(p_.mode)?1.:0.);
     lowSaturator_.reset();highSaturator_.reset();
     lowSaturator_.setMode(quality_);highSaturator_.setMode(quality_);
     inputDelay_.reset();bassDelay_.reset();trebleDelay_.reset();resetDryDelay();
 }
 Stereo Exciter::saturationTransfer(Stereo in,unsigned quality,void* raw) noexcept {
     const auto& c=*static_cast<SaturationContext*>(raw);
-    auto& mem=c.engine->tapeMemory_[c.band][quality];
-    const double memoryCoeff=c.engine->tapeCoeff_[quality];
-    mem.l=memoryCoeff*mem.l+(1.-memoryCoeff)*in.l;
-    mem.r=memoryCoeff*mem.r+(1.-memoryCoeff)*in.r;
-    Stereo result{};
-    // A single active personality costs only one nonlinear transfer. During
-    // mode automation the outgoing/incoming transfers are blended smoothly.
-    if(c.weights[0]>1.e-9) {
-        result.l+=c.weights[0]*(std::tanh(c.drive*(in.l+.12))-c.tubeBias)*c.invTanhDrive;
-        result.r+=c.weights[0]*(std::tanh(c.drive*(in.r+.12))-c.tubeBias)*c.invTanhDrive;
-    }
-    if(c.weights[1]>1.e-9) {
-        result.l+=c.weights[1]*std::tanh(c.drive*(in.l+.035*mem.l))*c.invTanhDrive;
-        result.r+=c.weights[1]*std::tanh(c.drive*(in.r+.035*mem.r))*c.invTanhDrive;
-    }
-    if(c.weights[2]>1.e-9) {
-        result.l+=c.weights[2]*std::atan(c.drive*in.l)*c.invAtanDrive;
-        result.r+=c.weights[2]*std::atan(c.drive*in.r)*c.invAtanDrive;
-    }
-    result.l=sanitized(result.l);
-    result.r=sanitized(result.r);
-    return result;
+    auto& state=c.engine->voiceStates_[c.band][quality];
+    const double amount=c.amount;
+    // Normalize around silence: stage(x=0)==0 and d(stage)/dx at 0 == 1.
+    // This preserves low-level gain while introducing drive-dependent curves.
+    const auto valve=[](double x,double drive,double bias) noexcept {
+        const double t=std::tanh(bias);
+        const double slope=drive*(1.-t*t);
+        return (std::tanh(drive*x+bias)-t)/slope;
+    };
+    const auto apply=[valve,quality](double x,double& flux,double& previous,
+                        double& transformerFlux,double tapeCoeff,double transformerCoeff,
+                        double amt,unsigned band,const std::array<double,3>& w) noexcept {
+        // Keep magnetic state alive during mode fades. Tape's odd-order
+        // transfer and slew softening are HEDD-inspired, not its proprietary code.
+        flux=tapeCoeff*flux+(1.-tapeCoeff)*x;
+        transformerFlux=transformerCoeff*transformerFlux+(1.-transformerCoeff)*x;
+        double y=0.;
+        if(w[0]>1.e-9) {
+            // HG-2 signal-path inspiration: filtered parallel tube saturation
+            // feeds a pentode-like stage, then a triode-like stage. Existing
+            // low/high band filters stand in for the HG-2 sat-frequency switch.
+            const double parallel=valve(x,1.+1.35*amt,-.21);
+            const double fed=x+.30*amt*(parallel-x);
+            const double pentode=valve(fed,1.+1.10*amt,.11+.13*amt);
+            const double triode=valve(pentode,.85+1.05*amt,-.06);
+            y+=w[0]*(.88*triode+.12*x);
+        }
+        if(w[1]>1.e-9) {
+            // Tape: symmetrical 3rd/5th harmonic soft knee, low-frequency
+            // magnetic memory and level-dependent HF slew compression.
+            // No intentionally injected even harmonics in this path.
+            const double magnetized=x+.040*amt*(flux-x);
+            const double drive=1.+2.3*amt;
+            const double compressed=std::tanh(drive*magnetized)/drive;
+            const double target=.20*magnetized+.80*compressed;
+            const double slew=(target-previous);
+            const double rateComp=static_cast<double>(1u<<quality);
+            const double scaled=1./(1.+.23*amt*rateComp*std::abs(slew));
+            previous+=scaled*slew;
+            y+=w[1]*previous;
+        } else {
+            // Running history while inaudible avoids surprise when switching.
+            previous=x;
+        }
+        if(w[2]>1.e-9) {
+            // Silk-inspired transformer: frequency-dependent core memory,
+            // deliberately stronger even-order texture in the high band.
+            // These are not matched Neve Red/Blue curves.
+            const double magnetized=x+.07*amt*(transformerFlux-x);
+            const double bias=(band==0?.48:.62)*(.7+.3*amt);
+            const double saturated=valve(magnetized,.75+.50*amt,bias);
+            y+=w[2]*(.14*saturated+.86*x);
+        }
+        return sanitized(y);
+    };
+    return {
+        apply(in.l,state.tapeFlux.l,state.tapeOutput.l,state.transformerFlux.l,
+              c.engine->tapeCoeff_[quality],c.engine->transformerCoeff_[quality],amount,c.band,c.weights),
+        apply(in.r,state.tapeFlux.r,state.tapeOutput.r,state.transformerFlux.r,
+              c.engine->tapeCoeff_[quality],c.engine->transformerCoeff_[quality],amount,c.band,c.weights)
+    };
 }
+
 Stereo Exciter::processWet(Stereo x) noexcept {
     const auto lowBand=crossover_.low(x);
     const Stereo highBand{x.l-lowBand.l,x.r-lowBand.r};
@@ -481,9 +527,8 @@ Stereo Exciter::processWet(Stereo x) noexcept {
     const Stereo treble{highBand.l-highLP.l,highBand.r-highLP.r};
     const double lo=lowDrive_.next()/10.,hi=highDrive_.next()/10.;
     const std::array<double,3> weights{modeWeights_[0].next(),modeWeights_[1].next(),modeWeights_[2].next()};
-    const double lowD=1.+lo*3.5,highD=1.+hi*3.5;
-    SaturationContext low{this,0u,lowD,1./std::tanh(lowD),1./std::atan(lowD),std::tanh(.12*lowD),weights};
-    SaturationContext high{this,1u,highD,1./std::tanh(highD),1./std::atan(highD),std::tanh(.12*highD),weights};
+    SaturationContext low{this,0u,lo,weights};
+    SaturationContext high{this,1u,hi,weights};
     const auto colorBass=lowSaturator_.process(bass,&Exciter::saturationTransfer,&low);
     const auto colorTreble=highSaturator_.process(treble,&Exciter::saturationTransfer,&high);
     const auto delayedBass=bassDelay_.process(bass);

@@ -226,9 +226,16 @@ public:
     }
 private:
     Stereo processWet(Stereo in) noexcept override;
+    // Three independently modeled, topology-inspired voices. State is indexed
+    // by band and 1x/2x/4x/8x path so oversampling transitions cannot reuse
+    // a different-rate magnetic or transformer history.
+    struct VoiceState {
+        Stereo tapeFlux{}, tapeOutput{}, transformerFlux{};
+    };
     struct SaturationContext {
-        Exciter* engine; unsigned band; double drive;
-        double invTanhDrive, invAtanDrive, tubeBias;
+        Exciter* engine;
+        unsigned band;
+        double amount;
         std::array<double,3> weights;
     };
     static Stereo saturationTransfer(Stereo in, unsigned quality, void* ctx) noexcept;
@@ -237,8 +244,9 @@ private:
     Pole crossover_{}, lowTone_{}, highTone_{}, dcRemoval_{};
     OversampledProcessor lowSaturator_{}, highSaturator_{};
     StereoDelay inputDelay_{}, bassDelay_{}, trebleDelay_{};
-    std::array<std::array<Stereo,4>,2> tapeMemory_{};
+    std::array<std::array<VoiceState,4>,2> voiceStates_{};
     std::array<double,4> tapeCoeff_{};
+    std::array<double,4> transformerCoeff_{};
     OversamplingMode quality_ = OversamplingMode::Off;
     Smoother lowDrive_{}, highDrive_{}, output_{};
     std::array<Smoother,3> modeWeights_{};
