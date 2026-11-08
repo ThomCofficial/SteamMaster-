@@ -23,11 +23,45 @@ The limiter **must** follow all potentially gain-raising output and stereo trans
 
 `TptEQ` is a topology-preserving state-variable filter. Smooth positive internal `g` and `k` plus response weights rather than linearly sweeping arbitrary biquad numerator and denominator coefficients. Its frequency is clamped **internally** below Nyquist to preserve digital stability; this is not a GUI range decision.
 
-## Nonlinear DSP & oversampling — pending production work
+## Nonlinear DSP & oversampling — v0.2 implemented baseline
 
-The Exciter's three paths already produce distinct nonlinear responses, with 15 ms transfer-function crossfades, but are currently evaluated at native rate. Ocean's mild `tanh` color is also native-rate. This **fails the final anti-aliasing requirement** for high drive until local linear-phase/FIR oversampling is implemented around nonlinear blocks.
+The stand-alone DSP now contains `FIRHalfBand2x`, `OversamplingPath`, and
+`OversampledProcessor` (`include/steammaster/Oversampling.hpp`,
+`src/Oversampling.cpp`):
 
-The recommended JUCE host adapter should initialize `juce::dsp::Oversampling<double>` (or a purpose-built equivalent) in `prepareToPlay`, query `getLatencyInSamples`, use integer-latency mode if appropriate, preallocate worst-case scratch buffers and compensate dry paths. OFF/2×/4×/8× transitions should crossfade prepared paths with matched latency, and the reported host latency should stay fixed where feasible. See https://docs.juce.com/master/classjuce_1_1dsp_1_1Oversampling.html .
+- Three cascaded **81-tap linear-phase Blackman-Harris halfband** interpolation
+  and decimation stages, with polyphase zero-tap elimination.
+- OFF, 2x, 4x, 8x, and a **70-sample constant native-rate latency** per
+  oversampled module. Natural group delay for paths is 0/40/60/70 samples;
+  their compensators supply 70/30/10/0 samples respectively.
+- Ocean and Exciter each return 70-sample-delayed wet processing and align dry,
+  original-band and bypass paths. The six-module rack's current DSP latency is
+  **140 host samples** (Ocean + Exciter), invariant with global quality. That is
+  only a DSP-core measurement until a VST3 host adapter reports it to Cubase.
+- Prepared quality paths and real-time-safe warmup/crossfades; the next
+  requested quality is coalesced while one transition is running. All FIR
+  buffers and coefficient storage are fixed-size and initialized off the audio
+  thread. The active CPU cost grows with oversampling factor.
+- Exciter Tape-like personality maintains per-quality nonlinear memory and
+  only calculates transfer functions with non-negligible interpolation weight.
+  Tape module itself has **not** been implemented.
+- Do **not** oversample linear filters or detector dynamics for no reason.
+  No global VST3 oversampling selector exists yet; `SixModuleRack::setOversamplingMode`
+  is an audio-thread-side interface.
+
+Remaining oversampling work includes full-spectrum alias sweeps at different
+sample rates, subjective/level-matched listening, proper Tape-module nonlinear
+processing, and host-backed latency validation. At 192 kHz and 8x, internal
+processing reaches 1.536 MHz and requires explicit Windows CPU profiling.
+
+## Host boundary still missing
+
+When constructing a VST3 wrapper, return the constant DSP latency via the host
+latency interface, preallocate block/scratch storage, and transfer parameters
+through a lock-free snapshot or queue. No JUCE or VST3 wrapper has been
+compiled or tested in this checkpoint. The host must ensure parameter-setters
+run on the audio thread at appropriate boundaries, and GUI metering must use
+rate-limited atomics/snapshots rather than reading live DSP state across threads.
 
 ## Calibration boundary
 

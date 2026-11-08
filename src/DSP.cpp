@@ -143,18 +143,28 @@ void Module::setCommon(CommonControls p) noexcept {
 }
 Stereo Module::process(Stereo in) noexcept {
     auto w=processWet(in);
-    return lerp(in,w,enabled_.next()*mix_.next());
+    auto dry=dryDelay_.process(in);
+    return lerp(dry,w,enabled_.next()*mix_.next());
 }
 
 void Ocean::prepare(double fs) noexcept {
-    Module::prepare(fs);sc_.prepare(fs);threshold_.prepare(fs,.012);threshold_.reset(p_.thresholdDb);set(p_);reset();
+    Module::prepare(fs);setWetLatency(OversampledProcessor::kLatency);
+    tube_.prepare(fs);tube_.setMode(quality_);linearDelay_.prepare(OversampledProcessor::kLatency);
+    sc_.prepare(fs);threshold_.prepare(fs,.012);threshold_.reset(p_.thresholdDb);set(p_);reset();
 }
 void Ocean::set(const OceanParameters& p) noexcept {
     p_=p;p_.attackMs=clamp(p.attackMs,25.,70.);
     p_.thresholdDb=clamp(p.thresholdDb,-60.,12.);
     sc_.setFrequency(p.scHpfHz);threshold_.set(p_.thresholdDb);setCommon(p.common);
 }
-void Ocean::reset() noexcept {envelope_=reductionDb_=0.;}
+void Ocean::reset() noexcept {
+    envelope_=reductionDb_=0.;sc_.reset();tube_.reset();tube_.setMode(quality_);
+    linearDelay_.reset();resetDryDelay();
+}
+Stereo Ocean::tubeTransfer(Stereo x,unsigned,void*) noexcept {
+    constexpr double normalizer=1./.8177540779702877; // 1 / tanh(1.15)
+    return {std::tanh(x.l*1.15)*normalizer,std::tanh(x.r*1.15)*normalizer};
+}
 Stereo Ocean::processWet(Stereo in) noexcept {
     auto sc=sc_.process(in);
     const double target=levelOf(sc);
@@ -169,9 +179,10 @@ Stereo Ocean::processWet(Stereo in) noexcept {
     reductionDb_=follow(reductionDb_,requested,timeCoefficient(fs_,.005));
     const double gain=dbToGain(-reductionDb_);
     // Low-level, gentle tube-like coloration; NOT a physical valve model.
-    auto tube=[](double x) noexcept {return std::tanh(x*1.15)/std::tanh(1.15);};
-    const double l=in.l*gain,r=in.r*gain;
-    return {l*.93 + tube(l)*.07, r*.93+tube(r)*.07};
+    const Stereo compressed{in.l*gain,in.r*gain};
+    const auto colored=tube_.process(compressed,&Ocean::tubeTransfer,nullptr);
+    const auto linear=linearDelay_.process(compressed);
+    return {linear.l*.93 + colored.l*.07,linear.r*.93+colored.r*.07};
 }
 
 void Furnace::prepare(double fs) noexcept {
@@ -181,7 +192,7 @@ void Furnace::set(const FurnaceParameters& p) noexcept {
     p_=p;p_.thresholdDb=clamp(p.thresholdDb,-15.,15.);
     sc_.setFrequency(p.scHpfHz);threshold_.set(p_.thresholdDb);setCommon(p.common);
 }
-void Furnace::reset() noexcept {envelope_=reductionDb_=0.;}
+void Furnace::reset() noexcept {envelope_=reductionDb_=0.;sc_.reset();}
 Stereo Furnace::processWet(Stereo in) noexcept {
     auto sc=sc_.process(in);
     const double target=levelOf(sc);
@@ -259,7 +270,10 @@ void Shadow::set(const ShadowParameters& p) noexcept {
     discreteGain_.set(clamp(p.discreteGainDb,-24.,24.));
     output_.set(clamp(p.outputDb,-12.,12.));
 }
-void Shadow::reset() noexcept {opticalEnv_=discreteEnv_=0.;opticalReductionDb_=discreteReductionDb_=0.;}
+void Shadow::reset() noexcept {
+    opticalEnv_=discreteEnv_=0.;opticalReductionDb_=discreteReductionDb_=0.;
+    opticalSC_.reset();discreteSC_.reset();
+}
 Stereo Shadow::processWet(Stereo in) noexcept {
     // Optical: long release memory and broad knee, stereo-linked detector.
     auto optSC=opticalSC_.process(in);
@@ -302,6 +316,12 @@ Stereo Exciter::Pole::low(Stereo x) noexcept {
 void Exciter::prepare(double fs) noexcept {
     Module::prepare(fs);lowDrive_.prepare(fs,.010);highDrive_.prepare(fs,.010);output_.prepare(fs,.010);
     crossover_.prepare(fs);lowTone_.prepare(fs);highTone_.prepare(fs);dcRemoval_.prepare(fs);
+    for(unsigned i=0;i<4;++i) tapeCoeff_[i]=std::exp(-1./(std::max(8000.,fs)*static_cast<double>(1u<<i)*.012));
+    setWetLatency(OversampledProcessor::kLatency);
+    lowSaturator_.prepare(fs);highSaturator_.prepare(fs);
+    inputDelay_.prepare(OversampledProcessor::kLatency);
+    bassDelay_.prepare(OversampledProcessor::kLatency);
+    trebleDelay_.prepare(OversampledProcessor::kLatency);
     for(std::size_t i=0;i<modeWeights_.size();++i) {modeWeights_[i].prepare(fs,.015);modeWeights_[i].reset(i==0?1.:0.);}
     lowDrive_.reset(0.);highDrive_.reset(0.);output_.reset(0.);
     set(p_);reset();
@@ -316,26 +336,35 @@ void Exciter::set(const ExciterParameters& p) noexcept {
 }
 void Exciter::reset() noexcept {
     crossover_.reset();lowTone_.reset();highTone_.reset();dcRemoval_.reset();
-    for(auto& v:histL_)v=0.;
-    for(auto& v:histR_)v=0.;
+    for(auto& row:tapeMemory_) for(auto& v:row)v={};
+    lowSaturator_.reset();highSaturator_.reset();
+    lowSaturator_.setMode(quality_);highSaturator_.setMode(quality_);
+    inputDelay_.reset();bassDelay_.reset();trebleDelay_.reset();resetDryDelay();
 }
-double Exciter::saturate(double x,double drive,ExciterMode mode,double& h) noexcept {
-    x=clamp(x,-8.,8.);drive=clamp(drive,1.,6.);
-    double y=0.;
-    switch(mode) {
-        case ExciterMode::Tube:
-            // Asymmetric transfer plus constant term cancellation at zero input.
-            y=(std::tanh(drive*(x+.12)) - std::tanh(drive*.12))/std::tanh(drive);
-            break;
-        case ExciterMode::Tape:
-            h=.997*h+.003*x;
-            y=std::tanh(drive*(x+.035*h))/std::tanh(drive);
-            break;
-        case ExciterMode::Transformer:
-            y=std::atan(drive*x)/std::atan(drive);
-            break;
+Stereo Exciter::saturationTransfer(Stereo in,unsigned quality,void* raw) noexcept {
+    const auto& c=*static_cast<SaturationContext*>(raw);
+    auto& mem=c.engine->tapeMemory_[c.band][quality];
+    const double memoryCoeff=c.engine->tapeCoeff_[quality];
+    mem.l=memoryCoeff*mem.l+(1.-memoryCoeff)*in.l;
+    mem.r=memoryCoeff*mem.r+(1.-memoryCoeff)*in.r;
+    Stereo result{};
+    // A single active personality costs only one nonlinear transfer. During
+    // mode automation the outgoing/incoming transfers are blended smoothly.
+    if(c.weights[0]>1.e-9) {
+        result.l+=c.weights[0]*(std::tanh(c.drive*(in.l+.12))-c.tubeBias)*c.invTanhDrive;
+        result.r+=c.weights[0]*(std::tanh(c.drive*(in.r+.12))-c.tubeBias)*c.invTanhDrive;
     }
-    return sanitized(y);
+    if(c.weights[1]>1.e-9) {
+        result.l+=c.weights[1]*std::tanh(c.drive*(in.l+.035*mem.l))*c.invTanhDrive;
+        result.r+=c.weights[1]*std::tanh(c.drive*(in.r+.035*mem.r))*c.invTanhDrive;
+    }
+    if(c.weights[2]>1.e-9) {
+        result.l+=c.weights[2]*std::atan(c.drive*in.l)*c.invAtanDrive;
+        result.r+=c.weights[2]*std::atan(c.drive*in.r)*c.invAtanDrive;
+    }
+    result.l=sanitized(result.l);
+    result.r=sanitized(result.r);
+    return result;
 }
 Stereo Exciter::processWet(Stereo x) noexcept {
     const auto lowBand=crossover_.low(x);
@@ -344,24 +373,20 @@ Stereo Exciter::processWet(Stereo x) noexcept {
     const auto highLP=highTone_.low(highBand);
     const Stereo treble{highBand.l-highLP.l,highBand.r-highLP.r};
     const double lo=lowDrive_.next()/10.,hi=highDrive_.next()/10.;
-    const double driveL=1.+lo*3.5,driveH=1.+hi*3.5;
-    double loL=0.,loR=0.,hiL=0.,hiR=0.;
-    // Crossfade the actual transfer functions so rapidly switched modes do not click.
-    for(std::size_t i=0;i<modeWeights_.size();++i) {
-        const double weight=modeWeights_[i].next();
-        if(weight<1.0e-10) continue;
-        const auto mode=static_cast<ExciterMode>(i);
-        loL+=weight*saturate(bass.l,driveL,mode,histL_[0]);
-        loR+=weight*saturate(bass.r,driveL,mode,histR_[0]);
-        hiL+=weight*saturate(treble.l,driveH,mode,histL_[1]);
-        hiR+=weight*saturate(treble.r,driveH,mode,histR_[1]);
-    }
-    const Stereo lowDelta{lo*(loL-bass.l),lo*(loR-bass.r)};
-    const Stereo highDelta{hi*(hiL-treble.l),hi*(hiR-treble.r)};
-    const Stereo totalDelta{lowDelta.l+highDelta.l,lowDelta.r+highDelta.r};
-    const auto dc=dcRemoval_.low(totalDelta);
-    const double out=dbToGain(output_.next());
-    return {(x.l+totalDelta.l-dc.l)*out,(x.r+totalDelta.r-dc.r)*out};
+    const std::array<double,3> weights{modeWeights_[0].next(),modeWeights_[1].next(),modeWeights_[2].next()};
+    const double lowD=1.+lo*3.5,highD=1.+hi*3.5;
+    SaturationContext low{this,0u,lowD,1./std::tanh(lowD),1./std::atan(lowD),std::tanh(.12*lowD),weights};
+    SaturationContext high{this,1u,highD,1./std::tanh(highD),1./std::atan(highD),std::tanh(.12*highD),weights};
+    const auto colorBass=lowSaturator_.process(bass,&Exciter::saturationTransfer,&low);
+    const auto colorTreble=highSaturator_.process(treble,&Exciter::saturationTransfer,&high);
+    const auto delayedBass=bassDelay_.process(bass);
+    const auto delayedTreble=trebleDelay_.process(treble);
+    const auto delayedInput=inputDelay_.process(x);
+    const Stereo delta{lo*(colorBass.l-delayedBass.l)+hi*(colorTreble.l-delayedTreble.l),
+                       lo*(colorBass.r-delayedBass.r)+hi*(colorTreble.r-delayedTreble.r)};
+    const auto dc=dcRemoval_.low(delta);
+    const double gain=dbToGain(output_.next());
+    return {(delayedInput.l+delta.l-dc.l)*gain,(delayedInput.r+delta.r-dc.r)*gain};
 }
 
 void SixModuleRack::prepare(double fs) noexcept {

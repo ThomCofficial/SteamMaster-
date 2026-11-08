@@ -3,14 +3,10 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include "steammaster/Core.hpp"
+#include "steammaster/Oversampling.hpp"
 
 namespace steammaster {
-struct Stereo { double l = 0.0, r = 0.0; };
-constexpr double kPi = 3.1415926535897932384626433832795;
-double dbToGain(double db) noexcept;
-double gainToDb(double gain) noexcept;
-double sanitized(double value) noexcept;
-double clamp(double value, double lo, double hi) noexcept;
 
 // All setters are called on the audio thread at a block boundary. UI/host-to-audio
 // communication must use an SPSC queue or lock-free parameter snapshot upstream.
@@ -29,6 +25,7 @@ class DetectorHPF {
 public:
     void prepare(double sampleRate) noexcept;
     void setFrequency(double hz) noexcept;
+    void reset() noexcept { low_={}; }
     Stereo process(Stereo in) noexcept;
 private:
     double fs_ = 48000.0, coeff_ = 0.0;
@@ -63,8 +60,11 @@ public:
     virtual void reset() noexcept = 0;
 protected:
     virtual Stereo processWet(Stereo in) noexcept = 0;
+    void setWetLatency(std::size_t samples) noexcept { dryDelay_.prepare(samples); }
+    void resetDryDelay() noexcept { dryDelay_.reset(); }
     double fs_ = 48000.0;
     Smoother enabled_{}, mix_{};
+    StereoDelay dryDelay_{};
 };
 
 enum class OceanRatio { R1_2, R1_5, R2, R3, R4, R6 };
@@ -83,9 +83,14 @@ public:
     void set(const OceanParameters& p) noexcept;
     void reset() noexcept override;
     double gainReductionDb() const noexcept { return reductionDb_; }
+    void setOversamplingMode(OversamplingMode quality) noexcept { quality_=quality; tube_.setMode(quality); }
 private:
     Stereo processWet(Stereo in) noexcept override;
+    static Stereo tubeTransfer(Stereo in, unsigned, void*) noexcept;
     OceanParameters p_{};
+    OversampledProcessor tube_{};
+    StereoDelay linearDelay_{};
+    OversamplingMode quality_ = OversamplingMode::Off;
     DetectorHPF sc_{};
     Smoother threshold_{};
     double envelope_ = 0.0, reductionDb_ = 0.0;
@@ -178,8 +183,10 @@ public:
     void prepare(double sampleRate) noexcept override;
     void set(const ShadowParameters& p) noexcept;
     void reset() noexcept override;
-    double opticalReductionDb() const noexcept { return opticalReductionDb_; }
-    double discreteReductionDb() const noexcept { return discreteReductionDb_; }
+    // Telemetry reflects the ACTUALLY APPLIED stage gain reduction, including
+    // individual IN crossfades, rather than detector activity while bypassed.
+    double opticalReductionDb() const noexcept { return opticalReductionDb_*opticalEnable_.value(); }
+    double discreteReductionDb() const noexcept { return discreteReductionDb_*discreteEnable_.value(); }
 private:
     Stereo processWet(Stereo in) noexcept override;
     ShadowParameters p_{};
@@ -204,13 +211,25 @@ public:
     void prepare(double sampleRate) noexcept override;
     void set(const ExciterParameters& p) noexcept;
     void reset() noexcept override;
+    void setOversamplingMode(OversamplingMode quality) noexcept {
+        quality_=quality; lowSaturator_.setMode(quality); highSaturator_.setMode(quality);
+    }
 private:
     Stereo processWet(Stereo in) noexcept override;
+    struct SaturationContext {
+        Exciter* engine; unsigned band; double drive;
+        double invTanhDrive, invAtanDrive, tubeBias;
+        std::array<double,3> weights;
+    };
+    static Stereo saturationTransfer(Stereo in, unsigned quality, void* ctx) noexcept;
     struct Pole { double l = 0.0, r = 0.0; Smoother coeff; void prepare(double fs) noexcept; void set(double fs,double hz) noexcept; Stereo low(Stereo v) noexcept; void reset() noexcept { l=r=0.0; } };
-    double saturate(double x, double drive, ExciterMode mode, double& history) noexcept;
     ExciterParameters p_{};
     Pole crossover_{}, lowTone_{}, highTone_{}, dcRemoval_{};
-    double histL_[2]{}, histR_[2]{};
+    OversampledProcessor lowSaturator_{}, highSaturator_{};
+    StereoDelay inputDelay_{}, bassDelay_{}, trebleDelay_{};
+    std::array<std::array<Stereo,4>,2> tapeMemory_{};
+    std::array<double,4> tapeCoeff_{};
+    OversamplingMode quality_ = OversamplingMode::Off;
     Smoother lowDrive_{}, highDrive_{}, output_{};
     std::array<Smoother,3> modeWeights_{};
 };
@@ -222,6 +241,11 @@ public:
     void prepare(double sampleRate) noexcept;
     Stereo process(Stereo input) noexcept;
     void reset() noexcept;
+    void setOversamplingMode(OversamplingMode quality) noexcept {
+        ocean.setOversamplingMode(quality);
+        exciter.setOversamplingMode(quality);
+    }
+    static constexpr std::size_t latencySamples() noexcept {return 2*OversampledProcessor::kLatency;}
     Ocean ocean;
     Furnace furnace;
     ParametricEQ parametric;

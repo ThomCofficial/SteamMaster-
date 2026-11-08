@@ -1,4 +1,4 @@
-name: SteamMaster DSP Core Tests
+name: SteamMaster DSP Foundation Tests
 on:
   push:
   pull_request:

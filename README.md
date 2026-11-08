@@ -1,36 +1,44 @@
-# SteamMaster DSP Foundation — engineering checkpoint 0.1.0
+# SteamMaster — DSP Foundation v0.2.0
 
-**This is a portable C++17 DSP library and test harness, NOT a finished VST3, and NOT a mastering-ready audio product.** No GUI assets, graphical controls, Cubase binaries, JUCE adapters or unapproved interfaces are included. The six approved module designs remain untouched.
+**Engineering checkpoint, not a finished VST3 or mastering-ready product.** This is a standalone, cross-platform C++17 DSP library with automated tests. The first six approved module GUIs remain **locked and unchanged**; the repository includes **no GUI, JUCE adapter, installer, Cubase binary, limiter or new artwork**.
 
-## What is implemented
+## What's new in v0.2
 
-- Ocean: stereo-linked soft-knee program-dependent compressor, user-selectable ratios/recovery, attack, sidechain HPF, mix, bypass and gentle nonlinear color.
-- Furnace: stereo-linked VCA compression, exact discrete attack/release/ratio selections, automatic release, SC HPF, mix, bypass.
-- Parametric EQ: four topology-preserving TPT EQs with peak/shelf constraints, gain, Q, frequency, output, mix, bypass.
-- Pultec: independent interactive low boost/attenuation and high boost/attenuation paths, variable high-boost bandwidth, output/mix/bypass. **Response-curve calibration is experimental and awaiting approval.**
-- Shadow: serial optical/discrete stereo-linked compression, independent IN stages, global IN, SC HPF, mix/output, per-stage gain-reduction telemetry. **1–24-style knob-to-dB mapping is unresolved.**
-- Exciter: distinct Tube/Tape/Transformer nonlinear paths, selectable low/high frequency emphasis, band-dependent drives, crossover, mode crossfade, output/mix/bypass. **Anti-aliasing quality is NOT yet production-grade; oversampling remains to be implemented.**
-- Shared: fixed-memory sample processing, parameter smoothing, module bypass crossfades, nonfinite containment, emergency >+12 dBFS sample bounding (not a true-peak limiter), denormal suppression and telemetry.
+- Implemented real **OFF / 2x / 4x / 8x** FIR oversampling around the **Ocean tube-coloration stage** and **both independent Exciter nonlinear bands**. It does **not** oversample the linear EQs or the VCA compression envelope calculations.
+- Fixed-latency, linear-phase 81-tap Blackman-Harris halfband FIR up/down filters; 70 samples per participating module. The six-module rack currently reports a fixed **140-sample DSP delay** at every quality setting (Ocean + Exciter). **The future VST3 adapter must report that latency to Cubase; no host PDC is implemented yet.**
+- Preconstructed DSP paths with warmup and ~12 ms, latency-aligned crossfades for changing oversampling modes. Rapid requests are queued; no allocation, synchronization or filter reinitialization occurs in sample processing.
+- Phase-aligned dry/wet and module-bypass paths; module and rack resets preserve selected oversampling quality and clear relevant detector/FIR states.
+- Optimized nonlinear work to process only actively weighted Exciter personalities and precompute transfer constants; preallocated FIR ring buffers with fast indices.
+- Shadow optical and discrete gain-reduction getters now reflect stage IN fade/bypass states.
+- Added independent anti-aliasing, delay, finite-sample, bypass, sample-rate, rapid-switching and safety regression tests.
 
-## Tests
+## Current module coverage
+
+1. **Ocean**: stereo-linked Vari-Mu-style dynamics, program-dependent recovery, gentle oversampled tube coloration.
+2. **Furnace**: stereo-linked VCA compression, stepped timings, AUTO release.
+3. **Parametric EQ**: four adjustable bands with stable TPT filters.
+4. **Pultec**: simultaneous broad low boost/cut and separate high shaping; coefficient calibration remains experimental.
+5. **Shadow**: independent optical + discrete compression stages in series, stage bypasses and telemetry.
+6. **Exciter**: Tube/Tape/Transformer transfer functions, low/high harmonic enhancement and local nonlinear oversampling.
+
+The first six modules perform actual DSP, but the analogue models have **not** been calibrated against reference hardware. Preserve all locked GUI designs and unresolved UI mappings. See `docs/CONTROL_AUDIT.md`.
+
+## Build and tests
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
-cmake --build build --config Release
+cmake --build build --config Release --parallel
 ctest --test-dir build -C Release --output-on-failure
 ```
 
-Run the executable directly for subtest detail and a machine-specific microbenchmark.
+Run `steammaster_tests` and `steammaster_oversampling_tests` directly for measurement output. GitHub Actions covers Windows/Linux Debug/Release and Linux ASan/UBSan.
 
-## Not yet done, by design
+## Important limitations
 
-- JUCE/VST3 and Cubase 13 integration or host lifecycle testing.
-- Full calibrated analog models and listening/AB measurements against hardware.
-- Oversampling 2x/4x/8x, phase/latency compensation, alias rejection, or safe switching among oversampling modes.
-- Baxandall, Tape, limiter, global stereo width and Mono Maker.
-- True-peak ceiling, LUFS meters, clipping indicator, A/B state or preset serialization.
-- Comprehensive automation tests, DAW sessions, windows binary tests and continuous CPU qualification.
+- This is **not** a runnable VST3 plugin and has **no Cubase host integration**.
+- No Baxandall, Tape module, limiter, true-peak ceiling, global stereo stage, preset/A-B serialization, LUFS/correlation meters or GUI control binding yet.
+- FIR oversampling has been validated with impulse alignment, several sample rates and a **single 9 kHz nonlinear alias probe at 48 kHz**; this is **not** a comprehensive production anti-aliasing specification. Final audio quality, 192 kHz CPU budgets and Windows/Cubase lifecycle stability remain unverified.
+- `SixModuleRack`'s ±4 sample clamp is emergency fault containment, **not** a safe listening level, dBTP ceiling or substitute for a real limiter.
+- Certain control ranges and model response shapes remain provisional DSP-native engineering values, **not** approved GUI mappings.
 
-The current module code is an **early real DSP implementation, not placeholder silence or parameter pass-through**. However, passing unit tests alone does not establish release-grade audio quality, real-time stability in Cubase or safe mastering ceiling enforcement.
-
-Read `docs/CONTROL_AUDIT.md`, `docs/ARCHITECTURE.md`, and `docs/TEST_REPORT.md` before adding host bindings.
+Read `docs/ARCHITECTURE.md`, `docs/CONTROL_AUDIT.md`, and `docs/TEST_REPORT.md` before adding VST3 bindings.
