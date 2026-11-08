@@ -319,42 +319,23 @@ Stereo ParametricEQ::processWet(Stereo in) noexcept {
 }
 
 void Pultec::prepare(double fs) noexcept {
-    Module::prepare(fs);lowBoost_.prepare(fs);lowCut_.prepare(fs);lowDip_.prepare(fs);
-    highBoost_.prepare(fs);highCut_.prepare(fs);
-    output_.prepare(fs,.012);output_.reset(0.);
+    Module::prepare(fs);
+    passive_.prepare(fs);
+    output_.prepare(fs,.012);
+    output_.reset(0.);
 }
 void Pultec::set(const PultecParameters& p) noexcept {
-    setCommon(p.common);output_.set(clamp(p.outputDb,-12.,12.));
-    const int low=(p.lowFrequencyHz==30 || p.lowFrequencyHz==60 || p.lowFrequencyHz==100) ? p.lowFrequencyHz:60;
-    const int high=(p.highBoostFrequencyHz==8000 || p.highBoostFrequencyHz==12000 || p.highBoostFrequencyHz==16000) ? p.highBoostFrequencyHz:12000;
-    const int atten=(p.highAttenuationFrequencyHz==5000 || p.highAttenuationFrequencyHz==10000 || p.highAttenuationFrequencyHz==20000) ? p.highAttenuationFrequencyHz:10000;
-    const double width=clamp(p.bandwidth,0.,1.);
-    // EQP-1A curves: LF boost max 13.5 dB, LF cut max 17.5 dB,
-    // HF peaking boost max ~18 dB, HF shelving attenuation max ~16 dB.
-    // These values are from Pulse Techniques' published EQP-1A specifications.
-    // Separate passive-branch shelf corners approximate coupled boost/cut.
-    // NOT a licensed WDF port and NOT a full measured circuit-match.
-    const double boost=std::pow(clamp(p.lowBoost,0.,10.)/10.,1.22);
-    const double cut=std::pow(clamp(p.lowAttenuation,0.,10.)/10.,1.20);
-    const double highAmount=std::pow(clamp(p.highBoost,0.,10.)/10.,1.20);
-    const double highCut=std::pow(clamp(p.highAttenuation,0.,10.)/10.,1.20);
-    // LF boost focuses lower than the LF attenuation branch. At the same
-    // nominal frequency both active controls create a bass shelf and a
-    // separate broad low-mid attenuation dip (the Pultec trick).
-    lowBoost_.configure(TptEQ::Mode::LowShelf,static_cast<double>(low)*1.10,.70,13.5*boost);
-    lowCut_.configure(TptEQ::Mode::LowShelf,static_cast<double>(low)*1.85,.65,-17.5*cut);
-    lowDip_.configure(TptEQ::Mode::Peak,static_cast<double>(low)*2.8,.55,-12.*boost*cut);
-    // "Bandwidth" increases the width, lowering Q and reducing peak height.
-    // Original EQP-1A high boost is resonant, not a broad upper shelf.
-    highBoost_.configure(TptEQ::Mode::Peak,static_cast<double>(high)*.88,
-                         1.10-.77*width,(18.-4.*width)*highAmount);
-    highCut_.configure(TptEQ::Mode::HighShelf,static_cast<double>(atten)*.93,.68,
-                       -16.*highCut);
+    setCommon(p.common);
+    output_.set(clamp(p.outputDb,-12.,12.));
+    passive_.configure(p.lowFrequencyHz,p.lowBoost,p.lowAttenuation,
+                       p.highBoostFrequencyHz,p.highBoost,p.bandwidth,
+                       p.highAttenuationFrequencyHz,p.highAttenuation);
 }
-void Pultec::reset() noexcept {lowBoost_.clear();lowCut_.clear();lowDip_.clear();highBoost_.clear();highCut_.clear();}
+void Pultec::reset() noexcept { passive_.reset(); }
 Stereo Pultec::processWet(Stereo x) noexcept {
-    x=lowBoost_.process(x);x=lowCut_.process(x);x=lowDip_.process(x);x=highBoost_.process(x);x=highCut_.process(x);
-    const double gain=dbToGain(output_.next());return{x.l*gain,x.r*gain};
+    const auto y=passive_.process(x);
+    const double gain=dbToGain(output_.next());
+    return {y.l*gain,y.r*gain};
 }
 
 void Shadow::prepare(double fs) noexcept {

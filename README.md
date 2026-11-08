@@ -86,3 +86,15 @@ Review `docs/ARCHITECTURE.md`, `docs/CONTROL_AUDIT.md`, `docs/V03_TEST_REPORT.md
 ## v0.6 metering correction
 
 Limiter `gainReductionDb()` now reports the effective gain attenuation from both the main and post-correction stages, including smooth bypass/post-stage crossfades. It excludes the user threshold's intentional input pre-gain. A new metering test checks finite and stereo-linked readings, active reduction, bypass recovery and reset at 44.1/48/96/192 kHz. No GUI work or parameter additions. This is DSP telemetry only; peak ceiling certification and host integration remain outstanding.
+
+### v1.1 — independently authored Pultec passive-network model
+
+The Pultec low section no longer combines generic digital shelving/peaking
+filters. It now solves an original **reduced passive RC circuit** with
+trapezoidal capacitor current memories and a two-node nodal matrix, followed by
+an **RLC-derived high-boost resonator** and an **RC-derived high-cut shelf**.
+The published switch capacitor/inductor values informed the modeling; this is
+**not** a clone of the complete EQP-1A circuit or hardware-measurement matched.
+Read [`docs/V11_PULTEC_CIRCUIT_AUDIT.md`](docs/V11_PULTEC_CIRCUIT_AUDIT.md).
+No GPL-3.0 source from `ABSounds/EQP-WDF-1A` was used or copied. The
+parametric EQ and every approved GUI component remain unchanged.

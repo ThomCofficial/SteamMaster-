@@ -5,6 +5,7 @@
 #include <cstdint>
 #include "steammaster/Core.hpp"
 #include "steammaster/Oversampling.hpp"
+#include "steammaster/PultecCircuit.hpp"
 
 namespace steammaster {
 
@@ -167,7 +168,7 @@ public:
     void reset() noexcept override;
 private:
     Stereo processWet(Stereo in) noexcept override;
-    TptEQ lowBoost_{}, lowCut_{}, lowDip_{}, highBoost_{}, highCut_{};
+    PultecCircuit passive_{};
     Smoother output_{};
 };
 

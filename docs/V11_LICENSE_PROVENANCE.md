@@ -1,0 +1,3 @@
+# Pultec model: license provenance
+
+The SteamMaster Pultec is original C++ code based on general electrical-engineering equations, manufacturer specifications, and a publicly available independent electronics schematic. It does not include source code from the GPL-3.0 `ABSounds/EQP-WDF-1A` repository and does not link against its libraries. The referenced academic paper informed the modeling approach; no GPL source was imported. The current circuit is a reduced analogue network, not the academic project's WDF model or an exact component-for-component implementation. Trademarks and future commercial distribution still require independent legal review.
