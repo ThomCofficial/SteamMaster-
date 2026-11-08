@@ -162,29 +162,48 @@ void Ocean::reset() noexcept {
     linearDelay_.reset();resetDryDelay();
 }
 Stereo Ocean::tubeTransfer(Stereo x,unsigned,void*) noexcept {
-    constexpr double normalizer=1./.8177540779702877; // 1 / tanh(1.15)
-    return {std::tanh(x.l*1.15)*normalizer,std::tanh(x.r*1.15)*normalizer};
+    // Differential push-pull inspired transfer; NOT measured 5670/6BA6 data.
+    const auto valve=[](double sample) noexcept {
+        constexpr double bias=.045,drive=.90;
+        const double y=.5*(std::tanh(drive*sample+bias)+std::tanh(drive*sample-bias));
+        const double norm=drive*(1.-std::tanh(bias)*std::tanh(bias));
+        return sanitized(y/norm+.0025*sample*sample/(1.+sample*sample));
+    };
+    return {valve(x.l),valve(x.r)};
 }
 Stereo Ocean::processWet(Stereo in) noexcept {
-    auto sc=sc_.process(in);
+    const auto sc=sc_.process(in);
     const double target=levelOf(sc);
     const bool increasing=target>envelope_;
-    const double release = recoveryOcean(p_.recovery)*(1.+.28*clamp(reductionDb_/12.,0.,1.));
+    const double release=recoveryOcean(p_.recovery)*(1.+.18*clamp(reductionDb_/12.,0.,1.));
     envelope_=follow(envelope_,target,timeCoefficient(fs_,increasing?p_.attackMs*.001:release));
     if(envelope_<1.e-30)envelope_=0.;
-    const double over=gainToDb(envelope_)-threshold_.next();
-    const double progress=clamp((over+6.)/18.,0.,1.);
-    const double ratio=1.+(ratioOcean(p_.ratio)-1.)*(.45+.55*progress);
-    const double requested=compressDb(gainToDb(envelope_),threshold_.value(),ratio,8.);
+    const double level=gainToDb(envelope_),threshold=threshold_.next(),over=level-threshold;
+    // Manley has COMP 1.5:1 and LIMIT 4:1 rising toward 20:1.
+    // SteamMaster's six locked ratios are retained as interpolated extensions.
+    const double selected=ratioOcean(p_.ratio);
+    double requested=0.;
+    if(selected<=2.) {
+        const double effective=1.+(selected-1.)*(.80+.20*clamp((over+6.)/18.,0.,1.));
+        requested=compressDb(level,threshold,effective,12.);
+    } else {
+        const double base=selected;
+        requested=compressDb(level,threshold,base,3.);
+        const double pivot=12./(1.-1./base);
+        if(over>pivot) {
+            const double extra=over-pivot;
+            const double t=clamp(extra/12.,0.,1.);
+            const double effective=base+(20.-base)*t*t*(3.-2.*t);
+            requested=12.+extra*(1.-1./effective);
+        }
+    }
     reductionDb_=follow(reductionDb_,requested,timeCoefficient(fs_,.005));
     const double gain=dbToGain(-reductionDb_);
-    // Low-level, gentle tube-like coloration; NOT a physical valve model.
     const Stereo compressed{in.l*gain,in.r*gain};
     const auto colored=tube_.process(compressed,&Ocean::tubeTransfer,nullptr);
     const auto linear=linearDelay_.process(compressed);
-    return {linear.l*.93 + colored.l*.07,linear.r*.93+colored.r*.07};
+    return {linear.l*.95+colored.l*.05,linear.r*.95+colored.r*.05};
 }
-
 void Furnace::prepare(double fs) noexcept {
     Module::prepare(fs);sc_.prepare(fs);threshold_.prepare(fs,.012);threshold_.reset(p_.thresholdDb);set(p_);reset();
 }
