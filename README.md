@@ -1,3 +1,19 @@
+# SteamMaster DSP Foundation — engineering checkpoint 0.5.0
+
+**DSP ONLY. No new GUI work, graphics, JUCE/VST3 wrapper or DAW-ready plugin has been added.**
+
+v0.5 adds a second 8x FIR post-limiter true-peak correction stage with fixed additional lookahead, and differentiates Studio/Vintage/Modern Tape models using measured harmonic-fingerprint regression tests. The deterministic reconstructed 8x and 16x limiter stress suites now enforce a **+0.05 dB tolerance**, rather than permitting the earlier +0.75 dB overshoot. An external FFmpeg true-peak check of a 3-second adversarial stereo probe measured **−1.1 dBTP** for a −1 dBTP setting. **These passes do not establish formal BS.1770 compliance or guarantee arbitrary-signal ceilings.**
+
+**Current full-rack latency:** `280 + ceil(0.005*fs) + ceil(0.002*fs)` samples (590/616/898/952/1624 at 44.1/48/88.2/96/192 kHz). No VST3 host latency reporting yet.
+
+The post-limiter stage costs additional CPU and latency and the primary limiter still calls an emergency sample clipper in rare harsh stress cases. Accurate final gain-reduction reporting, physical analog-model calibration, subjective listening, additional independent true-peak validation, VST3 and Cubase tests remain open.
+
+See [`docs/V05_TEST_REPORT.md`](docs/V05_TEST_REPORT.md) for test evidence and reproduction steps.
+
+---
+
+## Previous engineering checkpoints (historical)
+
 # SteamMaster DSP Foundation — engineering checkpoint 0.4.0
 
 **DSP-only development checkpoint; NOT a finished VST3 or mastering-ready product. The first six approved GUI designs remain untouched.**

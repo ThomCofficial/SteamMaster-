@@ -102,7 +102,7 @@ public:
     void setRequireLinkedGain(bool locked) noexcept {forceLinked_=locked;}
     void reset() noexcept;
     Stereo process(Stereo input) noexcept;
-    std::size_t latencySamples() const noexcept {return audioLatency_;}
+    std::size_t latencySamples() const noexcept {return audioLatency_+postLatency_;}
     Stereo gainReductionDb() const noexcept {return reductionDb_;}
     double measuredOutputTruePeak() const noexcept {return outputTruePeak_;}
     // Counts samples where emergency sample-domain clipping was needed.
@@ -110,18 +110,20 @@ public:
     std::uint64_t safetyClipEvents() const noexcept {return safetyClipEvents_;}
 private:
     static constexpr std::size_t kCapacity=4096;
-    std::array<Stereo,kCapacity> audioBuffer_{}, dryBuffer_{}, peakBuffer_{};
-    std::size_t audioCursor_=0, peakCursor_=0, audioLatency_=0;
-    FIRHalfBand2x detector2x_{}, detector4x_{}, detector8x_{}, meter2x_{}, meter4x_{}, meter8x_{};
-    Smoother inputGain_{}, ceiling_{}, bypass_{}, lookahead_{}, link_{};
-    Stereo gain_ {1.0,1.0}, reductionDb_{};
-    std::array<std::size_t,2> releaseHold_{};
+    std::array<Stereo,kCapacity> audioBuffer_{}, dryBuffer_{}, peakBuffer_{}, postBuffer_{};
+    std::size_t audioCursor_=0, peakCursor_=0, postCursor_=0, audioLatency_=0, postLatency_=0;
+    FIRHalfBand2x detector2x_{}, detector4x_{}, detector8x_{}, post2x_{}, post4x_{}, post8x_{}, meter2x_{}, meter4x_{}, meter8x_{};
+    Smoother inputGain_{}, ceiling_{}, bypass_{}, lookahead_{}, link_{}, postMix_{};
+    Stereo gain_ {1.0,1.0}, postGain_{1.0,1.0}, reductionDb_{};
+    std::array<std::size_t,2> releaseHold_{}, postHold_{};
     std::uint64_t safetyClipEvents_=0;
     double fs_=48000.0, outputTruePeak_=0.0, ceilingHard_=1.0;
     bool truePeak_=true, autoRelease_=false, forceLinked_=false;
     LimiterMode mode_=LimiterMode::Clean;
     double releaseMs_=150.;
     Stereo getPeak(Stereo input) noexcept;
+    Stereo postPeak(Stereo input) noexcept;
+    Stereo postTruePeakGuard(Stereo input, double ceiling) noexcept;
     Stereo measureOutput(Stereo output) noexcept;
 };
 

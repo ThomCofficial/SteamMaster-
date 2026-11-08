@@ -114,10 +114,16 @@ Stereo Tape::saturate(Stereo input,unsigned quality,void* raw) noexcept {
         const double bias=c.bias*.10;
         const double d=c.drive;
         const double clean=(std::tanh(d*(x+.5*bias))-std::tanh(d*.5*bias))/std::tanh(d);
-        const double old=(std::atan(d*(x+.8*bias+.10*memory))-
-                          std::atan(d*(.8*bias+.10*memory)))/std::atan(d);
-        const double modern=(std::tanh(d*(x+.2*bias+.035*memory))-
-                             std::tanh(d*(.2*bias+.035*memory)))/std::tanh(d);
+        // Separate provisional tape personalities with meaningful drive
+        // differences at zero bias: Vintage bends early and retains more
+        // signal memory; Modern has greater linear headroom than Studio.
+        // These are engineering voicings, NOT hardware-emulation claims.
+        const double vintageD=d*1.35;
+        const double modernD=d*.62;
+        const double old=(std::atan(vintageD*(x+.8*bias+.16*memory))-
+                          std::atan(vintageD*(.8*bias+.16*memory)))/std::atan(vintageD);
+        const double modern=(std::tanh(modernD*(x+.2*bias+.025*memory))-
+                             std::tanh(modernD*(.2*bias+.025*memory)))/std::tanh(modernD);
         return sanitized(c.weights[0]*clean+c.weights[1]*old+c.weights[2]*modern);
     };
     return {calc(input.l,mem.l),calc(input.r,mem.r)};
@@ -169,11 +175,15 @@ Stereo GlobalStereo::process(Stereo input) noexcept {
 void MasterLimiter::prepare(double sampleRate) noexcept {
     fs_=clamp(sampleRate,8000.,384000.);
     audioLatency_=35u+static_cast<std::size_t>(std::ceil(fs_*.005));
+    // Additional fixed post-limiter lookahead for true-peak correction;
+    // kept in the latency even with TP OFF so mode changes are click-free.
+    postLatency_=35u+static_cast<std::size_t>(std::ceil(fs_*.002));
     detector2x_.prepare();detector4x_.prepare();detector8x_.prepare();
     meter2x_.prepare();meter4x_.prepare();meter8x_.prepare();
-    for(auto* s:{&inputGain_,&ceiling_,&bypass_,&lookahead_,&link_})s->prepare(fs_,.006);
+    post2x_.prepare();post4x_.prepare();post8x_.prepare();
+    for(auto* s:{&inputGain_,&ceiling_,&bypass_,&lookahead_,&link_,&postMix_})s->prepare(fs_,.006);
     inputGain_.reset(1.);ceiling_.reset(1.);bypass_.reset(1.);
-    lookahead_.reset(3.);link_.reset(1.);
+    lookahead_.reset(3.);link_.reset(1.);postMix_.reset(1.);
     set(LimiterParameters{});reset();
 }
 void MasterLimiter::set(const LimiterParameters& p) noexcept {
@@ -183,15 +193,17 @@ void MasterLimiter::set(const LimiterParameters& p) noexcept {
     lookahead_.set(clamp(p.lookaheadMs,.1,5.));
     link_.set(clamp(p.stereoLink,0.,1.));
     bypass_.set(p.in?1.:0.);
+    postMix_.set(p.in&&p.truePeak?1.:0.);
     truePeak_=p.truePeak;autoRelease_=p.autoRelease;
     releaseMs_=clamp(p.releaseMs,10.,1000.);mode_=p.mode;
 }
 void MasterLimiter::reset() noexcept {
-    audioBuffer_.fill({});dryBuffer_.fill({});peakBuffer_.fill({});
-    audioCursor_=peakCursor_=0;gain_={1.,1.};reductionDb_={};outputTruePeak_=0.;
-    releaseHold_.fill(0);safetyClipEvents_=0;
+    audioBuffer_.fill({});dryBuffer_.fill({});peakBuffer_.fill({});postBuffer_.fill({});
+    audioCursor_=peakCursor_=postCursor_=0;gain_={1.,1.};postGain_={1.,1.};reductionDb_={};outputTruePeak_=0.;
+    releaseHold_.fill(0);postHold_.fill(0);safetyClipEvents_=0;
     detector2x_.reset();detector4x_.reset();detector8x_.reset();
     meter2x_.reset();meter4x_.reset();meter8x_.reset();
+    post2x_.reset();post4x_.reset();post8x_.reset();
 }
 Stereo MasterLimiter::getPeak(Stereo input) noexcept {
     Stereo even{},odd{},q0{},q1{},q2{},q3{};
@@ -207,6 +219,54 @@ Stereo MasterLimiter::getPeak(Stereo input) noexcept {
     }
     return result;
 }
+Stereo MasterLimiter::postPeak(Stereo input) noexcept {
+    // This completely independent 8x detector checks the *already limited*
+    // waveform, including any ISP created by modulation and peak guards.
+    Stereo even{},odd{},q0{},q1{},q2{},q3{};
+    post2x_.up(input,even,odd);
+    post4x_.up(even,q0,q1);
+    post4x_.up(odd,q2,q3);
+    Stereo result{std::abs(input.l),std::abs(input.r)};
+    for(const Stereo q : {q0,q1,q2,q3}) {
+        Stereo a{},b{};
+        post8x_.up(q,a,b);
+        result.l=std::max({result.l,std::abs(a.l),std::abs(b.l)});
+        result.r=std::max({result.r,std::abs(a.r),std::abs(b.r)});
+    }
+    return result;
+}
+Stereo MasterLimiter::postTruePeakGuard(Stereo input,double ceiling) noexcept {
+    // Causal correction stage. The detector sees a reconstructed peak at a
+    // 35-sample FIR delay; its associated waveform emerges from the post
+    // delay another 2ms later, allowing correction before output. This stage
+    // carries NO new user parameters or GUI features.
+    const auto p=postPeak(input);
+    const double target=ceiling*dbToGain(-.15); // small interpolation margin
+    const double linked=std::max(p.l,p.r);
+    const double weight=forceLinked_?1.:link_.value();
+    const double l=p.l+(linked-p.l)*weight;
+    const double r=p.r+(linked-p.r)*weight;
+    const Stereo requested{std::min(1.,target/std::max(kSmall,l)),
+                           std::min(1.,target/std::max(kSmall,r))};
+    const std::size_t ahead=postLatency_-35u;
+    const double release=smoothCoef(fs_,.045);
+    auto follow=[&](double needed,double& gain,std::size_t& hold) noexcept {
+        if(needed<gain){ gain=needed;hold=ahead; }
+        else if(hold>0){ --hold; }
+        else { gain=needed+release*(gain-needed); }
+        gain=clamp(gain,0.,1.);
+    };
+    follow(requested.l,postGain_.l,postHold_[0]);
+    follow(requested.r,postGain_.r,postHold_[1]);
+    postBuffer_[postCursor_]=input;
+    const auto read=(postCursor_+kCapacity-(postLatency_%kCapacity))%kCapacity;
+    const auto delayed=postBuffer_[read];
+    if(++postCursor_==kCapacity)postCursor_=0;
+    const double mix=postMix_.next();
+    return {delayed.l*(1.-mix+mix*postGain_.l),
+            delayed.r*(1.-mix+mix*postGain_.r)};
+}
+
 Stereo MasterLimiter::measureOutput(Stereo output) noexcept {
     Stereo even{},odd{},q0{},q1{},q2{},q3{};
     meter2x_.up(output,even,odd);
@@ -282,7 +342,7 @@ Stereo MasterLimiter::process(Stereo input) noexcept {
     const auto out=blend(dry,wet,en);
     if(++audioCursor_==kCapacity)audioCursor_=0;
     if(++peakCursor_==kCapacity)peakCursor_=0;
-    return measureOutput({sanitized(out.l),sanitized(out.r)});
+    return measureOutput(postTruePeakGuard({sanitized(out.l),sanitized(out.r)},ceilingHard_));
 }
 
 void MasteringRack::prepare(double fs) noexcept {
