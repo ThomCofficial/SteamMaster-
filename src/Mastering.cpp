@@ -77,81 +77,84 @@ Stereo Baxandall::process(Stereo x) noexcept {
 void Tape::prepare(double fs) noexcept {
     Module::prepare(fs);
     setWetLatency(OversampledProcessor::kLatency);
-    saturator_.prepare(fs);
-    bump_.prepare(fs);hfTrim_.prepare(fs);
-    drive_.prepare(fs,.012);bias_.prepare(fs,.012);transientGain_.prepare(fs,.020);
-    for(unsigned i=0;i<3;++i){types_[i].prepare(fs,.012);types_[i].reset(i==0?1.:0.);}
-    drive_.reset(0.);bias_.reset(0.);transientGain_.reset(0.);
+    saturator_.prepare(fs);magnetics_.prepare(fs);
+    dcAlpha_=1.-std::exp(-2.*kPi*5./fs_);
+    bump_.prepare(fs);reproLoss_.prepare(fs);hfTrim_.prepare(fs);
+    drive_.prepare(fs,.012);bias_.prepare(fs,.012);
+    speedFactor_.prepare(fs,.018);reproMakeup_.prepare(fs,.020);transientGain_.prepare(fs,.020);
+    for(unsigned i=0;i<3;++i){types_[i].prepare(fs,.020);types_[i].reset(i==0?1.:0.);}
+    drive_.reset(0.);bias_.reset(0.);speedFactor_.reset(1.);reproMakeup_.reset(1.);transientGain_.reset(0.);
     set(params_);reset();
 }
 void Tape::set(const TapeParameters& p) noexcept {
     params_=p;setCommon(p.common);
     drive_.set(clamp(p.driveDb,-10.,10.));bias_.set(clamp(p.bias,-5.,5.));
-    for(unsigned i=0;i<3;++i) types_[i].set(i==static_cast<unsigned>(p.type)?1.:0.);
-    // Speed voicings are provisional engineering calibration, not approved knob edits.
-    double bumpHz=68.,hfHz=12500.,bumpDb=1.5;
+    const unsigned type=std::min(2u,static_cast<unsigned>(p.type));
+    for(unsigned i=0;i<3;++i) types_[i].set(i==type?1.:0.);
+    double bumpHz=70.,hfHz=14000.,bumpDb=1.25,lossHz=14000.,lossDb=-1.15,speed=1.0;
     switch(p.speed){
-    case TapeSpeed::IPS7_5:bumpHz=48.;hfHz=7800.;bumpDb=2.3;break;
-    case TapeSpeed::IPS15:bumpHz=68.;hfHz=12500.;bumpDb=1.5;break;
-    case TapeSpeed::IPS30:bumpHz=94.;hfHz=16000.;bumpDb=.8;break;
+    case TapeSpeed::IPS7_5:
+        bumpHz=46.;hfHz=8700.;bumpDb=2.1;lossHz=9000.;lossDb=-2.8;speed=1.35;break;
+    case TapeSpeed::IPS15:
+        bumpHz=70.;hfHz=14000.;bumpDb=1.25;lossHz=14000.;lossDb=-1.15;speed=1.0;break;
+    case TapeSpeed::IPS30:
+        bumpHz=102.;hfHz=18000.;bumpDb=.65;lossHz=18500.;lossDb=-.30;speed=.67;break;
     }
-    bump_.configure(TptEQ::Mode::Peak,bumpHz,.65,bumpDb);
-    hfTrim_.configure(TptEQ::Mode::HighShelf,hfHz,.7,clamp(p.hfTrimDb,-6.,6.));
+    // Modern high-headroom mode has a slightly more restrained head bump,
+    // Vintage has a slightly more emphatic resonance. These values are not
+    // hardware-measured profiles for any identifiable ATR/A800 machine.
+    if(type==1)bumpDb*=1.2;
+    if(type==2)bumpDb*=.60;
+    bump_.configure(TptEQ::Mode::Peak,bumpHz,.62,bumpDb);
+    // Replay loss happens AFTER magnetic saturation, while HF Trim is a
+    // separate post-repro user EQ. Overbias increases HF loss.
+    lossDb+=p.bias>0.?-.26*clamp(p.bias,0.,5.):.09*clamp(-p.bias,0.,5.);
+    reproLoss_.configure(TptEQ::Mode::HighShelf,lossHz,.7071067811865,lossDb);
+    hfTrim_.configure(TptEQ::Mode::HighShelf,hfHz,.7071067811865,clamp(p.hfTrimDb,-6.,6.));
+    speedFactor_.set(speed);
+    // Level compensation at low programme level (-10 dB drive), measured
+    // against the *own modeled* 1 kHz response at 48 kHz. This prevents
+    // false loudness advantage between machine voicings/speeds; NOT a
+    // hardware-measured flux calibration or extra user control.
+    constexpr double makeupsDb[3][3]={{1.07,.77,.50},{1.58,1.13,.73},{.26,.19,.12}};
+    const unsigned sp=(p.speed==TapeSpeed::IPS7_5?0u:(p.speed==TapeSpeed::IPS15?1u:2u));
+    reproMakeup_.set(dbToGain(makeupsDb[type][sp]));
 }
 void Tape::reset() noexcept {
-    bump_.clear();hfTrim_.clear();saturator_.reset();saturator_.setMode(quality_);
-    memory_.fill({});previous_.fill({});envelope_=0.;dc_={};resetDryDelay();
+    bump_.clear();reproLoss_.clear();hfTrim_.clear();
+    saturator_.reset();saturator_.setMode(quality_);magnetics_.reset();
+    envelope_=0.;dc_={};resetDryDelay();
 }
 Stereo Tape::saturate(Stereo input,unsigned quality,void* raw) noexcept {
     auto& c=*static_cast<Context*>(raw);
-    auto& self=*c.self;
-    quality=std::min(quality,3u);
-    const double alpha=std::exp(-1./std::max(8000.,self.fs_*static_cast<double>(1u<<quality)*.012));
-    auto& mem=self.memory_[quality];
-    auto& prev=self.previous_[quality];
-    mem.l=alpha*mem.l+(1.-alpha)*input.l;
-    mem.r=alpha*mem.r+(1.-alpha)*input.r;
-    // Airwindows-inspired approach (not copied code): slew-dependent softening
-    // and magnetic memory, both computed at the oversampled rate.
-    const auto calc=[&](double x,double memory,double& last) noexcept {
-        const double slew=x-last;
-        last=x;
-        const double soft=std::tanh(slew*1.7)/1.7;
-        const double rounded=x-.18*(slew-soft);
-        const double bias=c.bias*.10;
-        const double d=c.drive;
-        const double clean=(std::tanh(d*(rounded+.5*bias))-std::tanh(d*.5*bias))/std::tanh(d);
-        // Separate provisional tape personalities with meaningful drive
-        // differences at zero bias: Vintage bends early and retains more
-        // signal memory; Modern has greater linear headroom than Studio.
-        // These are engineering voicings, NOT hardware-emulation claims.
-        const double vintageD=d*1.35;
-        const double modernD=d*.62;
-        const double old=(std::atan(vintageD*(rounded+.8*bias+.16*memory))-
-                          std::atan(vintageD*(.8*bias+.16*memory)))/std::atan(vintageD);
-        const double modern=(std::tanh(modernD*(rounded+.2*bias+.025*memory))-
-                             std::tanh(modernD*(.2*bias+.025*memory)))/std::tanh(modernD);
-        return sanitized(c.weights[0]*clean+c.weights[1]*old+c.weights[2]*modern);
-    };
-    return {calc(input.l,mem.l,prev.l),calc(input.r,mem.r,prev.r)};
+    return c.self->magnetics_.process(input,quality,c.drive,c.bias,c.speedFactor,c.weights);
 }
 Stereo Tape::processWet(Stereo input) noexcept {
-    auto pre=hfTrim_.process(bump_.process(input));
-    const double target=magnitude(pre);
+    const double target=magnitude(input);
     const bool attack=target>envelope_;
     envelope_=target+smoothCoef(fs_,attack?.012:.140)*(envelope_-target);
     envelope_=sanitized(envelope_);
-    const double overload=std::max(0.,gainToDb(envelope_)-(-4.));
-    const double gr=std::min(3.0,overload*.18);
-    transientGain_.set(-gr);
+    const double weights[3]={types_[0].next(),types_[1].next(),types_[2].next()};
+    const double sum=std::max(1.e-9,weights[0]+weights[1]+weights[2]);
+    // Amount of tape compression increases with flux (drive and programme
+    // level), with vintage ATR-style slightly more compressive. Linked stereo
+    // detection prevents stereo image modulation of common transients.
+    const double threshold=(-4.*weights[0]-7.*weights[1]+0.*weights[2])/sum;
+    const double slope=(.14*weights[0]+.20*weights[1]+.055*weights[2])/sum;
+    const double maxGr=(3.0*weights[0]+4.0*weights[1]+1.5*weights[2])/sum;
+    const double overload=std::max(0.,gainToDb(envelope_)-threshold);
+    transientGain_.set(-std::min(maxGr,overload*slope));
     const double comp=dbToGain(transientGain_.next());
-    const double d=1.35*dbToGain(drive_.next()*.55);
-    Context c{this,d,bias_.next(),{types_[0].next(),types_[1].next(),types_[2].next()}};
-    const auto y=saturator_.process({pre.l*comp,pre.r*comp},&Tape::saturate,&c);
-    // Very slow DC servo; no noise floor or wow/flutter introduced.
-    const double a=1.-std::exp(-2.*kPi*5./fs_);
-    dc_.l=sanitized(dc_.l+a*(y.l-dc_.l));dc_.r=sanitized(dc_.r+a*(y.r-dc_.r));
-    return {y.l-dc_.l,y.r-dc_.r};
+    const double d=1.26*dbToGain(drive_.next()*.55);
+    Context c{this,d,bias_.next(),speedFactor_.next(),
+              {weights[0]/sum,weights[1]/sum,weights[2]/sum}};
+    const auto magnetic=saturator_.process({input.l*comp,input.r*comp},&Tape::saturate,&c);
+    const auto playback=hfTrim_.process(reproLoss_.process(bump_.process(magnetic)));
+    // Very slow DC servo and no gratuitous tape noise or wow/flutter.
+    dc_.l=sanitized(dc_.l+dcAlpha_*(playback.l-dc_.l));
+    dc_.r=sanitized(dc_.r+dcAlpha_*(playback.r-dc_.r));
+    const double makeup=reproMakeup_.next();
+    return {(playback.l-dc_.l)*makeup,(playback.r-dc_.r)*makeup};
 }
 
 void GlobalStereo::prepare(double fs) noexcept {

@@ -1,3 +1,11 @@
+# SteamMaster DSP v1.4 — tape magnetic memory and repro calibration
+
+**DSP-only milestone: zero UI changes; no VST3 build.** The Tape unit now implements a purpose-built, independently authored magnetic-memory / slew / bias nonlinearity with three individually voiced Studio, Vintage and Modern personalities. Playback head-bump and high-frequency losses depend on speed (7.5 / 15 / 30 IPS), bias affects saturation and HF loss, and model-derived 1 kHz makeup calibration maintains similar low-level gain between modes. Existing drive, bias, HF Trim, mix, IN, speed and oversampling controls are all preserved; no hiss, wow/flutter or additional knobs were introduced. All 11 DSP suites include new Tape characterization and safety tests.
+
+**Not a hardware clone:** the tape model is *hardware-informed*, not component-for-component, and there are no measured tape-deck transfer functions or external blind listening validations. See [Tape v1.4 research / test audit](docs/V14_TAPE_MODEL_AUDIT.md) and [model-generated response CSV](docs/V14_TAPE_MODELED_RESPONSE.csv). **No third-party DSP was copied.**
+
+---
+
 # SteamMaster DSP v1.3 — Dangerous BAX EQ response refinement
 
 **DSP-only engineering checkpoint. No VST3 binary or GUI changes.**

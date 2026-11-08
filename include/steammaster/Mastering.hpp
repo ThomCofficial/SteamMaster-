@@ -1,6 +1,7 @@
 #pragma once
 #include "steammaster/DSP.hpp"
 #include "steammaster/BaxShelf.hpp"
+#include "steammaster/TapeMagnetics.hpp"
 #include <array>
 #include <atomic>
 #include <cstddef>
@@ -71,15 +72,15 @@ public:
 private:
     Stereo processWet(Stereo input) noexcept override;
     static Stereo saturate(Stereo input, unsigned quality, void* context) noexcept;
-    struct Context { Tape* self; double drive; double bias; std::array<double,3> weights; };
+    struct Context { Tape* self; double drive; double bias; double speedFactor; std::array<double,3> weights; };
     TapeParameters params_{};
     OversampledProcessor saturator_{};
-    TptEQ bump_{}, hfTrim_{};
+    TptEQ bump_{}, reproLoss_{}, hfTrim_{};
+    TapeMagnetics magnetics_{};
     Smoother drive_{}, bias_{}, transientGain_{};
     std::array<Smoother,3> types_{};
-    std::array<Stereo,4> memory_{};
-    std::array<Stereo,4> previous_{};
-    double envelope_ = 0.0;
+    Smoother speedFactor_{}, reproMakeup_{};
+    double envelope_ = 0.0, dcAlpha_ = 0.0;
     Stereo dc_{};
     OversamplingMode quality_ = OversamplingMode::Off;
 };
