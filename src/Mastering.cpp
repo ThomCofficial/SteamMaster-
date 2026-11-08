@@ -100,7 +100,7 @@ void Tape::set(const TapeParameters& p) noexcept {
 }
 void Tape::reset() noexcept {
     bump_.clear();hfTrim_.clear();saturator_.reset();saturator_.setMode(quality_);
-    memory_.fill({});envelope_=0.;dc_={};resetDryDelay();
+    memory_.fill({});previous_.fill({});envelope_=0.;dc_={};resetDryDelay();
 }
 Stereo Tape::saturate(Stereo input,unsigned quality,void* raw) noexcept {
     auto& c=*static_cast<Context*>(raw);
@@ -108,25 +108,32 @@ Stereo Tape::saturate(Stereo input,unsigned quality,void* raw) noexcept {
     quality=std::min(quality,3u);
     const double alpha=std::exp(-1./std::max(8000.,self.fs_*static_cast<double>(1u<<quality)*.012));
     auto& mem=self.memory_[quality];
+    auto& prev=self.previous_[quality];
     mem.l=alpha*mem.l+(1.-alpha)*input.l;
     mem.r=alpha*mem.r+(1.-alpha)*input.r;
-    const auto calc=[&](double x,double memory) noexcept {
+    // Airwindows-inspired approach (not copied code): slew-dependent softening
+    // and magnetic memory, both computed at the oversampled rate.
+    const auto calc=[&](double x,double memory,double& last) noexcept {
+        const double slew=x-last;
+        last=x;
+        const double soft=std::tanh(slew*1.7)/1.7;
+        const double rounded=x-.18*(slew-soft);
         const double bias=c.bias*.10;
         const double d=c.drive;
-        const double clean=(std::tanh(d*(x+.5*bias))-std::tanh(d*.5*bias))/std::tanh(d);
+        const double clean=(std::tanh(d*(rounded+.5*bias))-std::tanh(d*.5*bias))/std::tanh(d);
         // Separate provisional tape personalities with meaningful drive
         // differences at zero bias: Vintage bends early and retains more
         // signal memory; Modern has greater linear headroom than Studio.
         // These are engineering voicings, NOT hardware-emulation claims.
         const double vintageD=d*1.35;
         const double modernD=d*.62;
-        const double old=(std::atan(vintageD*(x+.8*bias+.16*memory))-
+        const double old=(std::atan(vintageD*(rounded+.8*bias+.16*memory))-
                           std::atan(vintageD*(.8*bias+.16*memory)))/std::atan(vintageD);
-        const double modern=(std::tanh(modernD*(x+.2*bias+.025*memory))-
+        const double modern=(std::tanh(modernD*(rounded+.2*bias+.025*memory))-
                              std::tanh(modernD*(.2*bias+.025*memory)))/std::tanh(modernD);
         return sanitized(c.weights[0]*clean+c.weights[1]*old+c.weights[2]*modern);
     };
-    return {calc(input.l,mem.l),calc(input.r,mem.r)};
+    return {calc(input.l,mem.l,prev.l),calc(input.r,mem.r,prev.r)};
 }
 Stereo Tape::processWet(Stereo input) noexcept {
     auto pre=hfTrim_.process(bump_.process(input));

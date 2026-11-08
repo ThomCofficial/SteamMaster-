@@ -76,6 +76,7 @@ private:
     Smoother drive_{}, bias_{}, transientGain_{};
     std::array<Smoother,3> types_{};
     std::array<Stereo,4> memory_{};
+    std::array<Stereo,4> previous_{};
     double envelope_ = 0.0;
     Stereo dc_{};
     OversamplingMode quality_ = OversamplingMode::Off;

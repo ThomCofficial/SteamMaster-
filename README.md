@@ -1,3 +1,7 @@
+# SteamMaster DSP v0.7 — analog voicing experiment
+
+DSP-only update. See `docs/V07_ANALOG_AUDIT.md` for limitations.
+
 # SteamMaster DSP Foundation — engineering checkpoint 0.5.0
 
 **DSP ONLY. No new GUI work, graphics, JUCE/VST3 wrapper or DAW-ready plugin has been added.**

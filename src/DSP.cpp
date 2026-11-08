@@ -240,11 +240,25 @@ void Pultec::set(const PultecParameters& p) noexcept {
     const int high=(p.highBoostFrequencyHz==8000 || p.highBoostFrequencyHz==12000 || p.highBoostFrequencyHz==16000) ? p.highBoostFrequencyHz:12000;
     const int atten=(p.highAttenuationFrequencyHz==5000 || p.highAttenuationFrequencyHz==10000 || p.highAttenuationFrequencyHz==20000) ? p.highAttenuationFrequencyHz:10000;
     const double width=clamp(p.bandwidth,0.,1.);
-    // DSP curve scaling is explicitly EXPERIMENTAL; 0..10 controls preserved.
-    lowBoost_.configure(TptEQ::Mode::LowShelf,static_cast<double>(low),.65,clamp(p.lowBoost,0.,10.)*1.15);
-    lowCut_.configure(TptEQ::Mode::LowShelf,static_cast<double>(low)*1.8,.7,-clamp(p.lowAttenuation,0.,10.)*.95);
-    highBoost_.configure(TptEQ::Mode::Peak,static_cast<double>(high),.28+width*.92,clamp(p.highBoost,0.,10.)*.95);
-    highCut_.configure(TptEQ::Mode::HighShelf,static_cast<double>(atten),.7,-clamp(p.highAttenuation,0.,10.)*.95);
+    // Coupled passive-EQ-inspired voicing: the LF attenuation corner is above
+    // the LF boost corner, creating the characteristic simultaneous boost/cut
+    // dip. Nonlinear pot taper approximates a passive control's useful travel.
+    // These are NOT measured hardware transfer functions; calibration awaits
+    // licensed reference sweeps from an actual EQP-1A-type unit.
+    const double boost=std::pow(clamp(p.lowBoost,0.,10.)/10.,1.35);
+    const double cut=std::pow(clamp(p.lowAttenuation,0.,10.)/10.,1.25);
+    const double highAmount=std::pow(clamp(p.highBoost,0.,10.)/10.,1.3);
+    const double highCut=std::pow(clamp(p.highAttenuation,0.,10.)/10.,1.25);
+    const double coupling=boost*cut;
+    lowBoost_.configure(TptEQ::Mode::LowShelf,static_cast<double>(low)*.78,.58,13.0*boost);
+    lowCut_.configure(TptEQ::Mode::Peak,static_cast<double>(low)*2.8,.68,
+                      -(10.5*cut+2.0*coupling));
+    // Broad, passive-style presence bell. Bandwidth control is deliberately
+    // inverse to Q: left is broad; right is narrower.
+    highBoost_.configure(TptEQ::Mode::Peak,static_cast<double>(high)*.85,
+                         .35+width*.9,11.0*highAmount);
+    highCut_.configure(TptEQ::Mode::HighShelf,static_cast<double>(atten),.63,
+                       -10.0*highCut);
 }
 void Pultec::reset() noexcept {lowBoost_.clear();lowCut_.clear();highBoost_.clear();highCut_.clear();}
 Stereo Pultec::processWet(Stereo x) noexcept {
