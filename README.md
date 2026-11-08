@@ -1,3 +1,11 @@
+# SteamMaster DSP v1.0 — reference-informed hardware voicing
+
+This repository contains standalone C++ DSP engines and tests for the nine-module SteamMaster mastering chain. **No VST3 or GUI yet; no UI changes in v1.0.**
+
+**v1.0 highlights:** published Manley progressive COMP/LIMIT gain-reduction characteristics implemented as non-allocating prepared LUTs; SSL 2:1 knee widened based on SSL documentation (numeric width remains a hypothesis); Shadow Hills discrete DUAL now independently implements fast 80% and slow 20% recovery components; EQP-1A-inspired response uses genuine low-frequency shelving attenuation, manufacturer maximum gains and coupled bass-dip behavior. All six original DSP suites plus independent hardware-reference tests run via CTest.
+
+**Caution:** these are manufacturer-data-anchored models, **not proven measurement-matched clones**. Physical-unit transfer, harmonic and dynamic response datasets are still missing. The GPLv3 EQP-WDF-1A academic implementation is referenced, not copied. See `docs/V10_HARDWARE_RESEARCH.md` and `docs/V10_MODELED_CURVES.csv` for exact provenance and modeled trace data.
+
 # SteamMaster DSP v0.7 — analog voicing experiment
 
 DSP-only update. See `docs/V07_ANALOG_AUDIT.md` for limitations.

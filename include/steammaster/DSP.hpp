@@ -94,6 +94,12 @@ private:
     DetectorHPF sc_{};
     Smoother threshold_{};
     double envelope_ = 0.0, reductionDb_ = 0.0;
+    // Non-allocating, prepared off the audio thread. Curves follow the
+    // published progressive Manley GR characteristics.
+    static constexpr std::size_t kCurvePoints = 769; // overdrive -16..80 dB, 0.125 dB resolution
+    std::array<std::array<float,kCurvePoints>,6> reductionCurves_{};
+    void prepareReductionCurves() noexcept;
+    double curveReduction(double overDb) const noexcept;
 };
 
 enum class FurnaceRatio { R2, R4, R10 };
@@ -161,7 +167,7 @@ public:
     void reset() noexcept override;
 private:
     Stereo processWet(Stereo in) noexcept override;
-    TptEQ lowBoost_{}, lowCut_{}, highBoost_{}, highCut_{};
+    TptEQ lowBoost_{}, lowCut_{}, lowDip_{}, highBoost_{}, highCut_{};
     Smoother output_{};
 };
 
@@ -196,6 +202,7 @@ private:
     Smoother opticalGain_{}, discreteGain_{}, output_{};
     double opticalEnv_ = 0.0, discreteEnv_ = 0.0;
     double opticalFastReduction_ = 0.0, opticalSlowReduction_ = 0.0;
+    double discreteFastReduction_ = 0.0, discreteSlowReduction_ = 0.0;
     double opticalReductionDb_ = 0.0, discreteReductionDb_ = 0.0;
 };
 

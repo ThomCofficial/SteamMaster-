@@ -147,13 +147,76 @@ Stereo Module::process(Stereo in) noexcept {
     return lerp(dry,w,enabled_.next()*mix_.next());
 }
 
+// Progressive Manley Variable Mu COMP and LIMIT characteristics. The
+// published owner's manual plots curved GR characteristics and explicitly
+// reports roughly 1.5:1 at 2 dB GR, 2:1 at 5 dB, 5:1 at 10 dB and up to
+// approximately 8:1 on heavily driven COMP; LIMIT rises toward 20:1.
+// These sparse published landmarks do NOT specify an entire transfer curve.
+// Smooth interpolation and the knee width below are engineering fits.
+double manleyCompRatio(double reductionDb) noexcept {
+    constexpr double depths[]={0.,2.,5.,10.,17.};
+    constexpr double ratios[]={1.28,1.50,2.00,5.00,8.00};
+    if(reductionDb>=depths[4])return ratios[4];
+    for(int i=0;i<4;++i) {
+        if(reductionDb<=depths[i+1]) {
+            const double t=clamp((reductionDb-depths[i])/(depths[i+1]-depths[i]),0.,1.);
+            const double eased=t*t*(3.-2.*t);
+            return ratios[i]+(ratios[i+1]-ratios[i])*eased;
+        }
+    }
+    return ratios[4];
+}
+void Ocean::prepareReductionCurves() noexcept {
+    constexpr double start=-16.,step=.125;
+    for(std::size_t k=0;k<reductionCurves_.size();++k) {
+        const OceanRatio mode=static_cast<OceanRatio>(k);
+        const double selected=ratioOcean(mode);
+        const double knee=selected<=2.0?13.0:5.0;
+        double reduction=0.;
+        for(std::size_t i=0;i<kCurvePoints;++i) {
+            const double over=start+static_cast<double>(i)*step;
+            double ratio=selected;
+            if(selected<=2.) {
+                const double scale=(selected-1.)/.5;
+                ratio=1.+(manleyCompRatio(reduction)-1.)*scale;
+            } else {
+                const double t=clamp((reduction-8.)/10.,0.,1.);
+                const double eased=t*t*(3.-2.*t);
+                ratio=selected+(20.-selected)*eased;
+            }
+            // The extra ratio modes 1.2/2/3/6 are SteamMaster extensions,
+            // not controls on the original COMP/LIMIT hardware.
+            const double kneeProgress=clamp((over+.5*knee)/knee,0.,1.);
+            const double slope=kneeProgress*(1.-1./std::max(1.001,ratio));
+            if(i>0)reduction+=step*slope;
+            reductionCurves_[k][i]=static_cast<float>(reduction);
+        }
+    }
+}
+double Ocean::curveReduction(double overDb) const noexcept {
+    constexpr double start=-16.,step=.125;
+    const auto& curve=reductionCurves_[static_cast<unsigned>(p_.ratio)];
+    const double x=(overDb-start)/step;
+    if(x<=0.)return 0.;
+    if(x>=static_cast<double>(kCurvePoints-1)) {
+        // Deep limiting beyond the documented grid is conservatively bounded.
+        return static_cast<double>(curve.back())+(overDb-80.)*.95;
+    }
+    const auto i=static_cast<std::size_t>(x);
+    const double f=x-static_cast<double>(i);
+    return static_cast<double>(curve[i])*(1.-f)+static_cast<double>(curve[i+1])*f;
+}
+
 void Ocean::prepare(double fs) noexcept {
+    prepareReductionCurves();
     Module::prepare(fs);setWetLatency(OversampledProcessor::kLatency);
     tube_.prepare(fs);tube_.setMode(quality_);linearDelay_.prepare(OversampledProcessor::kLatency);
     sc_.prepare(fs);threshold_.prepare(fs,.012);threshold_.reset(p_.thresholdDb);set(p_);reset();
 }
 void Ocean::set(const OceanParameters& p) noexcept {
-    p_=p;p_.attackMs=clamp(p.attackMs,25.,70.);
+    p_=p;
+    if(static_cast<unsigned>(p_.ratio)>=6u)p_.ratio=OceanRatio::R1_5;
+    p_.attackMs=clamp(p.attackMs,25.,70.);
     p_.thresholdDb=clamp(p.thresholdDb,-60.,12.);
     sc_.setFrequency(p.scHpfHz);threshold_.set(p_.thresholdDb);setCommon(p.common);
 }
@@ -162,12 +225,16 @@ void Ocean::reset() noexcept {
     linearDelay_.reset();resetDryDelay();
 }
 Stereo Ocean::tubeTransfer(Stereo x,unsigned,void*) noexcept {
-    // Differential push-pull inspired transfer; NOT measured 5670/6BA6 data.
+    // Calibrated *topology-inspired* transfer, not an extracted 5670/6BA6 curve.
+    // Differential push-pull cancellation strongly reduces even harmonics;
+    // small asymmetry leaves a modest second harmonic at higher levels.
+    constexpr double drive=0.90;
     const auto valve=[](double sample) noexcept {
-        constexpr double bias=.045,drive=.90;
-        const double y=.5*(std::tanh(drive*sample+bias)+std::tanh(drive*sample-bias));
+        constexpr double bias=0.045;
+        const double y=0.5*(std::tanh(drive*sample+bias)+std::tanh(drive*sample-bias));
         const double norm=drive*(1.-std::tanh(bias)*std::tanh(bias));
-        return sanitized(y/norm+.0025*sample*sample/(1.+sample*sample));
+        const double asym=0.0025*sample*sample/(1.+sample*sample);
+        return sanitized(y/norm+asym);
     };
     return {valve(x.l),valve(x.r)};
 }
@@ -175,35 +242,26 @@ Stereo Ocean::processWet(Stereo in) noexcept {
     const auto sc=sc_.process(in);
     const double target=levelOf(sc);
     const bool increasing=target>envelope_;
+    // The five recovery positions and 25..70 ms attack follow Manley's manual.
+    // The extra level-dependent recovery is a modeling hypothesis, not a bench fit.
     const double release=recoveryOcean(p_.recovery)*(1.+.18*clamp(reductionDb_/12.,0.,1.));
     envelope_=follow(envelope_,target,timeCoefficient(fs_,increasing?p_.attackMs*.001:release));
     if(envelope_<1.e-30)envelope_=0.;
-    const double level=gainToDb(envelope_),threshold=threshold_.next(),over=level-threshold;
-    // Manley has COMP 1.5:1 and LIMIT 4:1 rising toward 20:1.
-    // SteamMaster's six locked ratios are retained as interpolated extensions.
-    const double selected=ratioOcean(p_.ratio);
-    double requested=0.;
-    if(selected<=2.) {
-        const double effective=1.+(selected-1.)*(.80+.20*clamp((over+6.)/18.,0.,1.));
-        requested=compressDb(level,threshold,effective,12.);
-    } else {
-        const double base=selected;
-        requested=compressDb(level,threshold,base,3.);
-        const double pivot=12./(1.-1./base);
-        if(over>pivot) {
-            const double extra=over-pivot;
-            const double t=clamp(extra/12.,0.,1.);
-            const double effective=base+(20.-base)*t*t*(3.-2.*t);
-            requested=12.+extra*(1.-1./effective);
-        }
-    }
+    const double level=gainToDb(envelope_);
+    const double threshold=threshold_.next();
+    // GR curve interpolated from a fixed, allocation-free LUT whose local
+    // slopes are anchored to the manufacturer's published characteristics.
+    const double requested=curveReduction(level-threshold);
     reductionDb_=follow(reductionDb_,requested,timeCoefficient(fs_,.005));
     const double gain=dbToGain(-reductionDb_);
     const Stereo compressed{in.l*gain,in.r*gain};
     const auto colored=tube_.process(compressed,&Ocean::tubeTransfer,nullptr);
     const auto linear=linearDelay_.process(compressed);
+    // Conservative coloration at nominal operating level. Real harmonics
+    // depend on transformer loading, tube revision and drive calibration.
     return {linear.l*.95+colored.l*.05,linear.r*.95+colored.r*.05};
 }
+
 void Furnace::prepare(double fs) noexcept {
     Module::prepare(fs);sc_.prepare(fs);threshold_.prepare(fs,.012);threshold_.reset(p_.thresholdDb);set(p_);reset();
 }
@@ -220,8 +278,9 @@ Stereo Furnace::processWet(Stereo in) noexcept {
     envelope_=follow(envelope_,target,timeCoefficient(fs_,seconds));
     if(envelope_<1.e-30)envelope_=0.;
     const double threshold=threshold_.next();
-    // SSL-inspired, ratio-dependent knee; exact hardware curves require bench data.
-    const double knee=p_.ratio==FurnaceRatio::R2?6.0:(p_.ratio==FurnaceRatio::R4?4.0:2.0);
+    // SSL documents an unusually wide, ratio-dependent 2:1 knee. The 24 dB
+    // numerical width is a conservative working approximation; not a measured fit.
+    const double knee=p_.ratio==FurnaceRatio::R2?24.0:(p_.ratio==FurnaceRatio::R4?6.0:2.0);
     const double requested=compressDb(gainToDb(envelope_),threshold,ratioFurnace(p_.ratio),knee);
     if(p_.release==FurnaceRelease::Auto) {
         // Parallel fast/slow recovery memories: transient GR releases promptly,
@@ -260,7 +319,7 @@ Stereo ParametricEQ::processWet(Stereo in) noexcept {
 }
 
 void Pultec::prepare(double fs) noexcept {
-    Module::prepare(fs);lowBoost_.prepare(fs);lowCut_.prepare(fs);
+    Module::prepare(fs);lowBoost_.prepare(fs);lowCut_.prepare(fs);lowDip_.prepare(fs);
     highBoost_.prepare(fs);highCut_.prepare(fs);
     output_.prepare(fs,.012);output_.reset(0.);
 }
@@ -270,29 +329,31 @@ void Pultec::set(const PultecParameters& p) noexcept {
     const int high=(p.highBoostFrequencyHz==8000 || p.highBoostFrequencyHz==12000 || p.highBoostFrequencyHz==16000) ? p.highBoostFrequencyHz:12000;
     const int atten=(p.highAttenuationFrequencyHz==5000 || p.highAttenuationFrequencyHz==10000 || p.highAttenuationFrequencyHz==20000) ? p.highAttenuationFrequencyHz:10000;
     const double width=clamp(p.bandwidth,0.,1.);
-    // Coupled passive-EQ-inspired voicing: the LF attenuation corner is above
-    // the LF boost corner, creating the characteristic simultaneous boost/cut
-    // dip. Nonlinear pot taper approximates a passive control's useful travel.
-    // These are NOT measured hardware transfer functions; calibration awaits
-    // licensed reference sweeps from an actual EQP-1A-type unit.
-    const double boost=std::pow(clamp(p.lowBoost,0.,10.)/10.,1.35);
-    const double cut=std::pow(clamp(p.lowAttenuation,0.,10.)/10.,1.25);
-    const double highAmount=std::pow(clamp(p.highBoost,0.,10.)/10.,1.3);
-    const double highCut=std::pow(clamp(p.highAttenuation,0.,10.)/10.,1.25);
-    const double coupling=boost*cut;
-    lowBoost_.configure(TptEQ::Mode::LowShelf,static_cast<double>(low)*.78,.58,13.0*boost);
-    lowCut_.configure(TptEQ::Mode::Peak,static_cast<double>(low)*2.8,.68,
-                      -(10.5*cut+2.0*coupling));
-    // Broad, passive-style presence bell. Bandwidth control is deliberately
-    // inverse to Q: left is broad; right is narrower.
-    highBoost_.configure(TptEQ::Mode::Peak,static_cast<double>(high)*.85,
-                         .35+width*.9,11.0*highAmount);
-    highCut_.configure(TptEQ::Mode::HighShelf,static_cast<double>(atten),.63,
-                       -10.0*highCut);
+    // EQP-1A curves: LF boost max 13.5 dB, LF cut max 17.5 dB,
+    // HF peaking boost max ~18 dB, HF shelving attenuation max ~16 dB.
+    // These values are from Pulse Techniques' published EQP-1A specifications.
+    // Separate passive-branch shelf corners approximate coupled boost/cut.
+    // NOT a licensed WDF port and NOT a full measured circuit-match.
+    const double boost=std::pow(clamp(p.lowBoost,0.,10.)/10.,1.22);
+    const double cut=std::pow(clamp(p.lowAttenuation,0.,10.)/10.,1.20);
+    const double highAmount=std::pow(clamp(p.highBoost,0.,10.)/10.,1.20);
+    const double highCut=std::pow(clamp(p.highAttenuation,0.,10.)/10.,1.20);
+    // LF boost focuses lower than the LF attenuation branch. At the same
+    // nominal frequency both active controls create a bass shelf and a
+    // separate broad low-mid attenuation dip (the Pultec trick).
+    lowBoost_.configure(TptEQ::Mode::LowShelf,static_cast<double>(low)*1.10,.70,13.5*boost);
+    lowCut_.configure(TptEQ::Mode::LowShelf,static_cast<double>(low)*1.85,.65,-17.5*cut);
+    lowDip_.configure(TptEQ::Mode::Peak,static_cast<double>(low)*2.8,.55,-12.*boost*cut);
+    // "Bandwidth" increases the width, lowering Q and reducing peak height.
+    // Original EQP-1A high boost is resonant, not a broad upper shelf.
+    highBoost_.configure(TptEQ::Mode::Peak,static_cast<double>(high)*.88,
+                         1.10-.77*width,(18.-4.*width)*highAmount);
+    highCut_.configure(TptEQ::Mode::HighShelf,static_cast<double>(atten)*.93,.68,
+                       -16.*highCut);
 }
-void Pultec::reset() noexcept {lowBoost_.clear();lowCut_.clear();highBoost_.clear();highCut_.clear();}
+void Pultec::reset() noexcept {lowBoost_.clear();lowCut_.clear();lowDip_.clear();highBoost_.clear();highCut_.clear();}
 Stereo Pultec::processWet(Stereo x) noexcept {
-    x=lowBoost_.process(x);x=lowCut_.process(x);x=highBoost_.process(x);x=highCut_.process(x);
+    x=lowBoost_.process(x);x=lowCut_.process(x);x=lowDip_.process(x);x=highBoost_.process(x);x=highCut_.process(x);
     const double gain=dbToGain(output_.next());return{x.l*gain,x.r*gain};
 }
 
@@ -317,6 +378,7 @@ void Shadow::set(const ShadowParameters& p) noexcept {
 void Shadow::reset() noexcept {
     opticalEnv_=discreteEnv_=0.;opticalReductionDb_=discreteReductionDb_=0.;
     opticalFastReduction_=opticalSlowReduction_=0.;
+    discreteFastReduction_=discreteSlowReduction_=0.;
     opticalSC_.reset();discreteSC_.reset();
 }
 Stereo Shadow::processWet(Stereo in) noexcept {
@@ -339,11 +401,25 @@ Stereo Shadow::processWet(Stereo in) noexcept {
     // Discrete VCA: stepped timings, 1.2:1 to Flood 20:1.
     auto discSC=discreteSC_.process(midway);
     const double det2=levelOf(discSC);
-    const double rel=recoveryDiscrete(p_.discreteRecovery,discreteReductionDb_);
-    discreteEnv_=follow(discreteEnv_,det2,timeCoefficient(fs_,det2>discreteEnv_?attackDiscrete(p_.discreteAttack)*.001:rel));
+    // Shadow Hills DISCRETE Dual mirrors the optical two-phase recovery.
+    // Do not mistake a GR-dependent single time constant for the documented
+    // fast ~80% / slow ~20% recovery characteristic.
+    const bool dual=p_.discreteRecovery==DiscreteRecovery::Dual;
+    const double rel=dual?.055:recoveryDiscrete(p_.discreteRecovery,discreteReductionDb_);
+    const double attack=attackDiscrete(p_.discreteAttack)*.001;
+    discreteEnv_=follow(discreteEnv_,det2,timeCoefficient(fs_,det2>discreteEnv_?attack:rel));
     if(discreteEnv_<1.e-30)discreteEnv_=0.;
     const double discWanted=compressDb(gainToDb(discreteEnv_),discreteThreshold_.next(),ratioDiscrete(p_.discreteRatio),4.);
-    discreteReductionDb_=follow(discreteReductionDb_,discWanted,timeCoefficient(fs_,.002));
+    if(dual) {
+        discreteFastReduction_=follow(discreteFastReduction_,discWanted,
+            timeCoefficient(fs_,discWanted>discreteFastReduction_?attack:.12));
+        discreteSlowReduction_=follow(discreteSlowReduction_,discWanted,
+            timeCoefficient(fs_,discWanted>discreteSlowReduction_?attack:1.40));
+        discreteReductionDb_=std::max(0.,.80*discreteFastReduction_+.20*discreteSlowReduction_);
+    } else {
+        discreteReductionDb_=follow(discreteReductionDb_,discWanted,timeCoefficient(fs_,.002));
+        discreteFastReduction_=discreteSlowReduction_=discreteReductionDb_;
+    }
     const double discGain=dbToGain(-discreteReductionDb_+discreteGain_.next());
     Stereo discreteOut{midway.l*discGain,midway.r*discGain};
     Stereo out=lerp(midway,discreteOut,discreteEnable_.next());
