@@ -168,8 +168,9 @@ Stereo GlobalStereo::process(Stereo input) noexcept {
 
 void MasterLimiter::prepare(double sampleRate) noexcept {
     fs_=clamp(sampleRate,8000.,384000.);
-    audioLatency_=30u+static_cast<std::size_t>(std::ceil(fs_*.005));
-    detector2x_.prepare();detector4x_.prepare();meter2x_.prepare();meter4x_.prepare();
+    audioLatency_=35u+static_cast<std::size_t>(std::ceil(fs_*.005));
+    detector2x_.prepare();detector4x_.prepare();detector8x_.prepare();
+    meter2x_.prepare();meter4x_.prepare();meter8x_.prepare();
     for(auto* s:{&inputGain_,&ceiling_,&bypass_,&lookahead_,&link_})s->prepare(fs_,.006);
     inputGain_.reset(1.);ceiling_.reset(1.);bypass_.reset(1.);
     lookahead_.reset(3.);link_.reset(1.);
@@ -188,38 +189,50 @@ void MasterLimiter::set(const LimiterParameters& p) noexcept {
 void MasterLimiter::reset() noexcept {
     audioBuffer_.fill({});dryBuffer_.fill({});peakBuffer_.fill({});
     audioCursor_=peakCursor_=0;gain_={1.,1.};reductionDb_={};outputTruePeak_=0.;
-    detector2x_.reset();detector4x_.reset();meter2x_.reset();meter4x_.reset();
+    releaseHold_.fill(0);safetyClipEvents_=0;
+    detector2x_.reset();detector4x_.reset();detector8x_.reset();
+    meter2x_.reset();meter4x_.reset();meter8x_.reset();
 }
 Stereo MasterLimiter::getPeak(Stereo input) noexcept {
-    Stereo e{},o{},e0{},o0{},e1{},o1{};
-    detector2x_.up(input,e,o);
-    detector4x_.up(e,e0,o0);
-    detector4x_.up(o,e1,o1);
-    const auto max4=[&](double a,double b,double c,double d) noexcept {
-        return std::max({std::abs(a),std::abs(b),std::abs(c),std::abs(d)});
-    };
-    return {max4(e0.l,o0.l,e1.l,o1.l),max4(e0.r,o0.r,e1.r,o1.r)};
+    Stereo even{},odd{},q0{},q1{},q2{},q3{};
+    detector2x_.up(input,even,odd);
+    detector4x_.up(even,q0,q1);
+    detector4x_.up(odd,q2,q3);
+    Stereo result{};
+    for(const Stereo q : {q0,q1,q2,q3}) {
+        Stereo a{},b{};
+        detector8x_.up(q,a,b);
+        result.l=std::max({result.l,std::abs(a.l),std::abs(b.l)});
+        result.r=std::max({result.r,std::abs(a.r),std::abs(b.r)});
+    }
+    return result;
 }
 Stereo MasterLimiter::measureOutput(Stereo output) noexcept {
-    Stereo e{},o{},e0{},o0{},e1{},o1{};
-    meter2x_.up(output,e,o);meter4x_.up(e,e0,o0);meter4x_.up(o,e1,o1);
-    const double peak=std::max({std::abs(output.l),std::abs(output.r),
-        std::abs(e0.l),std::abs(e0.r),std::abs(o0.l),std::abs(o0.r),
-        std::abs(e1.l),std::abs(e1.r),std::abs(o1.l),std::abs(o1.r)});
+    Stereo even{},odd{},q0{},q1{},q2{},q3{};
+    meter2x_.up(output,even,odd);
+    meter4x_.up(even,q0,q1);
+    meter4x_.up(odd,q2,q3);
+    double peak=std::max(std::abs(output.l),std::abs(output.r));
+    for(const Stereo q : {q0,q1,q2,q3}) {
+        Stereo a{},b{};
+        meter8x_.up(q,a,b);
+        peak=std::max({peak,std::abs(a.l),std::abs(a.r),std::abs(b.l),std::abs(b.r)});
+    }
     outputTruePeak_=std::max(peak,outputTruePeak_*.99998);
     return output;
 }
+
 Stereo MasterLimiter::process(Stereo input) noexcept {
     const double pre=inputGain_.next();
     const Stereo driven{sanitized(input.l*pre),sanitized(input.r*pre)};
     const auto tp=getPeak(driven);
     peakBuffer_[peakCursor_]=tp;
-    // The FIR reconstruction detector has an inherent 30 host-sample delay.
+    // The 8x FIR reconstruction detector has an inherent 35 host-sample delay.
     // Sample-peak mode is delayed equivalently to maintain identical timing.
     // Selected lookahead is the lead between target detection and delayed audio.
-    const std::size_t maxAhead=audioLatency_-30u;
+    const std::size_t maxAhead=audioLatency_-35u;
     const auto userAhead=static_cast<std::size_t>(std::round(clamp(lookahead_.next(),.1,5.)*.001*fs_));
-    const auto offset=maxAhead-std::min(userAhead,maxAhead)+(truePeak_?0u:30u);
+    const auto offset=maxAhead-std::min(userAhead,maxAhead)+(truePeak_?0u:35u);
     const auto idx=(peakCursor_+kCapacity-(offset%kCapacity))%kCapacity;
     const Stereo detector=truePeak_?peakBuffer_[idx]:Stereo{std::abs(driven.l),std::abs(driven.r)};
     // For non-TP mode, use independently delayed raw samples rather than FIR peaks.
@@ -237,8 +250,22 @@ Stereo MasterLimiter::process(Stereo input) noexcept {
     const double decay=autoRelease_?clamp(80.+peakMax*90.,10.,1000.):releaseMs_;
     const double personality=mode_==LimiterMode::Punch?.7:(mode_==LimiterMode::Modern?1.3:1.);
     const double c=smoothCoef(fs_,.001*decay*personality);
-    gain_.l=wantL<gain_.l?wantL:wantL+c*(gain_.l-wantL);
-    gain_.r=wantR<gain_.r?wantR:wantR+c*(gain_.r-wantR);
+    // A detected transient precedes its corresponding delayed audio by
+    // userAhead samples. Holding the requested gain through that interval
+    // prevents release recovery from raising the transient while it is still
+    // travelling through the lookahead buffer. No dynamic storage or scans.
+    auto track=[&](double requested,double& current,std::size_t& remaining) noexcept {
+        if(requested<current) {
+            current=requested;
+            remaining=userAhead;
+        } else if(remaining>0) {
+            --remaining;
+        } else {
+            current=requested+c*(current-requested);
+        }
+    };
+    track(wantL,gain_.l,releaseHold_[0]);
+    track(wantR,gain_.r,releaseHold_[1]);
     gain_.l=clamp(gain_.l,0.,1.);gain_.r=clamp(gain_.r,0.,1.);
     reductionDb_={-gainToDb(gain_.l),-gainToDb(gain_.r)};
     audioBuffer_[audioCursor_]=driven;
@@ -248,7 +275,9 @@ Stereo MasterLimiter::process(Stereo input) noexcept {
     const Stereo dry=dryBuffer_[delayedIndex];
     const double en=bypass_.next();
     Stereo wet{delayed.l*gain_.l,delayed.r*gain_.r};
-    // Sample-domain last-resort guard is not a substitute for verified TP compliance.
+    // Last-resort sample-domain guard: count every intervention so clipping
+    // cannot masquerade as successful transparent gain reduction. Not TP proof.
+    if (std::abs(wet.l)>ceiling || std::abs(wet.r)>ceiling) ++safetyClipEvents_;
     wet.l=clamp(wet.l,-ceiling,ceiling);wet.r=clamp(wet.r,-ceiling,ceiling);
     const auto out=blend(dry,wet,en);
     if(++audioCursor_==kCapacity)audioCursor_=0;

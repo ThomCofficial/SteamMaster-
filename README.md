@@ -1,3 +1,9 @@
+# SteamMaster DSP Foundation — engineering checkpoint 0.4.0
+
+**DSP-only development checkpoint; NOT a finished VST3 or mastering-ready product. The first six approved GUI designs remain untouched.**
+
+**v0.4 changes:** an 8x FIR limiter detection/metering path, a lookahead-aware gain release hold, safety-clip event telemetry, and independent spectral/true-peak stress tests. The measured maximum intersample overshoot in the new stress set is still ~0.63 dB above the chosen ceiling. **The limiter is not yet compliant with a guaranteed true-peak ceiling.** See `docs/V04_TEST_REPORT.md`.
+
 # SteamMaster — DSP Foundation v0.3.0
 
 **Nine-module DSP engineering checkpoint, NOT a finished VST3 or certified mastering suite.**

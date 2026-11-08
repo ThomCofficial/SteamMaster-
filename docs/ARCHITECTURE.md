@@ -86,3 +86,9 @@ Latency is always `140` first-six + `70` Tape + `30 + ceil(0.005*fs)` limiter sa
 ### CPU and allocation
 
 All ring buffers and FIR coefficient arrays have fixed size and are prepared ahead of processing, with no allocations inside the sample callbacks. High sample rates and 8x nonlinear mode plus the 4x limiter TP meter remain CPU-intensive. Windows machine profiling, block-size performance and real DAW lifecycle tests are needed.
+
+## v0.4 limiter characterization (DSP-only)
+
+The limiter now uses **8x output and input reconstruction** in place of the v0.3 4x detector, with a **35-sample** reconstruction delay and fixed limiter audio delay `35 + ceil(0.005 * fs)`. Per-channel hold counters prevent gain-release recovery before the detected peak has traversed the user-selected lookahead. Safety-clip event counts are available to host-side diagnostic code and are intentionally nonzero in some adversarial stress cases.
+
+The new characterization suite includes independent 8x output-peak reconstruction and exposes the remaining true-peak overshoot. **A peak ceiling is not guaranteed**, and there is no LUFS engine or true-peak compliance certification. Increasing TP reconstruction quality alone does not solve this: final gain scheduling, post-gain ISP, mode switching, and clipping interventions need a separate dedicated safety architecture. Stereo/link/mono constraints must still be verified in the DAW. No new GUI controls or approved parameter ranges were introduced. See `docs/V04_TEST_REPORT.md`.

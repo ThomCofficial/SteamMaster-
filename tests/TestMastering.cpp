@@ -57,7 +57,7 @@ void globalStereoTests(double fs){
 void limiterTests(double fs){
     MasterLimiter lim;lim.prepare(fs);LimiterParameters p;
     p.thresholdDb=-12.;p.ceilingDbTP=-1.;p.lookaheadMs=5.;p.releaseMs=30.;p.truePeak=true;lim.set(p);
-    check(lim.latencySamples()==30u+static_cast<size_t>(std::ceil(fs*.005)),"limiter fixed maximum latency");
+    check(lim.latencySamples()==35u+static_cast<size_t>(std::ceil(fs*.005)),"limiter fixed maximum latency");
     double maxSignal=0.,gr=0.,tp=0.;
     for(int i=0;i<static_cast<int>(fs*.18);++i){const double wave=.9*std::sin(2*kPi*1700.*i/fs);auto x=lim.process({wave,wave});check(finite(x),"limiter signal finite");maxSignal=std::max(maxSignal,std::abs(x.l));gr=std::max(gr,lim.gainReductionDb().l);tp=std::max(tp,lim.measuredOutputTruePeak());}
     check(maxSignal<=dbToGain(-1.)+1e-9,"limiter enforces sample ceiling on steady tone");
