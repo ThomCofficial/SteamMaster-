@@ -1,44 +1,50 @@
-# SteamMaster — DSP Foundation v0.2.0
+# SteamMaster — DSP Foundation v0.3.0
 
-**Engineering checkpoint, not a finished VST3 or mastering-ready product.** This is a standalone, cross-platform C++17 DSP library with automated tests. The first six approved module GUIs remain **locked and unchanged**; the repository includes **no GUI, JUCE adapter, installer, Cubase binary, limiter or new artwork**.
+**Nine-module DSP engineering checkpoint, NOT a finished VST3 or certified mastering suite.**
 
-## What's new in v0.2
+This is a portable C++17 library and standalone regression harness. **No plugin binary, GUI, JUCE adapter, release assets or Cubase-host tests are included.** The first six visually approved module designs have not been modified.
 
-- Implemented real **OFF / 2x / 4x / 8x** FIR oversampling around the **Ocean tube-coloration stage** and **both independent Exciter nonlinear bands**. It does **not** oversample the linear EQs or the VCA compression envelope calculations.
-- Fixed-latency, linear-phase 81-tap Blackman-Harris halfband FIR up/down filters; 70 samples per participating module. The six-module rack currently reports a fixed **140-sample DSP delay** at every quality setting (Ocean + Exciter). **The future VST3 adapter must report that latency to Cubase; no host PDC is implemented yet.**
-- Preconstructed DSP paths with warmup and ~12 ms, latency-aligned crossfades for changing oversampling modes. Rapid requests are queued; no allocation, synchronization or filter reinitialization occurs in sample processing.
-- Phase-aligned dry/wet and module-bypass paths; module and rack resets preserve selected oversampling quality and clear relevant detector/FIR states.
-- Optimized nonlinear work to process only actively weighted Exciter personalities and precompute transfer constants; preallocated FIR ring buffers with fast indices.
-- Shadow optical and discrete gain-reduction getters now reflect stage IN fade/bypass states.
-- Added independent anti-aliasing, delay, finite-sample, bypass, sample-rate, rapid-switching and safety regression tests.
+## What's implemented
 
-## Current module coverage
+1. **Ocean:** stereo-linked variable-mu-inspired compressor and oversampled gentle coloration.
+2. **Furnace:** stereo-linked VCA bus compression with stepped attack/release and AUTO.
+3. **Parametric EQ:** four continuous TPT bands and 1/4 shelf/peak topology.
+4. **Pultec:** broad boost/attenuation controls with experimental EQ-curve mapping.
+5. **Shadow:** independent serial optical/discrete compressors with stage telemetry.
+6. **Exciter:** dual-band Tube/Tape/Transformer behavior, selective FIR oversampling.
+7. **Baxandall (new):** all documented discrete HPF, shelf and LPF positions, stepped 0.5 dB shelf gains, independent MID/SIDE bypass, L/R vs M/S processing, smooth routing crossfade. LINK is a **future controller-layer coordination behavior**, not an audio effect.
+8. **Tape (new):** Studio/Vintage/Modern nonlinear transfer functions with per-quality history, speed-dependent head-bump voicings, drive, bias, HF trim, stereo-linked transient compression and 2x/4x/8x nonlinear oversampling. **Speed and saturation response calibrations are provisional.**
+9. **Master Limiter (new, experimental):** Clean/Punch/Modern envelope variants, adjustable threshold, ceiling, release/AUTO, lookahead, 0–100% stereo link, true-peak detector switch, bypass and gain-reduction/peak telemetry. Sample-peak output is constrained while active; **an absolute ITU/EBU true-peak ceiling is not certified**. Final limiter panel and voicings remain unapproved.
 
-1. **Ocean**: stereo-linked Vari-Mu-style dynamics, program-dependent recovery, gentle oversampled tube coloration.
-2. **Furnace**: stereo-linked VCA compression, stepped timings, AUTO release.
-3. **Parametric EQ**: four adjustable bands with stable TPT filters.
-4. **Pultec**: simultaneous broad low boost/cut and separate high shaping; coefficient calibration remains experimental.
-5. **Shadow**: independent optical + discrete compression stages in series, stage bypasses and telemetry.
-6. **Exciter**: Tube/Tape/Transformer transfer functions, low/high harmonic enhancement and local nonlinear oversampling.
+Global core: input/output gain staging (output before limiter), complementary high-side widening, low-side suppression (Mono Maker), conservative fully-linked limiter behavior while Mono Maker is enabled, mono-friendly routing, global IN bypass with fixed latency, NaN/Inf containment and emergency ±4 sample guards.
 
-The first six modules perform actual DSP, but the analogue models have **not** been calibrated against reference hardware. Preserve all locked GUI designs and unresolved UI mappings. See `docs/CONTROL_AUDIT.md`.
+## Audio architecture and latency
 
-## Build and tests
+`Global Input → first six → Baxandall → Tape → Global Stereo → Global Output → Limiter → Metering`.
 
-```sh
+- FIR oversampling around nonlinear Ocean, Exciter and Tape only. No pointless global EQ oversampling.
+- Known DSP latency is `210 + limiterLatency` host samples; `limiterLatency = 30 + ceil(0.005 × sampleRate)` samples, constant across quality, limiter lookahead and true-peak modes **at a given sample rate**. At 44.1/48/88.2/96/192 kHz: **461 / 480 / 681 / 720 / 1200** samples.
+- These latencies are **not yet reported to Cubase**, because the VST3 wrapper has not been developed.
+- Setters operate on the audio thread at block boundaries; host/UI parameter transfer has not been implemented.
+
+## Build and test
+
+```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
 cmake --build build --config Release --parallel
 ctest --test-dir build -C Release --output-on-failure
 ```
 
-Run `steammaster_tests` and `steammaster_oversampling_tests` directly for measurement output. GitHub Actions covers Windows/Linux Debug/Release and Linux ASan/UBSan.
+CI includes Windows/Linux Debug/Release and Linux AddressSanitizer/UndefinedBehaviorSanitizer. `tests/TestMastering.cpp` covers all five requested sample rates, bypass, routing, stereo, nonlinear switching, gain reduction, nonfinite inputs, and fixed latency.
 
-## Important limitations
+## IMPORTANT—remaining work
 
-- This is **not** a runnable VST3 plugin and has **no Cubase host integration**.
-- No Baxandall, Tape module, limiter, true-peak ceiling, global stereo stage, preset/A-B serialization, LUFS/correlation meters or GUI control binding yet.
-- FIR oversampling has been validated with impulse alignment, several sample rates and a **single 9 kHz nonlinear alias probe at 48 kHz**; this is **not** a comprehensive production anti-aliasing specification. Final audio quality, 192 kHz CPU budgets and Windows/Cubase lifecycle stability remain unverified.
-- `SixModuleRack`'s ±4 sample clamp is emergency fault containment, **not** a safe listening level, dBTP ceiling or substitute for a real limiter.
-- Certain control ranges and model response shapes remain provisional DSP-native engineering values, **not** approved GUI mappings.
+- The limiter still needs **independent reconstructed true-peak certification**, overshoot/ISP stress sweeps, audible transient calibration, proper ITU-R BS.1770 / EBU R128 metering, and validated fast ceiling automation. `measuredOutputTruePeak` is provisional telemetry.
+- Global stereo processing uses **frequency-selective attenuation, not a brick-wall mono cutoff**; mono fold-down below 20–300 Hz is progressive. The design prevents widening of low frequencies but cannot assert mathematical zero side energy below a cutoff.
+- Tape emulation is an **engineering voicing**, not a measured calibration against a particular tape deck. No wow/flutter or noise is introduced.
+- Baxandall's L/R interpretation (the two rows become Left/Right) is an implementation assumption pending final approval. LPF positions above Nyquist are treated as effectively OUT, without relabeling controls.
+- Pultec and Shadow visual-control mapping discrepancies remain **unresolved**. No GUI mapping has been invented or locked.
+- A/B, presets, state serialization, LUFS/correlation meters, UI binding and Windows/Cubase lifecycle testing remain outstanding.
+- The emergency guard is a fault-containment measure, **not guaranteed hearing protection** or an output true-peak ceiling when the limiter is bypassed.
 
-Read `docs/ARCHITECTURE.md`, `docs/CONTROL_AUDIT.md`, and `docs/TEST_REPORT.md` before adding VST3 bindings.
+Review `docs/ARCHITECTURE.md`, `docs/CONTROL_AUDIT.md`, `docs/V03_TEST_REPORT.md` before VST3 integration.

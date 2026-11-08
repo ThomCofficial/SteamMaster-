@@ -12,3 +12,10 @@
 | Exciter | Mode **Tube/Tape/Transformer**, two drives, two frequency selections, Crossover, Output, Mix, IN. Artwork low frequency appears **30/60/100/200/400 Hz**; high frequency **1.5/3/5/8/12 kHz**; crossover **250/400/800/1200/2000/3000 Hz**; Drive 0..10; Output ±12 dB | Confirm which frequency control shapes harmonic emphasis vs crossover topology. No extra Odd/Even, Presence or SC HPF. |
 
 **In code:** unresolved UI-to-DSP scales are represented as **direct, unit-labeled DSP values**, with comments documenting that the UI binding is not approved. Some neutral/default values and a few musically plausible shape calibrations are engineering prototypes; they are NOT settled product specifications.
+
+## v0.3 control binding status
+
+- **Baxandall:** discrete HPF `OUT/12/18/24/30/36/43/54 Hz`; low shelf `74/84/98/116/131/166/230/361 Hz`; low & high gain `-5..+5` in 0.5 dB steps; high shelf `1.6/1.8/2.1/2.5/3.4/4.8/7.1/18 kHz`; LPF `OUT/70/28/18/12.6/11.1/9/7.5 kHz`; output `-4..+4`. Same for M and S. Independent IN, M/S-L/R switch. The proposed DSP uses first row as Left and second as Right in L/R mode; confirm this when the global panel is finalized. LINK behavior is deferred to GUI-controller coordination, not invented as a different DSP mode.
+- **Tape:** Studio/Vintage/Modern, 7.5/15/30 IPS, Drive -10..+10 dB, Bias -5..+5, HF Trim -6..+6, Mix 0..100%, IN. Noise and wow/flutter controls not added. Speed/bias -> actual voicing curves remain provisional pending audio calibration.
+- **Limiter:** uses the **proposed, not visually locked** Clean/Punch/Modern, Threshold -24..0, Ceiling -2..0 dBTP, Release 10..1000ms + AUTO, Lookahead 0.1..5ms, Link 0..100%, TP on/off, IN. Neither proposed control mappings nor the UI are considered finally approved. Absolute true-peak enforcement is not yet validated.
+- **Global:** Input -24..+24, Output -24..+12 **before** the limiter, quality OFF/2x/4x/8x, Global IN, Mono Maker OFF/20..300, Width 0..200%, Width Frequency 800..5000. No new controls.
