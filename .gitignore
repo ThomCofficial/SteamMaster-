@@ -1,0 +1,10 @@
+/build/
+/build-*/
+.vs/
+.idea/
+*.vcxproj.user
+*.obj
+*.o
+*.a
+*.dll
+*.vst3
