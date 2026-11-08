@@ -119,6 +119,7 @@ private:
     DetectorHPF sc_{};
     Smoother threshold_{};
     double envelope_ = 0.0, reductionDb_ = 0.0;
+    double autoFast_ = 0.0, autoSlow_ = 0.0;
 };
 
 struct EQBandParameters {
@@ -194,6 +195,7 @@ private:
     Smoother opticalEnable_{}, discreteEnable_{}, opticalThreshold_{}, discreteThreshold_{};
     Smoother opticalGain_{}, discreteGain_{}, output_{};
     double opticalEnv_ = 0.0, discreteEnv_ = 0.0;
+    double opticalFastReduction_ = 0.0, opticalSlowReduction_ = 0.0;
     double opticalReductionDb_ = 0.0, discreteReductionDb_ = 0.0;
 };
 

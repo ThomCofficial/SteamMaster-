@@ -192,7 +192,7 @@ void Furnace::set(const FurnaceParameters& p) noexcept {
     p_=p;p_.thresholdDb=clamp(p.thresholdDb,-15.,15.);
     sc_.setFrequency(p.scHpfHz);threshold_.set(p_.thresholdDb);setCommon(p.common);
 }
-void Furnace::reset() noexcept {envelope_=reductionDb_=0.;sc_.reset();}
+void Furnace::reset() noexcept {envelope_=reductionDb_=autoFast_=autoSlow_=0.;sc_.reset();}
 Stereo Furnace::processWet(Stereo in) noexcept {
     auto sc=sc_.process(in);
     const double target=levelOf(sc);
@@ -201,8 +201,19 @@ Stereo Furnace::processWet(Stereo in) noexcept {
     envelope_=follow(envelope_,target,timeCoefficient(fs_,seconds));
     if(envelope_<1.e-30)envelope_=0.;
     const double threshold=threshold_.next();
-    const double requested=compressDb(gainToDb(envelope_),threshold,ratioFurnace(p_.ratio),3.);
-    reductionDb_=follow(reductionDb_,requested,timeCoefficient(fs_,.002));
+    // SSL-inspired, ratio-dependent knee; exact hardware curves require bench data.
+    const double knee=p_.ratio==FurnaceRatio::R2?6.0:(p_.ratio==FurnaceRatio::R4?4.0:2.0);
+    const double requested=compressDb(gainToDb(envelope_),threshold,ratioFurnace(p_.ratio),knee);
+    if(p_.release==FurnaceRelease::Auto) {
+        // Parallel fast/slow recovery memories: transient GR releases promptly,
+        // sustained GR leaves a longer tail. Both states always track the detector.
+        autoFast_=follow(autoFast_,requested,timeCoefficient(fs_,requested>autoFast_?.002:.10));
+        autoSlow_=follow(autoSlow_,requested,timeCoefficient(fs_,requested>autoSlow_?.025:1.15));
+        reductionDb_=std::max(0.0,.70*autoFast_+.30*autoSlow_);
+    } else {
+        reductionDb_=follow(reductionDb_,requested,timeCoefficient(fs_,.002));
+        autoFast_=autoSlow_=reductionDb_;
+    }
     const double gain=dbToGain(-reductionDb_);
     return {in.l*gain,in.r*gain};
 }
@@ -286,17 +297,23 @@ void Shadow::set(const ShadowParameters& p) noexcept {
 }
 void Shadow::reset() noexcept {
     opticalEnv_=discreteEnv_=0.;opticalReductionDb_=discreteReductionDb_=0.;
+    opticalFastReduction_=opticalSlowReduction_=0.;
     opticalSC_.reset();discreteSC_.reset();
 }
 Stereo Shadow::processWet(Stereo in) noexcept {
     // Optical: long release memory and broad knee, stereo-linked detector.
     auto optSC=opticalSC_.process(in);
     const double detector=levelOf(optSC);
-    const double optRelease=.22+1.4*clamp(opticalReductionDb_/15.,0.,1.);
-    opticalEnv_=follow(opticalEnv_,detector,timeCoefficient(fs_,detector>opticalEnv_?.010:optRelease));
+    // Shadow Hills optical topology: nominal 2:1, with a dual-time-constant
+    // release memory (fast majority and slower residual). Not hardware calibrated.
+    opticalEnv_=follow(opticalEnv_,detector,timeCoefficient(fs_,detector>opticalEnv_?.010:.055));
     if(opticalEnv_<1.e-30)opticalEnv_=0.;
-    const double optWanted=compressDb(gainToDb(opticalEnv_),opticalThreshold_.next(),2.8,12.);
-    opticalReductionDb_=follow(opticalReductionDb_,optWanted,timeCoefficient(fs_,.008));
+    const double optWanted=compressDb(gainToDb(opticalEnv_),opticalThreshold_.next(),2.0,12.);
+    opticalFastReduction_=follow(opticalFastReduction_,optWanted,
+        timeCoefficient(fs_,optWanted>opticalFastReduction_?.010:.12));
+    opticalSlowReduction_=follow(opticalSlowReduction_,optWanted,
+        timeCoefficient(fs_,optWanted>opticalSlowReduction_?.018:1.40));
+    opticalReductionDb_=std::max(0.0,.80*opticalFastReduction_+.20*opticalSlowReduction_);
     const double optGain=dbToGain(-opticalReductionDb_+opticalGain_.next());
     Stereo optOut{in.l*optGain,in.r*optGain};
     Stereo midway=lerp(in,optOut,opticalEnable_.next());
