@@ -13,10 +13,11 @@ void check(bool ok, const char* message) {
 }
 constexpr double fs=48000.;
 using Buffer=std::vector<double>;
-Buffer render(ExciterMode mode, OversamplingMode quality, double freq, double amp, double low, double high) {
+Buffer render(ExciterMode mode, OversamplingMode quality, double freq, double amp, double low, double high,
+              double lowFreq=400.,double highFreq=2500.) {
     Exciter e;e.prepare(fs);
     ExciterParameters p;p.mode=mode;p.lowDrive=low;p.highDrive=high;
-    p.crossoverHz=1400.;p.lowFrequencyHz=400.;p.highFrequencyHz=2500.;
+    p.crossoverHz=1400.;p.lowFrequencyHz=lowFreq;p.highFrequencyHz=highFreq;
     e.set(p);e.setOversamplingMode(quality);
     constexpr int n=9600;
     Buffer samples; samples.reserve(n);
@@ -104,6 +105,31 @@ void checkBandIndependence() {
     }
 }
 
+
+void checkAudibleSpectrumAndFrequencyControls() {
+    // Plugin Doctor-style probes: the active Exciter must measurably change
+    // the fundamental spectrum AND produce harmonics, not just pass audio.
+    for(const auto mode:{ExciterMode::Tube,ExciterMode::Tape,ExciterMode::Transformer}) {
+        const auto dryHi=render(mode,OversamplingMode::X4,8000.,.3,0.,0.);
+        const auto wetHi=render(mode,OversamplingMode::X4,8000.,.3,0.,10.);
+        const auto dryLow=render(mode,OversamplingMode::X4,160.,.3,0.,0.);
+        const auto wetLow=render(mode,OversamplingMode::X4,160.,.3,10.,0.);
+        const double highChange=std::abs(magnitude(wetHi,8000.)-magnitude(dryHi,8000.));
+        const double lowChange=std::abs(magnitude(wetLow,160.)-magnitude(dryLow,160.));
+        std::printf("Mode %d spectrum: low fundamental change %.6g; high %.6g\\n",
+                    int(mode),lowChange,highChange);
+        check(lowChange>.003,"Exciter Low Drive must measurably color the bass spectrum");
+        check(highChange>.003,"Exciter High Drive must measurably color the treble spectrum");
+        const auto low50=render(mode,OversamplingMode::X4,160.,.3,10.,0.,50.,2500.);
+        const auto low700=render(mode,OversamplingMode::X4,160.,.3,10.,0.,700.,2500.);
+        const auto high1500=render(mode,OversamplingMode::X4,8000.,.3,0.,10.,400.,1500.);
+        const auto high16000=render(mode,OversamplingMode::X4,8000.,.3,0.,10.,400.,16000.);
+        check(std::abs(magnitude(low50,160.)-magnitude(low700,160.))>.003,
+              "Exciter Low Frequency selector must move the spectral contour");
+        check(std::abs(magnitude(high1500,8000.)-magnitude(high16000,8000.))>.003,
+              "Exciter High Frequency selector must move the spectral contour");
+    }
+}
 void checkNeutral() {
     // All drives at zero, for every voice and OS mode, must be exactly a
     // latency-aligned unity transfer (without added hiss, phase or coloration).
@@ -158,6 +184,7 @@ int main() {
     checkVoices();
     checkAlias();
     checkBandIndependence();
+    checkAudibleSpectrumAndFrequencyControls();
     checkAutomation();
     std::puts("Exciter DSP: topology, harmonics, aliasing, neutral, automation PASSED");
 }

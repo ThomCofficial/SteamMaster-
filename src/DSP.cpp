@@ -433,6 +433,8 @@ void Exciter::prepare(double fs) noexcept {
     inputDelay_.prepare(OversampledProcessor::kLatency);
     bassDelay_.prepare(OversampledProcessor::kLatency);
     trebleDelay_.prepare(OversampledProcessor::kLatency);
+    lowFocusDelay_.prepare(OversampledProcessor::kLatency);
+    highFocusDelay_.prepare(OversampledProcessor::kLatency);
     for(std::size_t i=0;i<modeWeights_.size();++i) {modeWeights_[i].prepare(fs,.015);modeWeights_[i].reset(i==0?1.:0.);}
     lowDrive_.reset(0.);highDrive_.reset(0.);output_.reset(0.);
     set(p_);reset();
@@ -452,7 +454,8 @@ void Exciter::reset() noexcept {
         modeWeights_[i].reset(i==static_cast<std::size_t>(p_.mode)?1.:0.);
     lowSaturator_.reset();highSaturator_.reset();
     lowSaturator_.setMode(quality_);highSaturator_.setMode(quality_);
-    inputDelay_.reset();bassDelay_.reset();trebleDelay_.reset();resetDryDelay();
+    inputDelay_.reset();bassDelay_.reset();trebleDelay_.reset();
+    lowFocusDelay_.reset();highFocusDelay_.reset();resetDryDelay();
 }
 Stereo Exciter::saturationTransfer(Stereo in,unsigned quality,void* raw) noexcept {
     const auto& c=*static_cast<SaturationContext*>(raw);
@@ -522,9 +525,20 @@ Stereo Exciter::saturationTransfer(Stereo in,unsigned quality,void* raw) noexcep
 Stereo Exciter::processWet(Stereo x) noexcept {
     const auto lowBand=crossover_.low(x);
     const Stereo highBand{x.l-lowBand.l,x.r-lowBand.r};
-    const auto bass=lowTone_.low(lowBand);
+    const auto lowFocus=lowTone_.low(lowBand);
     const auto highLP=highTone_.low(highBand);
-    const Stereo treble{highBand.l-highLP.l,highBand.r-highLP.r};
+    const Stereo highFocus{highBand.l-highLP.l,highBand.r-highLP.r};
+
+    // FIX: the old filtering excited only frequencies below Low Freq and
+    // above High Freq. At default 100 Hz / 5 kHz almost the entire music
+    // spectrum never reached the nonlinear circuits.
+    // Excite the actual crossover bands; the tone controls still focus
+    // the response within each band rather than deleting its midrange.
+    const Stereo bass{.75*lowBand.l+.25*lowFocus.l,
+                      .75*lowBand.r+.25*lowFocus.r};
+    const Stereo treble{.75*highBand.l+.25*highFocus.l,
+                        .75*highBand.r+.25*highFocus.r};
+
     const double lo=lowDrive_.next()/10.,hi=highDrive_.next()/10.;
     const std::array<double,3> weights{modeWeights_[0].next(),modeWeights_[1].next(),modeWeights_[2].next()};
     SaturationContext low{this,0u,lo,weights};
@@ -534,11 +548,28 @@ Stereo Exciter::processWet(Stereo x) noexcept {
     const auto delayedBass=bassDelay_.process(bass);
     const auto delayedTreble=trebleDelay_.process(treble);
     const auto delayedInput=inputDelay_.process(x);
-    const Stereo delta{(colorBass.l-delayedBass.l)+(colorTreble.l-delayedTreble.l),
-                       (colorBass.r-delayedBass.r)+(colorTreble.r-delayedTreble.r)};
+    const auto delayedLowFocus=lowFocusDelay_.process(lowFocus);
+    const auto delayedHighFocus=highFocusDelay_.process(highFocus);
+
+    // Restore the ORIGINAL dual-drive weighting, including its nonlinear
+    // drive curves; do not alter the transfer models or other modules.
+    const Stereo delta{lo*(colorBass.l-delayedBass.l)+hi*(colorTreble.l-delayedTreble.l),
+                       lo*(colorBass.r-delayedBass.r)+hi*(colorTreble.r-delayedTreble.r)};
     const auto dc=dcRemoval_.low(delta);
+
+    // Alongside harmonics, real exciters change the measured frequency
+    // response. These gentle, mode-specific contours are time-aligned
+    // with the oversampled saturation. Tube adds air, Tape softens the
+    // upper band, and Transformer adds upper presence. All are silent
+    // at zero drive, without hidden coloration when bypassed.
+    const double lowContour=lo*(.18*weights[0]+.24*weights[1]+.14*weights[2]);
+    const double highContour=hi*(.24*weights[0]-.13*weights[1]+.17*weights[2]);
+    const Stereo tone{lowContour*delayedLowFocus.l+highContour*delayedHighFocus.l,
+                      lowContour*delayedLowFocus.r+highContour*delayedHighFocus.r};
+
     const double gain=dbToGain(output_.next());
-    return {(delayedInput.l+delta.l-dc.l)*gain,(delayedInput.r+delta.r-dc.r)*gain};
+    return {(delayedInput.l+delta.l-dc.l+tone.l)*gain,
+            (delayedInput.r+delta.r-dc.r+tone.r)*gain};
 }
 
 void SixModuleRack::prepare(double fs) noexcept {

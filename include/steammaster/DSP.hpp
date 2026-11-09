@@ -244,6 +244,8 @@ private:
     Pole crossover_{}, lowTone_{}, highTone_{}, dcRemoval_{};
     OversampledProcessor lowSaturator_{}, highSaturator_{};
     StereoDelay inputDelay_{}, bassDelay_{}, trebleDelay_{};
+    // Delay spectral tone components by the same fixed saturation latency.
+    StereoDelay lowFocusDelay_{}, highFocusDelay_{};
     std::array<std::array<VoiceState,4>,2> voiceStates_{};
     std::array<double,4> tapeCoeff_{};
     std::array<double,4> transformerCoeff_{};
