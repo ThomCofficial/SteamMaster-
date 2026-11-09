@@ -159,31 +159,62 @@ Stereo Tape::processWet(Stereo input) noexcept {
 
 void GlobalStereo::prepare(double fs) noexcept {
     fs_=clamp(fs,8000.,384000.);
-    sideLowpass_.prepare(fs_);sideHighpass_.prepare(fs_);
+    sideHighpass_.prepare(fs_);
     width_.prepare(fs_,.012);monoMaker_.prepare(fs_,.012);
+    crossoverCoefficient_.prepare(fs_,.018);
     width_.reset(1.);monoMaker_.reset(0.);
+    crossoverCoefficient_.reset(.10);
+    correlationAlpha_=1.-std::exp(-1./(fs_*.250));
     set(GlobalParameters{});reset();
 }
 void GlobalStereo::set(const GlobalParameters& p) noexcept {
     width_.set(clamp(p.stereoWidth,0.,2.));
-    sideLowpass_.configure(TptEQ::Mode::LowPass,clamp(p.widthFrequencyHz,800.,5000.),.7071067811865);
-    const double cutoff=clamp(p.monoMakerHz,20.,300.);
-    sideHighpass_.configure(TptEQ::Mode::HighPass,cutoff,.7071067811865);
+    // Complementary first-order crossover. 'High' is exactly side-low, so
+    // 100% width is a sample-exact identity, and the first-order passbands
+    // do not create an unintended second-order side-image resonance.
+    const double f=clamp(p.widthFrequencyHz,800.,std::min(5000.,fs_*.45));
+    const double g=std::tan(kPi*f/fs_);
+    crossoverCoefficient_.set(g/(1.+g));
+    const double monoCutoff=clamp(p.monoMakerHz,20.,300.);
+    sideHighpass_.configure(TptEQ::Mode::HighPass,monoCutoff,.7071067811865);
     monoMaker_.set(p.monoMakerHz>0.?1.:0.);
 }
-void GlobalStereo::reset() noexcept {sideLowpass_.clear();sideHighpass_.clear();}
+void GlobalStereo::reset() noexcept {
+    sideHighpass_.clear();crossoverState_=0.;
+    powerL_=powerR_=crossPower_=0.;
+}
 Stereo GlobalStereo::process(Stereo input) noexcept {
-    const double mid=.5*(input.l+input.r),side=.5*(input.l-input.r);
-    const double low=sideLowpass_.process({side,side}).l;
-    const double width=width_.next();
-    const double widened=side+(width-1.)*(side-low); // No widening below width cutoff
-    const double hi=sideHighpass_.process({widened,widened}).l;
-    const double shaped=widened+(hi-widened)*monoMaker_.next();
-    return {mid+shaped,mid-shaped};
+    const double mid=.5*(input.l+input.r);
+    const double side=.5*(input.l-input.r);
+    // Make low frequencies mono *before* widening. This ensures the widener
+    // cannot reintroduce LF side energy discarded by Mono Maker.
+    const double filtered=sideHighpass_.process({side,side}).l;
+    const double mono=monoMaker_.next();
+    const double cleanSide=side+(filtered-side)*mono;
+    // Trapezoidal one-pole lowpass and its sample-exact complementary high
+    // component, both derived from the same signal (no extra rack latency).
+    const double a=crossoverCoefficient_.next();
+    const double low=a*cleanSide+(1.-a)*crossoverState_;
+    crossoverState_=sanitized(2.*low-crossoverState_);
+    const double upper=cleanSide-low;
+    const double shaped=cleanSide+(width_.next()-1.)*upper;
+    const Stereo result{mid+shaped,mid-shaped};
+    const double c=correlationAlpha_;
+    powerL_+=(result.l*result.l-powerL_)*c;
+    powerR_+=(result.r*result.r-powerR_)*c;
+    crossPower_+=(result.l*result.r-crossPower_)*c;
+    return result;
+}
+double GlobalStereo::correlation() const noexcept {
+    const double denom=std::sqrt(std::max(1.e-24,powerL_*powerR_));
+    return clamp(crossPower_/denom,-1.,1.);
 }
 
 void MasterLimiter::prepare(double sampleRate) noexcept {
     fs_=clamp(sampleRate,8000.,384000.);
+    fastRise_=smoothCoef(fs_,.008);fastFall_=smoothCoef(fs_,.080);
+    sustainRise_=smoothCoef(fs_,.060);sustainFall_=smoothCoef(fs_,.280);
+    releaseScale_=-1000./fs_;
     audioLatency_=35u+static_cast<std::size_t>(std::ceil(fs_*.005));
     // Additional fixed post-limiter lookahead for true-peak correction;
     // kept in the latency even with TP OFF so mode changes are click-free.
@@ -209,8 +240,10 @@ void MasterLimiter::set(const LimiterParameters& p) noexcept {
 }
 void MasterLimiter::reset() noexcept {
     audioBuffer_.fill({});dryBuffer_.fill({});peakBuffer_.fill({});postBuffer_.fill({});
+    postGainHistory_.fill({1.,1.});
     audioCursor_=peakCursor_=postCursor_=0;gain_={1.,1.};postGain_={1.,1.};reductionDb_={};prePostEffectiveGain_={1.,1.};outputTruePeak_=0.;
     releaseHold_.fill(0);postHold_.fill(0);safetyClipEvents_=0;
+    fastDemandDb_=sustainedDemandDb_=effectiveReleaseMs_={};
     detector2x_.reset();detector4x_.reset();detector8x_.reset();
     meter2x_.reset();meter4x_.reset();meter8x_.reset();
     post2x_.reset();post4x_.reset();post8x_.reset();
@@ -269,15 +302,17 @@ Stereo MasterLimiter::postTruePeakGuard(Stereo input,double ceiling) noexcept {
     follow(requested.l,postGain_.l,postHold_[0]);
     follow(requested.r,postGain_.r,postHold_[1]);
     postBuffer_[postCursor_]=input;
+    postGainHistory_[postCursor_]=prePostEffectiveGain_;
     const auto read=(postCursor_+kCapacity-(postLatency_%kCapacity))%kCapacity;
     const auto delayed=postBuffer_[read];
+    const auto effective=postGainHistory_[read];
     if(++postCursor_==kCapacity)postCursor_=0;
     const double mix=postMix_.next();
     // Meter the actual applied attenuation of BOTH gain-control stages.
     // The bypass crossfade and post-stage crossfade are accounted for; the
     // threshold's pre-gain is deliberately excluded (it is not reduction).
-    const double finalL=clamp(prePostEffectiveGain_.l*(1.-mix+mix*postGain_.l),1.e-15,1.);
-    const double finalR=clamp(prePostEffectiveGain_.r*(1.-mix+mix*postGain_.r),1.e-15,1.);
+    const double finalL=clamp(effective.l*(1.-mix+mix*postGain_.l),1.e-15,1.);
+    const double finalR=clamp(effective.r*(1.-mix+mix*postGain_.r),1.e-15,1.);
     reductionDb_={-gainToDb(finalL),-gainToDb(finalR)};
     return {delayed.l*(1.-mix+mix*postGain_.l),
             delayed.r*(1.-mix+mix*postGain_.r)};
@@ -322,26 +357,46 @@ Stereo MasterLimiter::process(Stereo input) noexcept {
     const double pl=p.l+(linked-p.l)*weight,pr=p.r+(linked-p.r)*weight;
     const double wantL=std::min(1.,ceiling/std::max(kSmall,pl));
     const double wantR=std::min(1.,ceiling/std::max(kSmall,pr));
-    const double peakMax=std::max(pl,pr);
-    const double decay=autoRelease_?clamp(80.+peakMax*90.,10.,1000.):releaseMs_;
-    const double personality=mode_==LimiterMode::Punch?.7:(mode_==LimiterMode::Modern?1.3:1.);
-    const double c=smoothCoef(fs_,.001*decay*personality);
-    // A detected transient precedes its corresponding delayed audio by
-    // userAhead samples. Holding the requested gain through that interval
-    // prevents release recovery from raising the transient while it is still
-    // travelling through the lookahead buffer. No dynamic storage or scans.
-    auto track=[&](double requested,double& current,std::size_t& remaining) noexcept {
+    // Two independent demand memories distinguish isolated peaks from dense
+    // sustained limiting. AUTO release responds to *duration and depth of
+    // gain reduction*, not merely the instantaneous input amplitude.
+    // Fixed release remains deterministic and retains the user's setting.
+    const auto updateDemand=[&](double want,double& fast,double& sustained) noexcept {
+        const double gr=-gainToDb(std::max(want,kSmall));
+        const double f=gr>fast?fastRise_:fastFall_;
+        const double slow=gr>sustained?sustainRise_:sustainFall_;
+        fast=gr+f*(fast-gr);
+        sustained=gr+slow*(sustained-gr);
+        return clamp(sustained/std::max(1.,std::max(fast,gr)),0.,1.);
+    };
+    const double sustainL=updateDemand(wantL,fastDemandDb_.l,sustainedDemandDb_.l);
+    const double sustainR=updateDemand(wantR,fastDemandDb_.r,sustainedDemandDb_.r);
+    const auto releaseTime=[&](double persistence) noexcept {
+        const double base=autoRelease_ ? 60.+550.*persistence : releaseMs_;
+        // Clean: conservative smooth release; Punch: rapid gain recovery
+        // after isolated peaks; Modern: adaptive short transients with
+        // deliberately slower recovery on dense passages.
+        const double factor=mode_==LimiterMode::Punch?.70:
+                            (mode_==LimiterMode::Modern?.72+.38*persistence:1.);
+        return clamp(base*factor,10.,1800.);
+    };
+    const double releaseL=releaseTime(sustainL),releaseR=releaseTime(sustainR);
+    effectiveReleaseMs_={releaseL,releaseR};
+    // Detected peaks precede audio by selected lookahead. Keep attenuation
+    // held for that whole window: a release must not lift the same peak.
+    auto track=[&](double requested,double& current,std::size_t& remaining,double timeMs) noexcept {
         if(requested<current) {
             current=requested;
             remaining=userAhead;
         } else if(remaining>0) {
             --remaining;
         } else {
+            const double c=std::exp(releaseScale_/timeMs);
             current=requested+c*(current-requested);
         }
     };
-    track(wantL,gain_.l,releaseHold_[0]);
-    track(wantR,gain_.r,releaseHold_[1]);
+    track(wantL,gain_.l,releaseHold_[0],releaseL);
+    track(wantR,gain_.r,releaseHold_[1],releaseR);
     gain_.l=clamp(gain_.l,0.,1.);gain_.r=clamp(gain_.r,0.,1.);
     audioBuffer_[audioCursor_]=driven;
     dryBuffer_[audioCursor_]=input;

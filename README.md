@@ -1,3 +1,11 @@
+# SteamMaster DSP v1.5 — Stereo Image + Master Limiter refinement
+
+**DSP only — no GUI or VST3 integration.** Stereo Image now uses a smoother complementary upper-band crossover and Mono Maker-before-widening routing, with read-only stereo correlation telemetry. Master Limiter now has a gain-reduction-driven dual-memory AUTO release, genuinely distinct Clean/Punch/Modern recovery, and gain-reduction telemetry aligned with the delayed output audio. The controls and fixed mastering-rack latency are unchanged. The 12 DSP test suites pass both Release and sanitizers locally.
+
+The true-peak limiter has strong reconstruction regression tests, but **it is not formally true-peak certified or DAW-tested**. See [Stereo/Limiter v1.5 DSP audit](docs/V15_STEREO_LIMITER_AUDIT.md). Existing audio-engine source remains C++17, independent of licensed third-party DSP libraries.
+
+---
+
 # SteamMaster DSP v1.4 — tape magnetic memory and repro calibration
 
 **DSP-only milestone: zero UI changes; no VST3 build.** The Tape unit now implements a purpose-built, independently authored magnetic-memory / slew / bias nonlinearity with three individually voiced Studio, Vintage and Modern personalities. Playback head-bump and high-frequency losses depend on speed (7.5 / 15 / 30 IPS), bias affects saturation and HF loss, and model-derived 1 kHz makeup calibration maintains similar low-level gain between modes. Existing drive, bias, HF Trim, mix, IN, speed and oversampling controls are all preserved; no hiss, wow/flutter or additional knobs were introduced. All 11 DSP suites include new Tape characterization and safety tests.
