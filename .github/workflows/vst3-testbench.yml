@@ -1,0 +1,27 @@
+name: Windows VST3 Test Bench
+on:
+  push:
+    branches: [main, 'vst3/**']
+  workflow_dispatch:
+jobs:
+  build-vst3:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure JUCE VST3
+        run: cmake -S . -B build-vst3 -DSTEAMMASTER_BUILD_VST3=ON -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release
+      - name: Build VST3
+        run: cmake --build build-vst3 --config Release --target SteamMasterVST3_VST3 --parallel 2
+      - name: Run DSP and plugin-host tests
+        run: ctest --test-dir build-vst3 -C Release --output-on-failure
+      - name: Package VST3
+        shell: pwsh
+        run: |
+          $plugin = Get-ChildItem build-vst3 -Recurse -Directory -Filter 'SteamMaster Test Bench.vst3' | Select-Object -First 1
+          if (-not $plugin) { throw 'VST3 bundle missing' }
+          Compress-Archive -Path $plugin.FullName -DestinationPath SteamMaster-TestBench-Windows-VST3.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SteamMaster-TestBench-Windows-VST3
+          path: SteamMaster-TestBench-Windows-VST3.zip
+          if-no-files-found: error

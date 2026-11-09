@@ -124,3 +124,12 @@ The published switch capacitor/inductor values informed the modeling; this is
 Read [`docs/V11_PULTEC_CIRCUIT_AUDIT.md`](docs/V11_PULTEC_CIRCUIT_AUDIT.md).
 No GPL-3.0 source from `ABSounds/EQP-WDF-1A` was used or copied. The
 parametric EQ and every approved GUI component remain unchanged.
+
+## v1.6: temporary digital VST3 test bench
+
+- Build on Windows: `cmake -S . -B build-vst3 -DSTEAMMASTER_BUILD_VST3=ON -DBUILD_TESTING=ON`, then `cmake --build build-vst3 --config Release --target SteamMasterVST3_VST3`.
+- The Windows VST3 GitHub workflow publishes a downloadable ZIP artifact **only after a successful build and full test run**. Download from the workflow run's **Artifacts** section.
+- Unzip the `.vst3` directory into `%CommonProgramFiles%\\VST3` and rescan plugins in Cubase. This is a **temporary test interface**, not the approved SteamMaster art.
+- Digital GUI: 12 scrollable tabs covering global controls, six initial processors, two Bax rows, tape, stereo and limiter; 107 automatable, state-persistent parameters.
+- All DSP modules run in the full signal chain. The plugin reports latency to Cubase. All parameter writes are consumed on the audio thread, with a no-allocation block-level snapshot; controls are not applied directly on the UI thread.
+- **Important:** this is an engineering test build, not mastering-safe release software. Turn down monitoring before testing extreme settings. Bypass the plugin if a test sounds wrong. True-peak ceiling compliance under every possible input is not yet guaranteed. CPU measurements and actual Cubase unload/reload testing remain outstanding.
