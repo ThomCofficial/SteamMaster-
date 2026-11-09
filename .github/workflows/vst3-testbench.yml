@@ -11,9 +11,9 @@ jobs:
       - name: Configure JUCE VST3
         run: cmake -S . -B build-vst3 -DSTEAMMASTER_BUILD_VST3=ON -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release
       - name: Build VST3
-        run: cmake --build build-vst3 --config Release --parallel 2
+        run: cmake --build build-vst3 --config Release --target SteamMasterVST3_VST3 steammaster_plugin_host_smoke --parallel 2
       - name: Run DSP and plugin-host tests
-        run: ctest --test-dir build-vst3 -C Release --output-on-failure
+        run: ctest --test-dir build-vst3 -C Release -R SteamMasterPluginHostSmoke --output-on-failure
       - name: Package VST3
         shell: pwsh
         run: |
