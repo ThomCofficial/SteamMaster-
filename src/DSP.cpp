@@ -442,7 +442,7 @@ void Exciter::prepare(double fs) noexcept {
 void Exciter::set(const ExciterParameters& p) noexcept {
     p_=p;setCommon(p.common);
     for(std::size_t i=0;i<modeWeights_.size();++i)modeWeights_[i].set(i==static_cast<std::size_t>(p.mode)?1.:0.);
-    lowDrive_.set(clamp(p.lowDrive,0.,10.));highDrive_.set(clamp(p.highDrive,0.,10.));
+    lowDrive_.set(clamp(p.lowDrive,0.,20.));highDrive_.set(clamp(p.highDrive,0.,20.));
     output_.set(clamp(p.outputDb,-12.,12.));
     crossover_.set(fs_,p.crossoverHz);lowTone_.set(fs_,p.lowFrequencyHz);
     highTone_.set(fs_,p.highFrequencyHz);dcRemoval_.set(fs_,8.);

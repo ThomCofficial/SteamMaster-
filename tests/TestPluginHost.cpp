@@ -65,12 +65,16 @@ void checkExciterHostSignalPath() {
     for(int mode=0;mode<3;++mode) {
         const auto driven=render(mode,9.f,9.f,250.f,3200.f);
         const auto shifted=render(mode,9.f,9.f,60.f,15000.f);
+        const auto extended=render(mode,20.f,20.f,250.f,3200.f);
         const double driveDelta=difference(neutral,driven);
         const double frequencyDelta=difference(driven,shifted);
+        const double extendedDelta=difference(driven,extended);
         std::cout<<"Exciter host mode "<<mode<<" drive RMS delta "<<driveDelta
-                 <<", frequency-control RMS delta "<<frequencyDelta<<"\\n";
+                 <<", frequency-control RMS delta "<<frequencyDelta
+                 <<", 9-to-20 RMS delta "<<extendedDelta<<"\\n";
         if(driveDelta<.003)throw std::runtime_error("Exciter host Drive is inaudible or unmapped");
         if(frequencyDelta<.001)throw std::runtime_error("Exciter host tone controls do not alter response");
+        if(extendedDelta<.001)throw std::runtime_error("Exciter 20 Drive is not being applied to the host signal");
     }
 }
 

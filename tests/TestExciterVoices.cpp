@@ -130,6 +130,40 @@ void checkAudibleSpectrumAndFrequencyControls() {
               "Exciter High Frequency selector must move the spectral contour");
     }
 }
+
+void checkExtendedDriveRange() {
+    // Increasing the control above 10 must actually increase the processed
+    // signal, not just change the GUI readout. Exercise all three voices
+    // and both independently driven bands at 2x the previous maximum.
+    const auto rmsDifference=[](const Buffer& a,const Buffer& b) {
+        double sum=0.;
+        for(std::size_t i=0;i<a.size();++i)sum+=std::pow(a[i]-b[i],2);
+        return std::sqrt(sum/double(a.size()));
+    };
+    for(const auto mode:{ExciterMode::Tube,ExciterMode::Tape,ExciterMode::Transformer}) {
+        const auto low10=render(mode,OversamplingMode::X4,160.,.25,10.,0.);
+        const auto low20=render(mode,OversamplingMode::X4,160.,.25,20.,0.);
+        const auto high10=render(mode,OversamplingMode::X4,6000.,.25,0.,10.);
+        const auto high20=render(mode,OversamplingMode::X4,6000.,.25,0.,20.);
+        const double lowChange=rmsDifference(low10,low20);
+        const double highChange=rmsDifference(high10,high20);
+        std::printf("Exciter extended range mode %d: low %.7g, high %.7g\\n",
+                    int(mode),lowChange,highChange);
+        check(lowChange>1.e-4,"Low Drive 20 must differ measurably from 10");
+        check(highChange>1.e-4,"High Drive 20 must differ measurably from 10");
+    }
+    // Instant max-drive combinations at multiple oversampling settings
+    // must remain finite and avoid runaway at conservative source level.
+    for(const auto quality:{OversamplingMode::Off,OversamplingMode::X2,
+                            OversamplingMode::X4,OversamplingMode::X8}) {
+        for(const auto mode:{ExciterMode::Tube,ExciterMode::Tape,ExciterMode::Transformer}) {
+            auto high=render(mode,quality,5200.,.25,20.,20.);
+            for(const auto v:high)check(std::isfinite(v) && std::abs(v)<3.5,
+                                        "Extended Exciter must stay finite and bounded");
+        }
+    }
+}
+
 void checkNeutral() {
     // All drives at zero, for every voice and OS mode, must be exactly a
     // latency-aligned unity transfer (without added hiss, phase or coloration).
@@ -185,6 +219,7 @@ int main() {
     checkAlias();
     checkBandIndependence();
     checkAudibleSpectrumAndFrequencyControls();
+    checkExtendedDriveRange();
     checkAutomation();
     std::puts("Exciter DSP: topology, harmonics, aliasing, neutral, automation PASSED");
 }

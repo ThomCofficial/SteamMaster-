@@ -68,9 +68,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout SteamMasterProcessor::makeLa
     layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID{"exciter_in",1},"Exciter / IN",true));
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"exciter_mix",1},"Exciter / Mix",juce::NormalisableRange<float>(0.0f,100.0f,0.001f),100.0f));
     layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{"exciter_mode",1},"Exciter / Mode",juce::StringArray{"Tube","Tape","Transformer"},0));
-    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"exciter_low_drive",1},"Exciter / Low Drive",juce::NormalisableRange<float>(0.0f,10.0f,0.001f),0.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"exciter_low_drive",1},"Exciter / Low Drive",juce::NormalisableRange<float>(0.0f,20.0f,0.001f),0.0f));
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"exciter_low_freq",1},"Exciter / Low Freq",juce::NormalisableRange<float>(20.0f,800.0f,0.001f),100.0f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"exciter_high_drive",1},"Exciter / High Drive",juce::NormalisableRange<float>(0.0f,10.0f,0.001f),0.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"exciter_high_drive",1},"Exciter / High Drive",juce::NormalisableRange<float>(0.0f,20.0f,0.001f),0.0f));
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"exciter_high_freq",1},"Exciter / High Freq",juce::NormalisableRange<float>(1000.0f,18000.0f,0.001f),5000.0f));
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"exciter_crossover",1},"Exciter / Crossover",juce::NormalisableRange<float>(100.0f,5000.0f,0.001f),800.0f));
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"exciter_output_db",1},"Exciter / Output dB",juce::NormalisableRange<float>(-12.0f,12.0f,0.001f),0.0f));
