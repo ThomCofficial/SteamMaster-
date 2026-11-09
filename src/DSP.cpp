@@ -534,8 +534,8 @@ Stereo Exciter::processWet(Stereo x) noexcept {
     const auto delayedBass=bassDelay_.process(bass);
     const auto delayedTreble=trebleDelay_.process(treble);
     const auto delayedInput=inputDelay_.process(x);
-    const Stereo delta{lo*(colorBass.l-delayedBass.l)+hi*(colorTreble.l-delayedTreble.l),
-                       lo*(colorBass.r-delayedBass.r)+hi*(colorTreble.r-delayedTreble.r)};
+    const Stereo delta{(colorBass.l-delayedBass.l)+(colorTreble.l-delayedTreble.l),
+                       (colorBass.r-delayedBass.r)+(colorTreble.r-delayedTreble.r)};
     const auto dc=dcRemoval_.low(delta);
     const double gain=dbToGain(output_.next());
     return {(delayedInput.l+delta.l-dc.l)*gain,(delayedInput.r+delta.r-dc.r)*gain};
