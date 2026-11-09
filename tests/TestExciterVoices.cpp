@@ -164,6 +164,25 @@ void checkExtendedDriveRange() {
     }
 }
 
+
+void checkTransformerCharacterAtExtendedDrive() {
+    // New transformer memory and saturation should add real second-harmonic
+    // density without runaway, even at the expanded maximum drive.
+    for(const auto quality:{OversamplingMode::Off,OversamplingMode::X2,
+                            OversamplingMode::X4,OversamplingMode::X8}) {
+        const auto low10=render(ExciterMode::Transformer,quality,125.,.45,10.,0.);
+        const auto low20=render(ExciterMode::Transformer,quality,125.,.45,20.,0.);
+        const double second10=magnitude(low10,250.);
+        const double second20=magnitude(low20,250.);
+        const double third20=magnitude(low20,375.);
+        std::printf("Transformer quality %d harmonic #2 10=%.7g 20=%.7g third20=%.7g\n",
+                    int(quality),second10,second20,third20);
+        check(second20>second10*1.10,
+              "Transformer high drive must meaningfully increase second-harmonic depth");
+        check(second20>third20,
+              "Transformer must preserve even-harmonic dominant texture");
+    }
+}
 void checkNeutral() {
     // All drives at zero, for every voice and OS mode, must be exactly a
     // latency-aligned unity transfer (without added hiss, phase or coloration).
@@ -220,6 +239,7 @@ int main() {
     checkBandIndependence();
     checkAudibleSpectrumAndFrequencyControls();
     checkExtendedDriveRange();
+    checkTransformerCharacterAtExtendedDrive();
     checkAutomation();
     std::puts("Exciter DSP: topology, harmonics, aliasing, neutral, automation PASSED");
 }

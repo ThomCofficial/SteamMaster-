@@ -50,10 +50,14 @@ void FIRHalfBand2x::up(Stereo input,Stereo& even,Stereo& odd) noexcept {
     const auto middle=delayed(kCenter/2);
     even={2.*h_[kCenter]*middle.l,2.*h_[kCenter]*middle.r};
     odd={};
-    for(std::size_t i=1;i<kTaps;i+=2) {
-        const auto v=delayed(i/2);
-        odd.l+=2.*h_[i]*v.l;
-        odd.r+=2.*h_[i]*v.r;
+    // Symmetric linear-phase halfband taps: 20 paired products in place of
+    // 40 individual products. Retains the same 81-tap transfer and latency.
+    for(std::size_t i=1;i<kCenter;i+=2) {
+        const auto a=delayed(i/2);
+        const auto b=delayed((kTaps-1-i)/2);
+        const double coefficient=2.*h_[i];
+        odd.l+=coefficient*(a.l+b.l);
+        odd.r+=coefficient*(a.r+b.r);
     }
 }
 Stereo FIRHalfBand2x::down(Stereo even,Stereo odd) noexcept {
@@ -63,10 +67,12 @@ Stereo FIRHalfBand2x::down(Stereo even,Stereo odd) noexcept {
     const auto middle=delayed(kCenter);
     out.l=h_[kCenter]*middle.l;
     out.r=h_[kCenter]*middle.r;
-    for(std::size_t i=1;i<kTaps;i+=2) {
-        const auto v=delayed(i);
-        out.l+=h_[i]*v.l;
-        out.r+=h_[i]*v.r;
+    // Fold the matching symmetric downsampling taps as well.
+    for(std::size_t i=1;i<kCenter;i+=2) {
+        const auto a=delayed(i);
+        const auto b=delayed(kTaps-1-i);
+        out.l+=h_[i]*(a.l+b.l);
+        out.r+=h_[i]*(a.r+b.r);
     }
     push(odd);
     return out;

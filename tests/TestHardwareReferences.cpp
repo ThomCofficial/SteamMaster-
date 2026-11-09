@@ -83,6 +83,13 @@ int main(){
     std::printf("SSL below knee R2 %.3f R10 %.3f\n",sslGR(FurnaceRatio::R2,-22.),sslGR(FurnaceRatio::R10,-22.));
     require(sslGR(FurnaceRatio::R2,-22.)>sslGR(FurnaceRatio::R10,-22.)+.05,
             "SSL 2:1 knee must extend below threshold farther than 10:1");
+    const double kneeTwo=sslGR(FurnaceRatio::R2,-22.);
+    const double kneeFour=sslGR(FurnaceRatio::R4,-22.);
+    const double kneeTen=sslGR(FurnaceRatio::R10,-22.);
+    require(kneeTwo>kneeFour+.05 && kneeFour>=kneeTen,
+            "Furnace low-ratio soft knee must begin earlier than high ratios");
+    require(sslGR(FurnaceRatio::R4,-10.)>sslGR(FurnaceRatio::R2,-10.),
+            "Furnace higher ratios must compress more at strong levels");
     shadowDualRelease();
     std::printf("Reference checks pass. Ocean COMP over10=%.2f over20=%.2f over30=%.2f, LIMIT over20=%.2f dB\n",comp10,comp20,comp30,limit20);
 }

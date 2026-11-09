@@ -278,10 +278,13 @@ Stereo Furnace::processWet(Stereo in) noexcept {
     envelope_=follow(envelope_,target,timeCoefficient(fs_,seconds));
     if(envelope_<1.e-30)envelope_=0.;
     const double threshold=threshold_.next();
-    // SSL documents an unusually wide, ratio-dependent 2:1 knee. The 24 dB
-    // numerical width is a conservative working approximation; not a measured fit.
-    const double knee=p_.ratio==FurnaceRatio::R2?24.0:(p_.ratio==FurnaceRatio::R4?6.0:2.0);
-    const double requested=compressDb(gainToDb(envelope_),threshold,ratioFurnace(p_.ratio),knee);
+    // SSL confirms the 2:1 knee is exceptionally soft and that lower ratios
+    // shift effective threshold downward. Conservatively sharpen the knee:
+    // 2:1 remains broad, 4:1 slightly tighter, 10:1 almost unchanged.
+    // These are *not* hardware-measured knee widths or threshold offsets.
+    const double knee=p_.ratio==FurnaceRatio::R2?22.0:(p_.ratio==FurnaceRatio::R4?5.5:1.8);
+    const double effectiveThreshold=threshold-(p_.ratio==FurnaceRatio::R2?.45:(p_.ratio==FurnaceRatio::R4?.10:0.));
+    const double requested=compressDb(gainToDb(envelope_),effectiveThreshold,ratioFurnace(p_.ratio),knee);
     if(p_.release==FurnaceRelease::Auto) {
         // Parallel fast/slow recovery memories: transient GR releases promptly,
         // sustained GR leaves a longer tail. Both states always track the detector.
@@ -427,6 +430,7 @@ void Exciter::prepare(double fs) noexcept {
         const double rate=std::max(8000.,fs)*static_cast<double>(1u<<i);
         tapeCoeff_[i]=std::exp(-1./(rate*.009));
         transformerCoeff_[i]=std::exp(-1./(rate*.0025));
+        transformerRemanenceCoeff_[i]=std::exp(-1./(rate*.011));
     }
     setWetLatency(OversampledProcessor::kLatency);
     lowSaturator_.prepare(fs);highSaturator_.prepare(fs);
@@ -469,7 +473,8 @@ Stereo Exciter::saturationTransfer(Stereo in,unsigned quality,void* raw) noexcep
         return (std::tanh(drive*x+bias)-t)/slope;
     };
     const auto apply=[valve,quality](double x,double& flux,double& previous,
-                        double& transformerFlux,double tapeCoeff,double transformerCoeff,
+                        double& transformerFlux,double& remanence,
+                        double tapeCoeff,double transformerCoeff,double remanenceCoeff,
                         double amt,unsigned band,const std::array<double,3>& w) noexcept {
         // Keep magnetic state alive during mode fades. Tape's odd-order
         // transfer and slew softening are HEDD-inspired, not its proprietary code.
@@ -504,21 +509,29 @@ Stereo Exciter::saturationTransfer(Stereo in,unsigned quality,void* raw) noexcep
             previous=x;
         }
         if(w[2]>1.e-9) {
-            // Silk-inspired transformer: frequency-dependent core memory,
-            // deliberately stronger even-order texture in the high band.
-            // These are not matched Neve Red/Blue curves.
-            const double magnetized=x+.07*amt*(transformerFlux-x);
-            const double bias=(band==0?.48:.62)*(.7+.3*amt);
-            const double saturated=valve(magnetized,.75+.50*amt,bias);
-            y+=w[2]*(.14*saturated+.86*x);
+            // Transformer ONLY: two time scales of magnetic core behavior
+            // and remanence-dependent asymmetry. The slower memory varies
+            // with program material; the faster flux varies with frequency.
+            // Circuit-inspired, not a hardware measurement of Neve Silk.
+            remanence=remanenceCoeff*remanence
+                     +(1.-remanenceCoeff)*std::tanh(.9*x);
+            const double magnetized=x+(band==0?.10:.055)*amt*(transformerFlux-x);
+            const double bias=(band==0?.45:.61)*(.70+.30*amt)
+                             +.055*amt*remanence;
+            const double saturated=valve(magnetized,.78+.56*amt,bias);
+            const double blend=(band==0?.18:.16)
+                               +(band==0?.040:.065)*std::min(2.,amt);
+            y+=w[2]*(blend*saturated+(1.-blend)*x);
         }
         return sanitized(y);
     };
     return {
-        apply(in.l,state.tapeFlux.l,state.tapeOutput.l,state.transformerFlux.l,
-              c.engine->tapeCoeff_[quality],c.engine->transformerCoeff_[quality],amount,c.band,c.weights),
-        apply(in.r,state.tapeFlux.r,state.tapeOutput.r,state.transformerFlux.r,
-              c.engine->tapeCoeff_[quality],c.engine->transformerCoeff_[quality],amount,c.band,c.weights)
+        apply(in.l,state.tapeFlux.l,state.tapeOutput.l,state.transformerFlux.l,state.transformerRemanence.l,
+              c.engine->tapeCoeff_[quality],c.engine->transformerCoeff_[quality],
+              c.engine->transformerRemanenceCoeff_[quality],amount,c.band,c.weights),
+        apply(in.r,state.tapeFlux.r,state.tapeOutput.r,state.transformerFlux.r,state.transformerRemanence.r,
+              c.engine->tapeCoeff_[quality],c.engine->transformerCoeff_[quality],
+              c.engine->transformerRemanenceCoeff_[quality],amount,c.band,c.weights)
     };
 }
 

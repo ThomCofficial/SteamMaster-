@@ -230,7 +230,7 @@ private:
     // by band and 1x/2x/4x/8x path so oversampling transitions cannot reuse
     // a different-rate magnetic or transformer history.
     struct VoiceState {
-        Stereo tapeFlux{}, tapeOutput{}, transformerFlux{};
+        Stereo tapeFlux{}, tapeOutput{}, transformerFlux{}, transformerRemanence{};
     };
     struct SaturationContext {
         Exciter* engine;
@@ -249,6 +249,7 @@ private:
     std::array<std::array<VoiceState,4>,2> voiceStates_{};
     std::array<double,4> tapeCoeff_{};
     std::array<double,4> transformerCoeff_{};
+    std::array<double,4> transformerRemanenceCoeff_{};
     OversamplingMode quality_ = OversamplingMode::Off;
     Smoother lowDrive_{}, highDrive_{}, output_{};
     std::array<Smoother,3> modeWeights_{};
