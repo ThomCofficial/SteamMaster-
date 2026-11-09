@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdint>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 using namespace steammaster;
 namespace {
@@ -98,9 +99,12 @@ void limiterModeTests(double fs){
 }
 void modeAudioDistinction() {
     constexpr double fs=48000.;
-    std::array<MasterLimiter,3> engines{};
+    // The limiter owns multiple lookahead/detector rings; avoid exceeding
+    // the smaller default Windows test-executable thread stack.
+    std::array<std::unique_ptr<MasterLimiter>,3> engines{};
     for(int mode=0;mode<3;++mode) {
-        auto& lim=engines[static_cast<std::size_t>(mode)];
+        engines[static_cast<std::size_t>(mode)]=std::make_unique<MasterLimiter>();
+        auto& lim=*engines[static_cast<std::size_t>(mode)];
         lim.prepare(fs);
         LimiterParameters p;p.autoRelease=true;p.thresholdDb=-12.;p.ceilingDbTP=-1.;
         p.lookaheadMs=5.;p.mode=static_cast<LimiterMode>(mode);lim.set(p);
@@ -111,7 +115,7 @@ void modeAudioDistinction() {
         const double wave=volume*std::sin(2*kPi*997.*i/fs);
         std::array<double,3> y{};
         for(int mode=0;mode<3;++mode)
-            y[static_cast<std::size_t>(mode)]=engines[static_cast<std::size_t>(mode)].process({wave,wave}).l;
+            y[static_cast<std::size_t>(mode)]=engines[static_cast<std::size_t>(mode)]->process({wave,wave}).l;
         if(i>=8000) {
             cleanVsPunch+=std::abs(y[0]-y[1]);
             cleanVsModern+=std::abs(y[0]-y[2]);
