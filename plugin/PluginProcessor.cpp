@@ -130,7 +130,7 @@ void SteamMasterProcessor::processBlock(juce::AudioBuffer<float>& buffer,juce::M
 }
 juce::AudioProcessorEditor* SteamMasterProcessor::createEditor(){return new SteamMasterEditor(*this);}
 void SteamMasterProcessor::getStateInformation(juce::MemoryBlock& dest){if(auto xml=state.copyState().createXml())copyXmlToBinary(*xml,dest);}
-void SteamMasterProcessor::setStateInformation(const void* data,int bytes){if(auto xml=getXmlFromBinary(data,bytes))if(xml->hasTagName(state.state.getType()))state.replaceState(juce::ValueTree::fromXml(*xml));}
+void SteamMasterProcessor::setStateInformation(const void* data,int bytes){if(auto xml=getXmlFromBinary(data,bytes))if(xml->hasTagName(state.state.getType().toString()))state.replaceState(juce::ValueTree::fromXml(*xml));}
 void SteamMasterProcessor::updateDSP() noexcept {
     bool changed=!snapshotValid_;
     for(size_t i=0;i<monitored_.size();++i){
