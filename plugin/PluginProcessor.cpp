@@ -145,10 +145,10 @@ void SteamMasterProcessor::updateDSP() noexcept {
     g.in=v("global_in")>.5f;g.inputDb=v("global_input_db");g.outputDb=v("global_output_db");g.oversampling=OversamplingMode(juce::jlimit(0,3,int(v("global_oversampling"))));
     g.monoMakerHz=v("stereo_mono_maker_hz");g.stereoWidth=v("stereo_width_percent")/100.;g.widthFrequencyHz=v("stereo_width_freq");rack->setGlobal(g);
     OceanParameters o;o.common.in=v("ocean_in")>.5f;o.common.mix=v("ocean_mix")/100.;
-    o.thresholdDb=v("ocean_threshold_db");o.ratio=OceanRatio(int(v("ocean_ratio")));o.attackMs=v("ocean_attack_ms");o.recovery=OceanRecovery(int(v("ocean_recovery")));o.scHpfHz=(0,40,80,160,320,500)[juce::jlimit(0,5,int(v("ocean_sc_hpf")))];
+    o.thresholdDb=v("ocean_threshold_db");o.ratio=OceanRatio(int(v("ocean_ratio")));o.attackMs=v("ocean_attack_ms");o.recovery=OceanRecovery(int(v("ocean_recovery")));o.scHpfHz=std::array<int,6>{0,40,80,160,320,500}[juce::jlimit(0,5,int(v("ocean_sc_hpf")))];
     rack->firstSix.ocean.set(o);
     FurnaceParameters fu;fu.common.in=v("furnace_in")>.5f;fu.common.mix=v("furnace_mix")/100.;
-    fu.thresholdDb=v("furnace_threshold_db");fu.ratio=FurnaceRatio(int(v("furnace_ratio")));fu.attack=FurnaceAttack(int(v("furnace_attack")));fu.release=FurnaceRelease(int(v("furnace_release")));fu.scHpfHz=(0,40,80,160,320,500)[juce::jlimit(0,5,int(v("furnace_sc_hpf")))];
+    fu.thresholdDb=v("furnace_threshold_db");fu.ratio=FurnaceRatio(int(v("furnace_ratio")));fu.attack=FurnaceAttack(int(v("furnace_attack")));fu.release=FurnaceRelease(int(v("furnace_release")));fu.scHpfHz=std::array<int,6>{0,40,80,160,320,500}[juce::jlimit(0,5,int(v("furnace_sc_hpf")))];
     rack->firstSix.furnace.set(fu);
     ParametricParameters eq;eq.common.in=v("parametric_in")>.5f;eq.common.mix=v("parametric_mix")/100.;
     eq.outputDb=v("parametric_output_db");
@@ -158,7 +158,7 @@ void SteamMasterProcessor::updateDSP() noexcept {
     eq.bands[3].frequencyHz=v("parametric_band_4_freq");eq.bands[3].q=v("parametric_band_4_q");eq.bands[3].gainDb=v("parametric_band_4_gain");eq.bands[3].mode=(int(v("parametric_band_4_type"))==1?TptEQ::Mode::LowShelf:(int(v("parametric_band_4_type"))==2?TptEQ::Mode::HighShelf:TptEQ::Mode::Peak));
     rack->firstSix.parametric.set(eq);
     PultecParameters pu;pu.common.in=v("pultec_in")>.5f;pu.common.mix=v("pultec_mix")/100.;
-    pu.lowFrequencyHz=(30,60,100)[juce::jlimit(0,2,int(v("pultec_low_freq")))];pu.lowBoost=v("pultec_low_boost");pu.lowAttenuation=v("pultec_low_atten");pu.highBoostFrequencyHz=(8000,12000,16000)[juce::jlimit(0,2,int(v("pultec_high_boost_freq")))];pu.highBoost=v("pultec_high_boost");pu.bandwidth=v("pultec_bandwidth");pu.highAttenuationFrequencyHz=(5000,10000,20000)[juce::jlimit(0,2,int(v("pultec_high_atten_freq")))];pu.highAttenuation=v("pultec_high_atten");pu.outputDb=v("pultec_output_db");
+    pu.lowFrequencyHz=std::array<int,3>{30,60,100}[juce::jlimit(0,2,int(v("pultec_low_freq")))];pu.lowBoost=v("pultec_low_boost");pu.lowAttenuation=v("pultec_low_atten");pu.highBoostFrequencyHz=std::array<int,3>{8000,12000,16000}[juce::jlimit(0,2,int(v("pultec_high_boost_freq")))];pu.highBoost=v("pultec_high_boost");pu.bandwidth=v("pultec_bandwidth");pu.highAttenuationFrequencyHz=std::array<int,3>{5000,10000,20000}[juce::jlimit(0,2,int(v("pultec_high_atten_freq")))];pu.highAttenuation=v("pultec_high_atten");pu.outputDb=v("pultec_output_db");
     rack->firstSix.pultec.set(pu);
     ShadowParameters sh;sh.common.in=v("shadow_in")>.5f;sh.common.mix=v("shadow_mix")/100.;
     sh.opticalIn=v("shadow_optical_in")>.5f;
@@ -168,7 +168,7 @@ void SteamMasterProcessor::updateDSP() noexcept {
     sh.discreteThresholdDb=v("shadow_discrete_threshold");
     sh.discreteGainDb=v("shadow_discrete_gain");
     sh.outputDb=v("shadow_output_db");
-    sh.discreteRatio=DiscreteRatio(int(v("shadow_discrete_ratio")));sh.discreteAttack=DiscreteAttack(int(v("shadow_discrete_attack")));sh.discreteRecovery=DiscreteRecovery(int(v("shadow_discrete_recovery")));sh.scHpfHz=(0,40,80,160,320,500)[juce::jlimit(0,5,int(v("shadow_sc_hpf")))];
+    sh.discreteRatio=DiscreteRatio(int(v("shadow_discrete_ratio")));sh.discreteAttack=DiscreteAttack(int(v("shadow_discrete_attack")));sh.discreteRecovery=DiscreteRecovery(int(v("shadow_discrete_recovery")));sh.scHpfHz=std::array<int,6>{0,40,80,160,320,500}[juce::jlimit(0,5,int(v("shadow_sc_hpf")))];
     rack->firstSix.shadow.set(sh);
     ExciterParameters ex;ex.common.in=v("exciter_in")>.5f;ex.common.mix=v("exciter_mix")/100.;
     ex.mode=ExciterMode(int(v("exciter_mode")));ex.lowDrive=v("exciter_low_drive");ex.lowFrequencyHz=v("exciter_low_freq");ex.highDrive=v("exciter_high_drive");ex.highFrequencyHz=v("exciter_high_freq");ex.crossoverHz=v("exciter_crossover");ex.outputDb=v("exciter_output_db");
