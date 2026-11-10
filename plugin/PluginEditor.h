@@ -25,6 +25,7 @@ private:
             juce::Image art;
             int artHeight = 0;
             juce::Image leftReel, rightReel;
+            juce::Image headerMeterAtlas;
             juce::Image shadowNeedle, exciterNeedle, correlationNeedle, limiterNeedle;
             juce::String section;
             SteamMasterProcessor* processor = nullptr;
@@ -37,9 +38,11 @@ private:
                     g.drawImage(art, juce::Rectangle<float>(0.f,0.f,(float)getWidth(),(float)artHeight),
                                 juce::RectanglePlacement::stretchToFit);
                     paintMovingParts(g);
+                    if(section=="Global") paintHeaderInstruments(g);
                 }
             }
             void paintMovingParts(juce::Graphics& g);
+            void paintHeaderInstruments(juce::Graphics& g);
         } contents;
         std::vector<std::unique_ptr<juce::Component>> controls;
         std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>> sliders;
