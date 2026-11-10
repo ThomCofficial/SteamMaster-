@@ -16,10 +16,9 @@ class SteamLook final : public juce::LookAndFeel_V4 {
 public:
  SteamLook() {
 #ifdef STEAMMASTER_HAS_ARTWORK
-    globalInput = juce::ImageFileFormat::loadFrom(BinaryData::brass_steampunk_knob_sprite_sheet_png,
-                                                 (size_t)BinaryData::brass_steampunk_knob_sprite_sheet_pngSize);
-    globalOutput = juce::ImageFileFormat::loadFrom(BinaryData::brass_steampunk_knob_sprite_sheet_png,
-                                                  (size_t)BinaryData::brass_steampunk_knob_sprite_sheet_pngSize);
+    globalInput = juce::ImageFileFormat::loadFrom(BinaryData::Continuous_Large_Brass_png,
+                      (size_t)BinaryData::Continuous_Large_Brass_pngSize);
+    globalOutput = globalInput;
 #endif
     setColour(juce::Slider::textBoxTextColourId, ivory);
     setColour(juce::Slider::textBoxBackgroundColourId, deep);
@@ -47,7 +46,7 @@ public:
        auto matrix=juce::AffineTransform::rotation(angle,imageW/2.f,imageH/2.f)
                        .scaled(scale).translated((float)x+w/2.f-imageW*scale/2.f,
                                                   (float)y+h/2.f-imageH*scale/2.f);
-       g.drawImageTransformed(*sprite,matrix);
+       g.drawImageTransformed(*sprite,matrix,false);
        return;
     }
 #endif
