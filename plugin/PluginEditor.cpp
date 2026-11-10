@@ -190,16 +190,16 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
 #ifdef STEAMMASTER_HAS_ARTWORK
     const char* asset = nullptr;
     int assetSize = 0;
-    if (section == "Global") { asset=BinaryData::global_header_png; assetSize=BinaryData::global_header_pngSize; }
-    else if(section == "Ocean") { asset=BinaryData::ocean_png; assetSize=BinaryData::ocean_pngSize; }
-    else if(section == "Furnace") { asset=BinaryData::furnace_png; assetSize=BinaryData::furnace_pngSize; }
-    else if(section == "Parametric") { asset=BinaryData::parametric_png; assetSize=BinaryData::parametric_pngSize; }
-    else if(section == "Pultec") { asset=BinaryData::pultec_png; assetSize=BinaryData::pultec_pngSize; }
-    else if(section == "Shadow") { asset=BinaryData::shadow_png; assetSize=BinaryData::shadow_pngSize; }
-    else if(section == "Exciter") { asset=BinaryData::exciter_png; assetSize=BinaryData::exciter_pngSize; }
-    else if(section == "Bax") { asset=BinaryData::bax_png; assetSize=BinaryData::bax_pngSize; }
-    else if(section == "Tape") { asset=BinaryData::tape_png; assetSize=BinaryData::tape_pngSize; }
-    else if(section == "Stereo + Limiter") { asset=BinaryData::stereo_limiter_png; assetSize=BinaryData::stereo_limiter_pngSize; }
+    if (section == "Global") { asset=BinaryData::header_faceplate_blank_candidate_png; assetSize=BinaryData::header_faceplate_blank_candidate_pngSize; }
+    else if(section == "Ocean") { asset=BinaryData::ocean_module_source_png; assetSize=BinaryData::ocean_module_source_pngSize; }
+    else if(section == "Furnace") { asset=BinaryData::furnace_module_source_png; assetSize=BinaryData::furnace_module_source_pngSize; }
+    else if(section == "Parametric") { asset=BinaryData::parametric_eq_module_source_png; assetSize=BinaryData::parametric_eq_module_source_pngSize; }
+    else if(section == "Pultec") { asset=BinaryData::Pultec_Approved_Reference_png; assetSize=BinaryData::Pultec_Approved_Reference_pngSize; }
+    else if(section == "Shadow") { asset=BinaryData::Shadow_Source_Locked_png; assetSize=BinaryData::Shadow_Source_Locked_pngSize; }
+    else if(section == "Exciter") { asset=BinaryData::Exciter_panel_uncorrected_1536x402_png; assetSize=BinaryData::Exciter_panel_uncorrected_1536x402_pngSize; }
+    else if(section == "Bax") { asset=BinaryData::baxandall_module_trimmed_reference_png; assetSize=BinaryData::baxandall_module_trimmed_reference_pngSize; }
+    else if(section == "Tape") { asset=BinaryData::Tape_Module_Reference_1536x469_png; assetSize=BinaryData::Tape_Module_Reference_1536x469_pngSize; }
+    else if(section == "Stereo + Limiter") { asset=BinaryData::stereo_limiter_approved_source_png; assetSize=BinaryData::stereo_limiter_approved_source_pngSize; }
     if (asset != nullptr && assetSize > 0) {
        contents.art = juce::ImageFileFormat::loadFrom(asset, (size_t)assetSize);
     }
