@@ -125,8 +125,26 @@ void SteamMasterProcessor::processBlock(juce::AudioBuffer<float>& buffer,juce::M
     if(buffer.getNumChannels()<2)return;
     updateDSP();
     auto* left=buffer.getWritePointer(0);auto* right=buffer.getWritePointer(1);
-    for(int i=0;i<buffer.getNumSamples();++i){const auto y=rack->process({double(left[i]),double(right[i])});left[i]=float(y.l);right[i]=float(y.r);}
-    for(int c=2;c<buffer.getNumChannels();++c)buffer.clear(c,0,buffer.getNumSamples());
+    float peak=0.f;
+    for(int i=0;i<buffer.getNumSamples();++i){
+        const auto y=rack->process({double(left[i]),double(right[i])});
+        left[i]=float(y.l);right[i]=float(y.r);
+        peak=juce::jmax(peak,std::abs(left[i]),std::abs(right[i]));
+    }
+    for(int channel=2;channel<buffer.getNumChannels();++channel)
+        buffer.clear(channel,0,buffer.getNumSamples());
+    if(buffer.getNumSamples()>0){
+        // GUI telemetry is lock-free, published only once per processing block.
+        // No file access, allocations, locks, or message-thread calls here.
+        meterOutputDb.store(20.f*std::log10(juce::jmax(1.0e-6f,peak)),std::memory_order_relaxed);
+        meterOceanGr.store((float)rack->firstSix.ocean.gainReductionDb(),std::memory_order_relaxed);
+        meterFurnaceGr.store((float)rack->firstSix.furnace.gainReductionDb(),std::memory_order_relaxed);
+        meterShadowOpticalGr.store((float)rack->firstSix.shadow.opticalReductionDb(),std::memory_order_relaxed);
+        meterShadowDiscreteGr.store((float)rack->firstSix.shadow.discreteReductionDb(),std::memory_order_relaxed);
+        const auto gr=rack->limiter.gainReductionDb();
+        meterLimiterGr.store((float)juce::jmax(std::abs(gr.l),std::abs(gr.r)),std::memory_order_relaxed);
+        meterCorrelation.store((float)rack->stereo.correlation(),std::memory_order_relaxed);
+    }
 }
 juce::AudioProcessorEditor* SteamMasterProcessor::createEditor(){return new SteamMasterEditor(*this);}
 void SteamMasterProcessor::getStateInformation(juce::MemoryBlock& dest){if(auto xml=state.copyState().createXml())copyXmlToBinary(*xml,dest);}
