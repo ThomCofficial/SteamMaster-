@@ -5,10 +5,10 @@
 #endif
 
 namespace {
-constexpr auto brass = juce::Colour(0xffbb9353);
-constexpr auto ivory = juce::Colour(0xfff0dec0);
-constexpr auto steel = juce::Colour(0xff263742);
-constexpr auto deep = juce::Colour(0xff10191d);
+const juce::Colour brass (0xffbb9353);
+const juce::Colour ivory (0xfff0dec0);
+const juce::Colour steel (0xff263742);
+const juce::Colour deep (0xff10191d);
 class SteamLook final : public juce::LookAndFeel_V4 {
 public:
  SteamLook() {
@@ -428,7 +428,7 @@ void SteamMasterEditor::Page::resized() {
 
     int extra=0;
     for(int i=0;i<(int)controls.size();++i) {
-        auto p=approvedPosition(section,i);
+        auto p=approvedPosition(ids[(size_t)i]);
         const bool embedded=artValid&&p.x>=0&&p.y>=0;
         int x,y,w,h;
         if(embedded) {
