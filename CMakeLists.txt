@@ -154,7 +154,8 @@ if(STEAMMASTER_BUILD_VST3)
   set(STEAMMASTER_MODULE_NAMES ocean furnace parametric pultec shadow exciter bax tape stereo_limiter)
   set(STEAMMASTER_UNIFIED_ART_FILES
       "${CMAKE_CURRENT_SOURCE_DIR}/tools/ui_layout.json"
-      "${CMAKE_CURRENT_SOURCE_DIR}/plugin/generated/header_original_faceplate.png")
+      "${CMAKE_CURRENT_SOURCE_DIR}/plugin/generated/header_original_faceplate.png"
+      "${CMAKE_CURRENT_SOURCE_DIR}/plugin/generated/tape_reels.png")
   foreach(MOD IN LISTS STEAMMASTER_MODULE_NAMES)
     list(APPEND STEAMMASTER_UNIFIED_ART_FILES
       "${CMAKE_CURRENT_SOURCE_DIR}/plugin/generated/${MOD}_faceplate.png"
