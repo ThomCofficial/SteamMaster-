@@ -102,7 +102,7 @@ if(STEAMMASTER_BUILD_VST3)
   FetchContent_Declare(juce GIT_REPOSITORY https://github.com/juce-framework/JUCE.git GIT_TAG 8.0.10 GIT_SHALLOW TRUE)
   FetchContent_MakeAvailable(juce)
   juce_add_plugin(SteamMasterVST3 COMPANY_NAME "ThomC" BUNDLE_ID "com.thomc.steammaster.testbench" PLUGIN_MANUFACTURER_CODE ThmC PLUGIN_CODE SmT1 FORMATS VST3 PRODUCT_NAME "SteamMaster" IS_SYNTH FALSE NEEDS_MIDI_INPUT FALSE NEEDS_MIDI_OUTPUT FALSE COPY_PLUGIN_AFTER_BUILD FALSE)
-  target_sources(SteamMasterVST3 PRIVATE plugin/PluginProcessor.cpp plugin/PluginProcessor.h plugin/PluginEditor.cpp plugin/PluginEditor.h)
+  target_sources(SteamMasterVST3 PRIVATE plugin/PluginProcessor.cpp plugin/PluginProcessor.h plugin/PluginEditor.cpp plugin/PluginEditor.h plugin/HeaderModule.cpp plugin/HeaderModule.h)
   target_link_libraries(SteamMasterVST3 PRIVATE steammaster_dsp juce::juce_audio_utils juce::juce_audio_processors juce::juce_gui_extra juce::juce_dsp)
   target_compile_definitions(SteamMasterVST3 PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0)
   # Every source panel is embedded from the ORIGINAL uploaded GitHub asset folders.
@@ -120,6 +120,26 @@ if(STEAMMASTER_BUILD_VST3)
     "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_StereoImage_Limiter_Module_Kit_v1/00_source/stereo_limiter_approved_source.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/knob_input_silver.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/knob_output_silver.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/global_toggle_off.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/global_toggle_on.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/button_off_off.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/button_off_on.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/button_2x_off.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/button_2x_on.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/button_4x_off.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/button_4x_on.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/button_8x_off.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/button_8x_on.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/button_a_off.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/button_a_on.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/button_b_off.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/button_b_on.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/button_previous_off.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/button_previous_on.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/button_next_off.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/button_next_on.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/button_save_off.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/button_save_on.png"
   )
   foreach(ART_FILE IN LISTS STEAMMASTER_ART_FILES)
     if(NOT EXISTS "${ART_FILE}")
