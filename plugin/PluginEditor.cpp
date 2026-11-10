@@ -534,7 +534,7 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
         presetLabel=std::make_unique<juce::Label>();
         presetLabel->setJustificationType(juce::Justification::centred);
         presetLabel->setFont(juce::Font(juce::FontOptions(17.f,juce::Font::italic)));
-        presetLabel->setColour(juce::Label::backgroundColourId,juce::Colour(0xff292319));
+        presetLabel->setColour(juce::Label::backgroundColourId,juce::Colours::transparentBlack);
         presetLabel->setColour(juce::Label::textColourId,juce::Colour(0xffedd6a0));
         presetLabel->setText(presetTitle,juce::dontSendNotification);
         contents.addAndMakeVisible(*presetLabel);
@@ -621,20 +621,20 @@ void SteamMasterEditor::Page::ArtCanvas::paintMovingParts(juce::Graphics& g) {
         g.drawImageTransformed(sprite,t,false);
     };
     if(section=="Tape") {
-        drawReel(leftReel,174.f*4.f*sx,70.f*4.f*sy,112.f*4.f*sx);
-        drawReel(rightReel,969.f*4.f*sx,70.f*4.f*sy,112.f*4.f*sx);
+        drawReel(leftReel,174.f*sx,70.f*sy,136.f*sx);
+        drawReel(rightReel,969.f*sx,70.f*sy,136.f*sx);
     } else if(section=="Shadow") {
         const float reduction=juce::jmax(0.f,-read(processor->meterShadowOpticalGr))
                             +juce::jmax(0.f,-read(processor->meterShadowDiscreteGr));
-        drawMeterNeedle(g,shadowNeedle,570.f*4.f*sx,109.f*4.f*sy,130.f*sx,
+        drawMeterNeedle(g,shadowNeedle,570.f*sx,109.f*sy,78.f*sx,
                         juce::jlimit(0.f,1.f,reduction/20.f));
     } else if(section=="Exciter") {
-        drawMeterNeedle(g,exciterNeedle,565.f*4.f*sx,80.f*4.f*sy,140.f*sx,
+        drawMeterNeedle(g,exciterNeedle,565.f*sx,76.f*sy,70.f*sx,
                         juce::jlimit(0.f,1.f,(read(processor->meterOutputDb)+60.f)/60.f));
     } else if(section=="Stereo + Limiter") {
-        drawMeterNeedle(g,correlationNeedle,750.f*sx,295.f*sy,200.f*sx,
+        drawMeterNeedle(g,correlationNeedle,363.f*sx,133.f*sy,75.f*sx,
                         (read(processor->meterCorrelation)+1.f)*0.5f);
-        drawMeterNeedle(g,limiterNeedle,1880.f*sx,295.f*sy,200.f*sx,
+        drawMeterNeedle(g,limiterNeedle,1040.f*sx,133.f*sy,75.f*sx,
                         juce::jlimit(0.f,1.f,read(processor->meterLimiterGr)/20.f));
     }
 }
