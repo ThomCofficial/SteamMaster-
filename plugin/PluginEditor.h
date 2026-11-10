@@ -19,9 +19,13 @@ private:
         juce::Viewport viewport;
         struct ArtCanvas final : juce::Component {
             juce::Image art;
+            int artHeight = 0;
             void paint(juce::Graphics& g) override {
-                if(art.isValid()) g.drawImage(art, getLocalBounds().toFloat());
-                else g.fillAll(juce::Colour(0xff26333a));
+                g.fillAll(juce::Colour(0xff19252a));
+                if(art.isValid() && artHeight > 0) {
+                    g.drawImage(art, juce::Rectangle<float>(0.f,0.f,(float)getWidth(),(float)artHeight),
+                                juce::RectanglePlacement::stretchToFit);
+                }
             }
         } contents;
         std::vector<std::unique_ptr<juce::Component>> controls;
