@@ -399,9 +399,41 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
     else if(section == "Tape") { asset=BinaryData::TapeMachine_Faceplate_Clean_4x_png; assetSize=BinaryData::TapeMachine_Faceplate_Clean_4x_pngSize; }
     else if(section == "Stereo + Limiter") { asset=BinaryData::StereoImage_Limiter_Clean_Redesigned_png; assetSize=BinaryData::StereoImage_Limiter_Clean_Redesigned_pngSize; }
     if (asset != nullptr && assetSize > 0) {
-       contents.art = juce::ImageFileFormat::loadFrom(asset, (size_t)assetSize);
-       if (section == "Ocean + Furnace" && contents.art.isValid())
-           contents.art = contents.art.getClippedImage(juce::Rectangle<int>(0, 215, 2172, 300));
+        contents.art = juce::ImageFileFormat::loadFrom(asset, (size_t)assetSize);
+        if (contents.art.isValid()) {
+            // Crop native artwork rather than stretching large empty PNG margins.
+            if (section == "Ocean + Furnace")
+                contents.art=contents.art.getClippedImage({0,224,2172,276});
+            else if (section == "Pultec")
+                contents.art=contents.art.getClippedImage({0,252,2172,232});
+            else if (section == "Stereo + Limiter")
+                contents.art=contents.art.getClippedImage({0,142,2172,406});
+        }
+    }
+    contents.section=section;
+    contents.processor=&source;
+    auto loadImage=[](const void* p,size_t bytes) {
+        return juce::ImageFileFormat::loadFrom(p,bytes);
+    };
+    if(section=="Tape") {
+        contents.leftReel=loadImage(BinaryData::Reel_Left_FrontOn_png,
+                                   (size_t)BinaryData::Reel_Left_FrontOn_pngSize);
+        contents.rightReel=loadImage(BinaryData::Reel_Right_FrontOn_png,
+                                    (size_t)BinaryData::Reel_Right_FrontOn_pngSize);
+    }
+    if(section=="Shadow") {
+        contents.shadowNeedle=loadImage(BinaryData::GainReduction_Needle_png,
+                                        (size_t)BinaryData::GainReduction_Needle_pngSize);
+    }
+    if(section=="Exciter") {
+        contents.exciterNeedle=loadImage(BinaryData::VU_Animated_Needle_Brass_png,
+                                         (size_t)BinaryData::VU_Animated_Needle_Brass_pngSize);
+    }
+    if(section=="Stereo + Limiter") {
+        contents.correlationNeedle=loadImage(BinaryData::Correlation_Needle_Separate_png,
+                                              (size_t)BinaryData::Correlation_Needle_Separate_pngSize);
+        contents.limiterNeedle=loadImage(BinaryData::Gain_Reduction_Needle_Separate_png,
+                                          (size_t)BinaryData::Gain_Reduction_Needle_Separate_pngSize);
     }
 #endif
     addAndMakeVisible(contents);
@@ -555,7 +587,55 @@ void SteamMasterEditor::Page::navigatePreset(int direction) {
     } else if(presetLabel) presetLabel->setText("Invalid preset",juce::dontSendNotification);
 }
 
-void SteamMasterEditor::Page::timerCallback(){repaint(juce::Rectangle<int>(getWidth()-295,0,290,30));}
+void SteamMasterEditor::Page::timerCallback(){
+    if (section=="Tape") contents.reelAngle += 0.025f;
+    contents.repaint();
+    if (section=="Global") repaint(juce::Rectangle<int>(getWidth()-150,0,150,20));
+}
+void SteamMasterEditor::Page::ArtCanvas::drawMeterNeedle(
+    juce::Graphics& g,const juce::Image& needle,float cx,float cy,
+    float radius,float fraction) {
+    if (!needle.isValid()) return;
+    const float scale=radius*0.72f/(float)juce::jmax(needle.getWidth(),needle.getHeight());
+    const float angle=juce::jmap(juce::jlimit(0.f,1.f,fraction),-0.85f,0.85f);
+    const float sw=(float)needle.getWidth(), sh=(float)needle.getHeight();
+    auto transform=juce::AffineTransform::rotation(angle,sw*0.5f,sh*0.82f)
+        .scaled(scale).translated(cx-sw*scale*0.5f,cy-sh*scale*0.82f);
+    g.drawImageTransformed(needle,transform,false);
+}
+void SteamMasterEditor::Page::ArtCanvas::paintMovingParts(juce::Graphics& g) {
+    if (!processor || !art.isValid()) return;
+    const float sx=(float)getWidth()/art.getWidth();
+    const float sy=(float)artHeight/art.getHeight();
+    const auto read=[](const std::atomic<float>& v){
+        return v.load(std::memory_order_relaxed);
+    };
+    auto drawReel=[&](const juce::Image& sprite,float x,float y,float diameter) {
+        if(!sprite.isValid())return;
+        const float scale=diameter/(float)juce::jmax(sprite.getWidth(),sprite.getHeight());
+        const float iw=(float)sprite.getWidth(), ih=(float)sprite.getHeight();
+        auto t=juce::AffineTransform::rotation(reelAngle,iw/2.f,ih/2.f)
+               .scaled(scale).translated(x-diameter/2.f,y-diameter/2.f);
+        g.drawImageTransformed(sprite,t,false);
+    };
+    if(section=="Tape") {
+        drawReel(leftReel,174.f*4.f*sx,70.f*4.f*sy,112.f*4.f*sx);
+        drawReel(rightReel,969.f*4.f*sx,70.f*4.f*sy,112.f*4.f*sx);
+    } else if(section=="Shadow") {
+        const float reduction=juce::jmax(0.f,-read(processor->meterShadowOpticalGr))
+                            +juce::jmax(0.f,-read(processor->meterShadowDiscreteGr));
+        drawMeterNeedle(g,shadowNeedle,570.f*4.f*sx,109.f*4.f*sy,130.f*sx,
+                        juce::jlimit(0.f,1.f,reduction/20.f));
+    } else if(section=="Exciter") {
+        drawMeterNeedle(g,exciterNeedle,565.f*4.f*sx,80.f*4.f*sy,140.f*sx,
+                        juce::jlimit(0.f,1.f,(read(processor->meterOutputDb)+60.f)/60.f));
+    } else if(section=="Stereo + Limiter") {
+        drawMeterNeedle(g,correlationNeedle,750.f*sx,295.f*sy,200.f*sx,
+                        (read(processor->meterCorrelation)+1.f)*0.5f);
+        drawMeterNeedle(g,limiterNeedle,1880.f*sx,295.f*sy,200.f*sx,
+                        juce::jlimit(0.f,1.f,read(processor->meterLimiterGr)/20.f));
+    }
+}
 void SteamMasterEditor::Page::paint(juce::Graphics& g) {
     g.fillAll(deep);
     g.setColour(brass);
