@@ -10,8 +10,17 @@ const juce::Colour ivory (0xfff0dec0);
 const juce::Colour steel (0xff263742);
 const juce::Colour deep (0xff10191d);
 class SteamLook final : public juce::LookAndFeel_V4 {
+#ifdef STEAMMASTER_HAS_ARTWORK
+ juce::Image globalInput, globalOutput;
+#endif
 public:
  SteamLook() {
+#ifdef STEAMMASTER_HAS_ARTWORK
+    globalInput = juce::ImageFileFormat::loadFrom(BinaryData::knob_input_silver_png,
+                                                 (size_t)BinaryData::knob_input_silver_pngSize);
+    globalOutput = juce::ImageFileFormat::loadFrom(BinaryData::knob_output_silver_png,
+                                                  (size_t)BinaryData::knob_output_silver_pngSize);
+#endif
     setColour(juce::Slider::textBoxTextColourId, ivory);
     setColour(juce::Slider::textBoxBackgroundColourId, deep);
     setColour(juce::Slider::textBoxOutlineColourId, brass.withAlpha(0.45f));
@@ -24,7 +33,24 @@ public:
     setColour(juce::TabbedButtonBar::frontOutlineColourId, brass);
  }
  void drawRotarySlider(juce::Graphics& g,int x,int y,int w,int h,float position,
-                      float start,float end,juce::Slider&) override {
+                      float start,float end,juce::Slider& slider) override {
+#ifdef STEAMMASTER_HAS_ARTWORK
+    const juce::Image* sprite = nullptr;
+    if(slider.getComponentID()=="global_input_db") sprite=&globalInput;
+    if(slider.getComponentID()=="global_output_db") sprite=&globalOutput;
+    if(sprite!=nullptr && sprite->isValid()) {
+       const float diameter=(float)juce::jmin(w,h)*0.80f;
+       const float scale=diameter/(float)juce::jmax(sprite->getWidth(),sprite->getHeight());
+       const float angle=start+position*(end-start);
+       const float imageW=(float)sprite->getWidth(),imageH=(float)sprite->getHeight();
+       juce::Graphics::ScopedSaveState saved(g);
+       auto matrix=juce::AffineTransform::rotation(angle,imageW/2.f,imageH/2.f)
+                       .scaled(scale).translated((float)x+w/2.f-imageW*scale/2.f,
+                                                  (float)y+h/2.f-imageH*scale/2.f);
+       g.drawImageTransformed(*sprite,matrix);
+       return;
+    }
+#endif
     auto bounds=juce::Rectangle<float>((float)x,(float)y,(float)w,(float)h).reduced(7.f);
     const float r=juce::jmin(bounds.getWidth(),bounds.getHeight())*0.43f;
     const auto c=bounds.getCentre();
@@ -242,7 +268,8 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
                 controls.push_back(std::move(box));
             } else {
                 auto slider=std::make_unique<juce::Slider>();
-                slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+                slider->setComponentID(id);
+            slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
                 slider->setTextBoxStyle(juce::Slider::TextBoxBelow,false,108,23);
                 slider->setRange(0,juce::jmax(0,choice->choices.size()-1),1);
                 slider->setRotaryParameters(juce::MathConstants<float>::pi*1.25f,
@@ -266,6 +293,7 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
             controls.push_back(std::move(b));
         } else {
             auto slider=std::make_unique<juce::Slider>();
+            slider->setComponentID(id);
             slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
             slider->setTextBoxStyle(juce::Slider::TextBoxBelow,false,92,23);
             slider->setRotaryParameters(juce::MathConstants<float>::pi*1.25f,
