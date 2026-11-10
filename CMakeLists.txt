@@ -102,7 +102,7 @@ if(STEAMMASTER_BUILD_VST3)
   FetchContent_Declare(juce GIT_REPOSITORY https://github.com/juce-framework/JUCE.git GIT_TAG 8.0.10 GIT_SHALLOW TRUE)
   FetchContent_MakeAvailable(juce)
   juce_add_plugin(SteamMasterVST3 COMPANY_NAME "ThomC" BUNDLE_ID "com.thomc.steammaster.testbench" PLUGIN_MANUFACTURER_CODE ThmC PLUGIN_CODE SmT1 FORMATS VST3 PRODUCT_NAME "SteamMaster" IS_SYNTH FALSE NEEDS_MIDI_INPUT FALSE NEEDS_MIDI_OUTPUT FALSE COPY_PLUGIN_AFTER_BUILD FALSE)
-  target_sources(SteamMasterVST3 PRIVATE plugin/PluginProcessor.cpp plugin/PluginProcessor.h plugin/PluginEditor.cpp plugin/PluginEditor.h plugin/HeaderModule.cpp plugin/HeaderModule.h)
+  target_sources(SteamMasterVST3 PRIVATE plugin/PluginProcessor.cpp plugin/PluginProcessor.h plugin/PluginEditor.cpp plugin/PluginEditor.h plugin/HeaderModule.cpp plugin/HeaderModule.h plugin/UnifiedModule.cpp plugin/UnifiedModule.h)
   target_link_libraries(SteamMasterVST3 PRIVATE steammaster_dsp juce::juce_audio_utils juce::juce_audio_processors juce::juce_gui_extra juce::juce_dsp)
   target_compile_definitions(SteamMasterVST3 PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0)
   # Every source panel is embedded from the ORIGINAL uploaded GitHub asset folders.
@@ -150,7 +150,22 @@ if(STEAMMASTER_BUILD_VST3)
       message(FATAL_ERROR "STEAMMASTER INVALID SMALL ARTWORK: ${ART_FILE}")
     endif()
   endforeach()
-  juce_add_binary_data(SteamMasterArtwork SOURCES ${STEAMMASTER_ART_FILES})
+  # Deterministic source-art reconstruction (never 1-pixel placeholders).
+  set(STEAMMASTER_MODULE_NAMES ocean furnace parametric pultec shadow exciter bax tape stereo_limiter)
+  set(STEAMMASTER_UNIFIED_ART_FILES
+      "${CMAKE_CURRENT_SOURCE_DIR}/tools/ui_layout.json"
+      "${CMAKE_CURRENT_SOURCE_DIR}/plugin/generated/header_original_faceplate.png")
+  foreach(MOD IN LISTS STEAMMASTER_MODULE_NAMES)
+    list(APPEND STEAMMASTER_UNIFIED_ART_FILES
+      "${CMAKE_CURRENT_SOURCE_DIR}/plugin/generated/${MOD}_faceplate.png"
+      "${CMAKE_CURRENT_SOURCE_DIR}/plugin/generated/${MOD}_rotors.png")
+  endforeach()
+  foreach(ART_FILE IN LISTS STEAMMASTER_UNIFIED_ART_FILES)
+    if(NOT EXISTS "${ART_FILE}")
+      message(FATAL_ERROR "Missing generated original artwork: ${ART_FILE}; run python tools/prepare_unified_ui.py")
+    endif()
+  endforeach()
+  juce_add_binary_data(SteamMasterArtwork SOURCES ${STEAMMASTER_ART_FILES} ${STEAMMASTER_UNIFIED_ART_FILES})
   target_link_libraries(SteamMasterVST3 PRIVATE SteamMasterArtwork)
   target_compile_definitions(SteamMasterVST3 PRIVATE STEAMMASTER_HAS_ARTWORK=1)
   juce_generate_juce_header(SteamMasterVST3)
