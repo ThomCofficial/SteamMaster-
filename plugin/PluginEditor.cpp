@@ -15,6 +15,7 @@ class SteamLook final : public juce::LookAndFeel_V4 {
     std::map<juce::String, std::pair<juce::Image, juce::Image>> switches;
     std::map<juce::String, std::pair<juce::Image, juce::Image>> headerButtonsArt;
     std::map<int, juce::Image> oversamplingArt;
+    std::map<juce::String, std::array<juce::Image,6>> eqModes;
 public:
     SteamLook() {
 #ifdef STEAMMASTER_HAS_ARTWORK
@@ -206,6 +207,39 @@ public:
                 inSheet.getClippedImage({531,152,385,763})};
         }
 #endif
+#ifdef STEAMMASTER_HAS_ARTWORK
+        eqModes["parametric_band_1_type"]={
+            juce::ImageFileFormat::loadFrom(BinaryData::Band1_Peak_OriginalState_png,(size_t)BinaryData::Band1_Peak_OriginalState_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band1_Peak_OFF_png,(size_t)BinaryData::Band1_Peak_OFF_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band1_Low_Shelf_ON_png,(size_t)BinaryData::Band1_Low_Shelf_ON_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band1_Low_Shelf_OriginalState_png,(size_t)BinaryData::Band1_Low_Shelf_OriginalState_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band1_High_Shelf_ON_png,(size_t)BinaryData::Band1_High_Shelf_ON_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band1_High_Shelf_OriginalState_png,(size_t)BinaryData::Band1_High_Shelf_OriginalState_pngSize)};
+        eqModes["parametric_band_2_type"]={
+            juce::ImageFileFormat::loadFrom(BinaryData::Band2_Peak_OriginalState_png,(size_t)BinaryData::Band2_Peak_OriginalState_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band2_Peak_OFF_png,(size_t)BinaryData::Band2_Peak_OFF_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band2_Low_Shelf_ON_png,(size_t)BinaryData::Band2_Low_Shelf_ON_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band2_Low_Shelf_OriginalState_png,(size_t)BinaryData::Band2_Low_Shelf_OriginalState_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band2_High_Shelf_ON_png,(size_t)BinaryData::Band2_High_Shelf_ON_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band2_High_Shelf_OriginalState_png,(size_t)BinaryData::Band2_High_Shelf_OriginalState_pngSize)};
+        eqModes["parametric_band_3_type"]={
+            juce::ImageFileFormat::loadFrom(BinaryData::Band3_Peak_OriginalState_png,(size_t)BinaryData::Band3_Peak_OriginalState_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band3_Peak_OFF_png,(size_t)BinaryData::Band3_Peak_OFF_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band3_Low_Shelf_ON_png,(size_t)BinaryData::Band3_Low_Shelf_ON_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band3_Low_Shelf_OriginalState_png,(size_t)BinaryData::Band3_Low_Shelf_OriginalState_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band3_High_Shelf_ON_png,(size_t)BinaryData::Band3_High_Shelf_ON_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band3_High_Shelf_OriginalState_png,(size_t)BinaryData::Band3_High_Shelf_OriginalState_pngSize)};
+        eqModes["parametric_band_4_type"]={
+            juce::ImageFileFormat::loadFrom(BinaryData::Band4_Peak_OriginalState_png,(size_t)BinaryData::Band4_Peak_OriginalState_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band4_Peak_OFF_png,(size_t)BinaryData::Band4_Peak_OFF_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band4_Low_Shelf_ON_png,(size_t)BinaryData::Band4_Low_Shelf_ON_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band4_Low_Shelf_OriginalState_png,(size_t)BinaryData::Band4_Low_Shelf_OriginalState_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band4_High_Shelf_ON_png,(size_t)BinaryData::Band4_High_Shelf_ON_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Band4_High_Shelf_OriginalState_png,(size_t)BinaryData::Band4_High_Shelf_OriginalState_pngSize)};
+        switches["parametric_in"]={
+            juce::ImageFileFormat::loadFrom(BinaryData::IN_OriginalState_png,(size_t)BinaryData::IN_OriginalState_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::IN_OFF_png,(size_t)BinaryData::IN_OFF_pngSize)};
+#endif
         setColour(juce::Slider::textBoxTextColourId, ivory);
         setColour(juce::Slider::textBoxBackgroundColourId, deep);
         setColour(juce::Slider::textBoxOutlineColourId, brass.withAlpha(0.45f));
@@ -217,6 +251,20 @@ public:
     }
     void drawComboBox(juce::Graphics& g, int w, int h, bool,
                       int, int, int, int, juce::ComboBox& box) override {
+#ifdef STEAMMASTER_HAS_ARTWORK
+        auto eq=eqModes.find(box.getComponentID());
+        if(eq!=eqModes.end()){
+            const int selected=juce::jlimit(0,2,box.getSelectedItemIndex());
+            for(int i=0;i<3;i++){
+                const auto& sprite=eq->second[(size_t)(i*2+(i==selected?0:1))];
+                if(sprite.isValid())
+                    g.drawImage(sprite,juce::Rectangle<float>(
+                        (float)i*w/3.f,0.f,(float)w/3.f,(float)h),
+                        juce::RectanglePlacement::stretchToFit,false);
+            }
+            return;
+        }
+#endif
         if(box.getComponentID()=="global_oversampling") {
 #ifdef STEAMMASTER_HAS_ARTWORK
             const int index=juce::jlimit(0,3,box.getSelectedItemIndex());
@@ -542,7 +590,8 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
         if(auto* choice=dynamic_cast<juce::AudioParameterChoice*>(p)) {
             // Rotary detents for frequency selectors and vintage switch banks.
             // Multi-mode buttons remain a readable popup selector.
-            const bool popup=id=="global_oversampling" || id=="exciter_mode" ||
+            const bool popup=(id.startsWith("parametric_band_") && id.endsWith("_type")) ||
+                             id=="global_oversampling" || id=="exciter_mode" ||
                              id=="limiter_mode" || id=="stereo_routing";
             if(popup) {
                 auto box=std::make_unique<juce::ComboBox>();
@@ -856,11 +905,12 @@ void SteamMasterEditor::Page::resized() {
                          id=="limiter_mode" || id=="exciter_mode";
         const float diameter=(section=="Global")
              ? (id=="global_in"?185.f:(combo?72.f:56.f))
-             : (id=="exciter_mode"?133.f:(id=="limiter_mode"?169.f:
+             : (id.startsWith("parametric_band_") && id.endsWith("_type")?156.f:
+                (id=="exciter_mode"?133.f:(id=="limiter_mode"?169.f:
                 (id=="stereo_routing"?104.f:
-                (small?(toggle?25.f:(combo?56.f:30.f)):38.f))));
+                (small?(toggle?25.f:(combo?56.f:30.f)):38.f)))));
         const int w=juce::jmax(14,juce::roundToInt((id=="global_in"?94.f:diameter)*sx));
-        const int h=juce::jmax(14,juce::roundToInt((id=="global_in"?185.f:(combo?(id=="exciter_mode"?26.f:(id=="limiter_mode"?36.f:34.f)):diameter))*sy));
+        const int h=juce::jmax(14,juce::roundToInt((id=="global_in"?185.f:(combo?(id=="exciter_mode"?26.f:(id=="limiter_mode"?36.f:(id.startsWith("parametric_band_")?23.f:34.f))):diameter))*sy));
         const int x=juce::roundToInt(p.x*sx)-w/2;
         const int y=juce::roundToInt(p.y*sy)-h/2;
         control->setBounds(x,y,w,h);
