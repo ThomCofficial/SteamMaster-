@@ -34,6 +34,7 @@ public:
     std::atomic<float> meterRightDb{-90.f};
     std::atomic<float> meterIntegratedLufs{-90.f};
     std::atomic<float> meterShortTermLufs{-90.f};
+    std::atomic<float> meterTruePeakDb{-90.f};
     std::atomic<float> meterOceanGr{0.f};
     std::atomic<float> meterFurnaceGr{0.f};
     std::atomic<float> meterShadowOpticalGr{0.f};
