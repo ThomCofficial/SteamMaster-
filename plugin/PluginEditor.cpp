@@ -209,6 +209,7 @@ void SteamMasterEditor::Page::resized() {
     const int cols=juce::jmax(1,artWidth/cellW);
     const int extraRows=(overflow+cols-1)/cols;
     const int totalHeight=artHeight+(extraRows?extraRows*cellH+28:0);
+    contents.artHeight=artHeight;
     contents.setSize(artWidth,totalHeight);
     int extra=0;
     for(int i=0;i<(int)controls.size();++i) {
@@ -237,7 +238,7 @@ void SteamMasterEditor::Page::resized() {
         }
         auto* control=controls[(size_t)i].get();
         control->setBounds(x,y,w,h);
-        control->setTooltip(labels[(size_t)i]->getText());
+        control->setName(labels[(size_t)i]->getText());
     }
 }
 SteamMasterEditor::SteamMasterEditor(SteamMasterProcessor& p):AudioProcessorEditor(&p),processor(p) {
