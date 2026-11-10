@@ -11,6 +11,7 @@ public:
     ~SteamMasterEditor() override;
     void resized() override;
     void paint(juce::Graphics&) override;
+    bool saveFullRackPreview(const juce::File& destination);
 private:
     struct Page final : juce::Component, private juce::Timer {
         explicit Page(juce::AudioProcessor&,juce::AudioProcessorValueTreeState&,const juce::String&);
