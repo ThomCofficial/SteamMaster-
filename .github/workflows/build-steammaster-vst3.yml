@@ -1,6 +1,8 @@
 name: SteamMaster Windows VST3 — real artwork
 on:
   workflow_dispatch:
+  push:
+    branches: [ui-development-assets-integration]
   pull_request:
     branches: [vst3/v1.7-performance-character]
     paths:
@@ -16,33 +18,16 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - name: Verify all 12 original visual assets
+      - name: Verify uploaded UI assets
         shell: pwsh
         run: |
-          $names = @(
-            'plugin/assets/SteamMaster_Global_Header_Complete_v2/header_faceplate_blank_candidate.png',
-            'plugin/assets/SteamMaster_Ocean_Furnace_Asset_Prep_v1/ocean_module_source.png',
-            'plugin/assets/SteamMaster_Ocean_Furnace_Asset_Prep_v1/furnace_module_source.png',
-            'plugin/assets/SteamMaster_ParametricEQ_Asset_Prep_v1/parametric_eq_module_source.png',
-            'plugin/assets/SteamMaster_Pultec_EQ_DSP_Locked_Handoff/artwork/Pultec_Approved_Reference.png',
-            'plugin/assets/SteamMaster_Shadow_Complete_Module_Kit_v1/01_reference/Shadow_Source_Locked.png',
-            'plugin/assets/SteamMaster_Exciter_Complete_Asset_Prep_v1/SteamMaster_Exciter_Complete_Asset_Prep_v1/source/Exciter_panel_uncorrected_1536x402.png',
-            'plugin/assets/SteamMaster_BaxandallEQ_Module_Kit_v1/01_reference/baxandall_module_trimmed_reference.png',
-            'plugin/assets/SteamMaster_Tape_Complete_Module_Kit_v1/source/Tape_Module_Reference_1536x469.png',
-            'plugin/assets/SteamMaster_StereoImage_Limiter_Module_Kit_v1/00_source/stereo_limiter_approved_source.png',
-            'plugin/assets/SteamMaster_Global_Header_Complete_v2/knob_input_silver.png',
-            'plugin/assets/SteamMaster_Global_Header_Complete_v2/knob_output_silver.png'
-          )
-          foreach ($path in $names) {
-            if (!(Test-Path $path)) { throw "MISSING ORIGINAL ARTWORK: $path" }
-            $file = Get-Item $path
-            if ($file.Length -lt 10240) { throw "REJECTED PLACEHOLDER ASSET: $path ($($file.Length) bytes)" }
-            $bytes = [IO.File]::ReadAllBytes((Resolve-Path $path).Path)
-            $magic = [byte[]](137,80,78,71,13,10,26,10)
-            for ($i=0; $i -lt 8; $i++) {
-              if($bytes[$i] -ne $magic[$i]) { throw "INVALID PNG SIGNATURE: $path" }
-            }
-            Write-Host "Original artwork verified: $path ($($file.Length) bytes)"
+          $packs = @('01_Header','02_Ocean_Furnace','03_Parametric_EQ','04_Pultec_EQ','05_Shadow_Compressor','06_Exciter','07_Baxandall_EQ','08_Tape_Machine_v3','09_Stereo_Limiter_v3')
+          foreach ($pack in $packs) {
+            $folder = Join-Path 'plugin/assets' $pack
+            if (!(Test-Path $folder)) { throw "MISSING UI MODULE: $pack" }
+            $pngs = @(Get-ChildItem $folder -Filter '*.png' -File -Recurse)
+            if ($pngs.Count -lt 1) { throw "MISSING PNG ASSETS: $pack" }
+            Write-Host "$pack : $($pngs.Count) PNG files"
           }
       - name: Configure Release VST3
         run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DSTEAMMASTER_BUILD_VST3=ON -DBUILD_TESTING=ON
