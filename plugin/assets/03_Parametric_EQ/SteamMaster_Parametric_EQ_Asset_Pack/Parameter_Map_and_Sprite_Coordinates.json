@@ -1,0 +1,655 @@
+{
+  "module": "Parametric EQ \u2014 Four-Band Equalizer",
+  "source": "User-supplied Parametric EQ.png, preserved as positioning authority",
+  "source_pixels": [
+    1144,
+    139
+  ],
+  "sprite_scale": 4,
+  "faceplate_pixels": [
+    4576,
+    556
+  ],
+  "control_count": {
+    "knobs": 14,
+    "mode_buttons": 12,
+    "in_buttons": 1
+  },
+  "knobs": [
+    {
+      "id": "Band1_Gain",
+      "band": 1,
+      "kind": "Gain",
+      "x": 198,
+      "y": 72,
+      "radius": 17,
+      "sprite_size": [
+        148,
+        148
+      ],
+      "origin_px": [
+        720,
+        216
+      ],
+      "parameter": {
+        "min": -12,
+        "max": 12,
+        "unit": "dB",
+        "scale": [
+          "\u221212",
+          "0",
+          "+12"
+        ]
+      }
+    },
+    {
+      "id": "Band1_Frequency",
+      "band": 1,
+      "kind": "Frequency",
+      "x": 261,
+      "y": 72,
+      "radius": 17,
+      "sprite_size": [
+        148,
+        148
+      ],
+      "origin_px": [
+        972,
+        216
+      ],
+      "parameter": {
+        "min": 20,
+        "max": 20000,
+        "unit": "Hz",
+        "scale": [
+          "20",
+          "200",
+          "2k",
+          "20k"
+        ]
+      }
+    },
+    {
+      "id": "Band1_Q",
+      "band": 1,
+      "kind": "Q",
+      "x": 319,
+      "y": 72,
+      "radius": 14,
+      "sprite_size": [
+        124,
+        124
+      ],
+      "origin_px": [
+        1216,
+        228
+      ],
+      "parameter": {
+        "min": 0.2,
+        "max": 8,
+        "unit": "Q",
+        "scale": [
+          "0.2",
+          "1",
+          "8"
+        ]
+      }
+    },
+    {
+      "id": "Band2_Gain",
+      "band": 2,
+      "kind": "Gain",
+      "x": 397,
+      "y": 72,
+      "radius": 17,
+      "sprite_size": [
+        148,
+        148
+      ],
+      "origin_px": [
+        1516,
+        216
+      ],
+      "parameter": {
+        "min": -12,
+        "max": 12,
+        "unit": "dB",
+        "scale": [
+          "\u221212",
+          "0",
+          "+12"
+        ]
+      }
+    },
+    {
+      "id": "Band2_Frequency",
+      "band": 2,
+      "kind": "Frequency",
+      "x": 461,
+      "y": 72,
+      "radius": 17,
+      "sprite_size": [
+        148,
+        148
+      ],
+      "origin_px": [
+        1772,
+        216
+      ],
+      "parameter": {
+        "min": 20,
+        "max": 20000,
+        "unit": "Hz",
+        "scale": [
+          "20",
+          "200",
+          "2k",
+          "20k"
+        ]
+      }
+    },
+    {
+      "id": "Band2_Q",
+      "band": 2,
+      "kind": "Q",
+      "x": 519,
+      "y": 72,
+      "radius": 14,
+      "sprite_size": [
+        124,
+        124
+      ],
+      "origin_px": [
+        2016,
+        228
+      ],
+      "parameter": {
+        "min": 0.2,
+        "max": 8,
+        "unit": "Q",
+        "scale": [
+          "0.2",
+          "1",
+          "8"
+        ]
+      }
+    },
+    {
+      "id": "Band3_Gain",
+      "band": 3,
+      "kind": "Gain",
+      "x": 602,
+      "y": 72,
+      "radius": 17,
+      "sprite_size": [
+        148,
+        148
+      ],
+      "origin_px": [
+        2336,
+        216
+      ],
+      "parameter": {
+        "min": -12,
+        "max": 12,
+        "unit": "dB",
+        "scale": [
+          "\u221212",
+          "0",
+          "+12"
+        ]
+      }
+    },
+    {
+      "id": "Band3_Frequency",
+      "band": 3,
+      "kind": "Frequency",
+      "x": 664,
+      "y": 72,
+      "radius": 17,
+      "sprite_size": [
+        148,
+        148
+      ],
+      "origin_px": [
+        2584,
+        216
+      ],
+      "parameter": {
+        "min": 20,
+        "max": 20000,
+        "unit": "Hz",
+        "scale": [
+          "20",
+          "200",
+          "2k",
+          "20k"
+        ]
+      }
+    },
+    {
+      "id": "Band3_Q",
+      "band": 3,
+      "kind": "Q",
+      "x": 723,
+      "y": 72,
+      "radius": 14,
+      "sprite_size": [
+        124,
+        124
+      ],
+      "origin_px": [
+        2832,
+        228
+      ],
+      "parameter": {
+        "min": 0.2,
+        "max": 8,
+        "unit": "Q",
+        "scale": [
+          "0.2",
+          "1",
+          "8"
+        ]
+      }
+    },
+    {
+      "id": "Band4_Gain",
+      "band": 4,
+      "kind": "Gain",
+      "x": 804,
+      "y": 72,
+      "radius": 17,
+      "sprite_size": [
+        148,
+        148
+      ],
+      "origin_px": [
+        3144,
+        216
+      ],
+      "parameter": {
+        "min": -12,
+        "max": 12,
+        "unit": "dB",
+        "scale": [
+          "\u221212",
+          "0",
+          "+12"
+        ]
+      }
+    },
+    {
+      "id": "Band4_Frequency",
+      "band": 4,
+      "kind": "Frequency",
+      "x": 869,
+      "y": 72,
+      "radius": 17,
+      "sprite_size": [
+        148,
+        148
+      ],
+      "origin_px": [
+        3404,
+        216
+      ],
+      "parameter": {
+        "min": 20,
+        "max": 20000,
+        "unit": "Hz",
+        "scale": [
+          "20",
+          "200",
+          "2k",
+          "20k"
+        ]
+      }
+    },
+    {
+      "id": "Band4_Q",
+      "band": 4,
+      "kind": "Q",
+      "x": 927,
+      "y": 72,
+      "radius": 14,
+      "sprite_size": [
+        124,
+        124
+      ],
+      "origin_px": [
+        3648,
+        228
+      ],
+      "parameter": {
+        "min": 0.2,
+        "max": 8,
+        "unit": "Q",
+        "scale": [
+          "0.2",
+          "1",
+          "8"
+        ]
+      }
+    },
+    {
+      "id": "Output",
+      "band": 0,
+      "kind": "Output",
+      "x": 1014,
+      "y": 78,
+      "radius": 23,
+      "sprite_size": [
+        196,
+        196
+      ],
+      "origin_px": [
+        3960,
+        216
+      ],
+      "parameter": {
+        "min": -12,
+        "max": 12,
+        "unit": "dB",
+        "scale": [
+          "\u221212",
+          "0",
+          "+12"
+        ]
+      }
+    },
+    {
+      "id": "Mix",
+      "band": 0,
+      "kind": "Mix",
+      "x": 1084,
+      "y": 71,
+      "radius": 17,
+      "sprite_size": [
+        148,
+        148
+      ],
+      "origin_px": [
+        4264,
+        212
+      ],
+      "parameter": {
+        "min": 0,
+        "max": 100,
+        "unit": "%",
+        "scale": [
+          "0",
+          "50",
+          "100"
+        ]
+      }
+    }
+  ],
+  "buttons": [
+    {
+      "id": "IN",
+      "kind": "toggle",
+      "rect": [
+        111,
+        85,
+        154,
+        116
+      ],
+      "origin_px": [
+        444,
+        340
+      ],
+      "sprite_size": [
+        172,
+        124
+      ]
+    },
+    {
+      "id": "Band1_Peak",
+      "kind": "mode",
+      "band": 1,
+      "rect": [
+        180,
+        100,
+        232,
+        123
+      ],
+      "default_on": true,
+      "origin_px": [
+        720,
+        400
+      ],
+      "sprite_size": [
+        208,
+        92
+      ]
+    },
+    {
+      "id": "Band1_Low_Shelf",
+      "kind": "mode",
+      "band": 1,
+      "rect": [
+        231,
+        100,
+        284,
+        123
+      ],
+      "default_on": false,
+      "origin_px": [
+        924,
+        400
+      ],
+      "sprite_size": [
+        212,
+        92
+      ]
+    },
+    {
+      "id": "Band1_High_Shelf",
+      "kind": "mode",
+      "band": 1,
+      "rect": [
+        283,
+        100,
+        338,
+        123
+      ],
+      "default_on": false,
+      "origin_px": [
+        1132,
+        400
+      ],
+      "sprite_size": [
+        220,
+        92
+      ]
+    },
+    {
+      "id": "Band2_Peak",
+      "kind": "mode",
+      "band": 2,
+      "rect": [
+        383,
+        100,
+        431,
+        123
+      ],
+      "default_on": true,
+      "origin_px": [
+        1532,
+        400
+      ],
+      "sprite_size": [
+        192,
+        92
+      ]
+    },
+    {
+      "id": "Band2_Low_Shelf",
+      "kind": "mode",
+      "band": 2,
+      "rect": [
+        430,
+        100,
+        486,
+        123
+      ],
+      "default_on": false,
+      "origin_px": [
+        1720,
+        400
+      ],
+      "sprite_size": [
+        224,
+        92
+      ]
+    },
+    {
+      "id": "Band2_High_Shelf",
+      "kind": "mode",
+      "band": 2,
+      "rect": [
+        485,
+        100,
+        542,
+        123
+      ],
+      "default_on": false,
+      "origin_px": [
+        1940,
+        400
+      ],
+      "sprite_size": [
+        228,
+        92
+      ]
+    },
+    {
+      "id": "Band3_Peak",
+      "kind": "mode",
+      "band": 3,
+      "rect": [
+        586,
+        100,
+        636,
+        123
+      ],
+      "default_on": true,
+      "origin_px": [
+        2344,
+        400
+      ],
+      "sprite_size": [
+        200,
+        92
+      ]
+    },
+    {
+      "id": "Band3_Low_Shelf",
+      "kind": "mode",
+      "band": 3,
+      "rect": [
+        635,
+        100,
+        693,
+        123
+      ],
+      "default_on": false,
+      "origin_px": [
+        2540,
+        400
+      ],
+      "sprite_size": [
+        232,
+        92
+      ]
+    },
+    {
+      "id": "Band3_High_Shelf",
+      "kind": "mode",
+      "band": 3,
+      "rect": [
+        692,
+        100,
+        749,
+        123
+      ],
+      "default_on": false,
+      "origin_px": [
+        2768,
+        400
+      ],
+      "sprite_size": [
+        228,
+        92
+      ]
+    },
+    {
+      "id": "Band4_Peak",
+      "kind": "mode",
+      "band": 4,
+      "rect": [
+        788,
+        100,
+        839,
+        123
+      ],
+      "default_on": true,
+      "origin_px": [
+        3152,
+        400
+      ],
+      "sprite_size": [
+        204,
+        92
+      ]
+    },
+    {
+      "id": "Band4_Low_Shelf",
+      "kind": "mode",
+      "band": 4,
+      "rect": [
+        838,
+        100,
+        895,
+        123
+      ],
+      "default_on": false,
+      "origin_px": [
+        3352,
+        400
+      ],
+      "sprite_size": [
+        228,
+        92
+      ]
+    },
+    {
+      "id": "Band4_High_Shelf",
+      "kind": "mode",
+      "band": 4,
+      "rect": [
+        894,
+        100,
+        951,
+        123
+      ],
+      "default_on": false,
+      "origin_px": [
+        3576,
+        400
+      ],
+      "sprite_size": [
+        228,
+        92
+      ]
+    }
+  ],
+  "notes": [
+    "Source image is a small raster reference; 4x output uses resampling, not recovered hidden detail.",
+    "Clean faceplate is a deterministic reconstruction: sockets replace control areas.",
+    "Reapplying sprites uses original source pixels and preserves knob/control arrangement.",
+    "Scale overlays have accurate major values, with their geometry intended for final JUCE rendering.",
+    "Do not treat generated alternative conceptual artwork as the approved design."
+  ]
+}
