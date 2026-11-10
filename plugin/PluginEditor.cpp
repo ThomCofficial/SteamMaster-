@@ -1,5 +1,6 @@
 #include "PluginEditor.h"
 #include <cmath>
+#include <map>
 #ifdef STEAMMASTER_HAS_ARTWORK
 #include <BinaryData.h>
 #endif
@@ -10,64 +11,144 @@ const juce::Colour ivory (0xfff0dec0);
 const juce::Colour steel (0xff263742);
 const juce::Colour deep (0xff10191d);
 class SteamLook final : public juce::LookAndFeel_V4 {
-#ifdef STEAMMASTER_HAS_ARTWORK
- juce::Image globalInput, globalOutput;
-#endif
+    std::map<juce::String, juce::Image> knobs;
 public:
- SteamLook() {
+    SteamLook() {
 #ifdef STEAMMASTER_HAS_ARTWORK
-    globalInput = juce::ImageFileFormat::loadFrom(BinaryData::Continuous_Large_Brass_png,
-                      (size_t)BinaryData::Continuous_Large_Brass_pngSize);
-    globalOutput = globalInput;
+        auto load = [this](const char* id, const void* bytes, size_t count) {
+            auto image = juce::ImageFileFormat::loadFrom(bytes, count);
+            if (image.isValid()) knobs.emplace(id, image);
+        };
+        load("global_input_db", BinaryData::Continuous_Large_Brass_png, (size_t) BinaryData::Continuous_Large_Brass_pngSize);
+        load("global_output_db", BinaryData::Continuous_Large_Brass_png, (size_t) BinaryData::Continuous_Large_Brass_pngSize);
+        load("ocean_threshold_db", BinaryData::Continuous_Large_Brass_png, (size_t) BinaryData::Continuous_Large_Brass_pngSize);
+        load("ocean_ratio", BinaryData::Stepped_Lever_Brass_png, (size_t) BinaryData::Stepped_Lever_Brass_pngSize);
+        load("ocean_attack_ms", BinaryData::Continuous_Large_Brass_png, (size_t) BinaryData::Continuous_Large_Brass_pngSize);
+        load("ocean_recovery", BinaryData::Stepped_Lever_Brass_png, (size_t) BinaryData::Stepped_Lever_Brass_pngSize);
+        load("ocean_sc_hpf", BinaryData::Stepped_Lever_Brass_png, (size_t) BinaryData::Stepped_Lever_Brass_pngSize);
+        load("ocean_mix", BinaryData::Continuous_Small_Brass_png, (size_t) BinaryData::Continuous_Small_Brass_pngSize);
+        load("furnace_threshold_db", BinaryData::Continuous_Large_Brass_png, (size_t) BinaryData::Continuous_Large_Brass_pngSize);
+        load("furnace_ratio", BinaryData::Stepped_Lever_Brass_png, (size_t) BinaryData::Stepped_Lever_Brass_pngSize);
+        load("furnace_attack", BinaryData::Stepped_Lever_Brass_png, (size_t) BinaryData::Stepped_Lever_Brass_pngSize);
+        load("furnace_release", BinaryData::Stepped_Lever_Brass_png, (size_t) BinaryData::Stepped_Lever_Brass_pngSize);
+        load("furnace_sc_hpf", BinaryData::Stepped_Lever_Brass_png, (size_t) BinaryData::Stepped_Lever_Brass_pngSize);
+        load("furnace_mix", BinaryData::Continuous_Small_Brass_png, (size_t) BinaryData::Continuous_Small_Brass_pngSize);
+        load("parametric_output_db", BinaryData::Output_png, (size_t) BinaryData::Output_pngSize);
+        load("parametric_mix", BinaryData::Mix_png, (size_t) BinaryData::Mix_pngSize);
+        load("pultec_low_freq", BinaryData::Stepped_Lever_Brass_png, (size_t) BinaryData::Stepped_Lever_Brass_pngSize);
+        load("pultec_low_boost", BinaryData::Continuous_Large_Brass_png, (size_t) BinaryData::Continuous_Large_Brass_pngSize);
+        load("pultec_low_atten", BinaryData::Continuous_Large_Brass_png, (size_t) BinaryData::Continuous_Large_Brass_pngSize);
+        load("pultec_high_boost_freq", BinaryData::Stepped_Lever_Brass_png, (size_t) BinaryData::Stepped_Lever_Brass_pngSize);
+        load("pultec_high_boost", BinaryData::Continuous_Large_Brass_png, (size_t) BinaryData::Continuous_Large_Brass_pngSize);
+        load("pultec_high_atten_freq", BinaryData::Stepped_Lever_Brass_png, (size_t) BinaryData::Stepped_Lever_Brass_pngSize);
+        load("pultec_high_atten", BinaryData::Continuous_Large_Brass_png, (size_t) BinaryData::Continuous_Large_Brass_pngSize);
+        load("pultec_bandwidth", BinaryData::Continuous_Small_Brass_png, (size_t) BinaryData::Continuous_Small_Brass_pngSize);
+        load("pultec_output_db", BinaryData::Continuous_Small_Brass_png, (size_t) BinaryData::Continuous_Small_Brass_pngSize);
+        load("pultec_mix", BinaryData::Continuous_Small_Brass_png, (size_t) BinaryData::Continuous_Small_Brass_pngSize);
+        load("shadow_optical_threshold", BinaryData::Optical_Threshold_png, (size_t) BinaryData::Optical_Threshold_pngSize);
+        load("shadow_optical_makeup", BinaryData::Optical_Gain_png, (size_t) BinaryData::Optical_Gain_pngSize);
+        load("shadow_discrete_threshold", BinaryData::Discrete_Threshold_png, (size_t) BinaryData::Discrete_Threshold_pngSize);
+        load("shadow_discrete_gain", BinaryData::Discrete_Gain_png, (size_t) BinaryData::Discrete_Gain_pngSize);
+        load("shadow_discrete_ratio", BinaryData::Discrete_Ratio_png, (size_t) BinaryData::Discrete_Ratio_pngSize);
+        load("shadow_discrete_attack", BinaryData::Discrete_Attack_png, (size_t) BinaryData::Discrete_Attack_pngSize);
+        load("shadow_discrete_recovery", BinaryData::Discrete_Recovery_png, (size_t) BinaryData::Discrete_Recovery_pngSize);
+        load("shadow_sc_hpf", BinaryData::Sidechain_HPF_png, (size_t) BinaryData::Sidechain_HPF_pngSize);
+        load("shadow_output_db", BinaryData::Output_png, (size_t) BinaryData::Output_pngSize);
+        load("shadow_mix", BinaryData::Mix_png, (size_t) BinaryData::Mix_pngSize);
+        load("exciter_low_drive", BinaryData::Low_Drive_Brass_Transparent_png, (size_t) BinaryData::Low_Drive_Brass_Transparent_pngSize);
+        load("exciter_low_freq", BinaryData::Low_Frequency_Brass_Transparent_png, (size_t) BinaryData::Low_Frequency_Brass_Transparent_pngSize);
+        load("exciter_high_drive", BinaryData::High_Drive_Brass_Transparent_png, (size_t) BinaryData::High_Drive_Brass_Transparent_pngSize);
+        load("exciter_high_freq", BinaryData::High_Frequency_Brass_Transparent_png, (size_t) BinaryData::High_Frequency_Brass_Transparent_pngSize);
+        load("exciter_crossover", BinaryData::Crossover_Brass_Transparent_png, (size_t) BinaryData::Crossover_Brass_Transparent_pngSize);
+        load("exciter_output_db", BinaryData::Output_Brass_Transparent_png, (size_t) BinaryData::Output_Brass_Transparent_pngSize);
+        load("exciter_mix", BinaryData::Mix_Brass_Transparent_png, (size_t) BinaryData::Mix_Brass_Transparent_pngSize);
+        load("tape_type", BinaryData::Type_FrontOn_png, (size_t) BinaryData::Type_FrontOn_pngSize);
+        load("tape_speed", BinaryData::Speed_FrontOn_png, (size_t) BinaryData::Speed_FrontOn_pngSize);
+        load("tape_drive_db", BinaryData::Drive_FrontOn_png, (size_t) BinaryData::Drive_FrontOn_pngSize);
+        load("tape_bias", BinaryData::Bias_FrontOn_png, (size_t) BinaryData::Bias_FrontOn_pngSize);
+        load("tape_hf_trim_db", BinaryData::HF_Trim_FrontOn_png, (size_t) BinaryData::HF_Trim_FrontOn_pngSize);
+        load("tape_mix", BinaryData::Mix_FrontOn_png, (size_t) BinaryData::Mix_FrontOn_pngSize);
+        load("stereo_mono_maker_hz", BinaryData::Mono_Maker_FrontFacing_Transparent_png, (size_t) BinaryData::Mono_Maker_FrontFacing_Transparent_pngSize);
+        load("stereo_width_percent", BinaryData::Stereo_Width_FrontFacing_Transparent_png, (size_t) BinaryData::Stereo_Width_FrontFacing_Transparent_pngSize);
+        load("stereo_width_freq", BinaryData::Width_Frequency_FrontFacing_Transparent_png, (size_t) BinaryData::Width_Frequency_FrontFacing_Transparent_pngSize);
+        load("limiter_threshold_db", BinaryData::Threshold_FrontFacing_Transparent_png, (size_t) BinaryData::Threshold_FrontFacing_Transparent_pngSize);
+        load("limiter_ceiling_dbtp", BinaryData::Ceiling_FrontFacing_Transparent_png, (size_t) BinaryData::Ceiling_FrontFacing_Transparent_pngSize);
+        load("limiter_release_ms", BinaryData::Release_FrontFacing_Transparent_png, (size_t) BinaryData::Release_FrontFacing_Transparent_pngSize);
+        load("limiter_lookahead_ms", BinaryData::Lookahead_FrontFacing_Transparent_png, (size_t) BinaryData::Lookahead_FrontFacing_Transparent_pngSize);
+        load("limiter_stereo_link", BinaryData::Stereo_Link_FrontFacing_Transparent_png, (size_t) BinaryData::Stereo_Link_FrontFacing_Transparent_pngSize);
+        load("parametric_band_1_gain", BinaryData::Band1_Gain_png, (size_t) BinaryData::Band1_Gain_pngSize);
+        load("parametric_band_1_freq", BinaryData::Band1_Frequency_png, (size_t) BinaryData::Band1_Frequency_pngSize);
+        load("parametric_band_1_q", BinaryData::Band1_Q_png, (size_t) BinaryData::Band1_Q_pngSize);
+        load("parametric_band_2_gain", BinaryData::Band2_Gain_png, (size_t) BinaryData::Band2_Gain_pngSize);
+        load("parametric_band_2_freq", BinaryData::Band2_Frequency_png, (size_t) BinaryData::Band2_Frequency_pngSize);
+        load("parametric_band_2_q", BinaryData::Band2_Q_png, (size_t) BinaryData::Band2_Q_pngSize);
+        load("parametric_band_3_gain", BinaryData::Band3_Gain_png, (size_t) BinaryData::Band3_Gain_pngSize);
+        load("parametric_band_3_freq", BinaryData::Band3_Frequency_png, (size_t) BinaryData::Band3_Frequency_pngSize);
+        load("parametric_band_3_q", BinaryData::Band3_Q_png, (size_t) BinaryData::Band3_Q_pngSize);
+        load("parametric_band_4_gain", BinaryData::Band4_Gain_png, (size_t) BinaryData::Band4_Gain_pngSize);
+        load("parametric_band_4_freq", BinaryData::Band4_Frequency_png, (size_t) BinaryData::Band4_Frequency_pngSize);
+        load("parametric_band_4_q", BinaryData::Band4_Q_png, (size_t) BinaryData::Band4_Q_pngSize);
+        load("bax_mid_hpf", BinaryData::Bax_HPF_png, (size_t) BinaryData::Bax_HPF_pngSize);
+        load("bax_mid_low_freq", BinaryData::Bax_Low_Shelf_Frequency_png, (size_t) BinaryData::Bax_Low_Shelf_Frequency_pngSize);
+        load("bax_mid_low_gain", BinaryData::Bax_Low_Shelf_Gain_png, (size_t) BinaryData::Bax_Low_Shelf_Gain_pngSize);
+        load("bax_mid_high_freq", BinaryData::Bax_High_Shelf_Frequency_png, (size_t) BinaryData::Bax_High_Shelf_Frequency_pngSize);
+        load("bax_mid_high_gain", BinaryData::Bax_High_Shelf_Gain_png, (size_t) BinaryData::Bax_High_Shelf_Gain_pngSize);
+        load("bax_mid_lpf", BinaryData::Bax_LPF_png, (size_t) BinaryData::Bax_LPF_pngSize);
+        load("bax_mid_output_db", BinaryData::Bax_Output_png, (size_t) BinaryData::Bax_Output_pngSize);
+        load("bax_side_hpf", BinaryData::Bax_HPF_png, (size_t) BinaryData::Bax_HPF_pngSize);
+        load("bax_side_low_freq", BinaryData::Bax_Low_Shelf_Frequency_png, (size_t) BinaryData::Bax_Low_Shelf_Frequency_pngSize);
+        load("bax_side_low_gain", BinaryData::Bax_Low_Shelf_Gain_png, (size_t) BinaryData::Bax_Low_Shelf_Gain_pngSize);
+        load("bax_side_high_freq", BinaryData::Bax_High_Shelf_Frequency_png, (size_t) BinaryData::Bax_High_Shelf_Frequency_pngSize);
+        load("bax_side_high_gain", BinaryData::Bax_High_Shelf_Gain_png, (size_t) BinaryData::Bax_High_Shelf_Gain_pngSize);
+        load("bax_side_lpf", BinaryData::Bax_LPF_png, (size_t) BinaryData::Bax_LPF_pngSize);
+        load("bax_side_output_db", BinaryData::Bax_Output_png, (size_t) BinaryData::Bax_Output_pngSize);
 #endif
-    setColour(juce::Slider::textBoxTextColourId, ivory);
-    setColour(juce::Slider::textBoxBackgroundColourId, deep);
-    setColour(juce::Slider::textBoxOutlineColourId, brass.withAlpha(0.45f));
-    setColour(juce::ComboBox::backgroundColourId, steel);
-    setColour(juce::ComboBox::textColourId, ivory);
-    setColour(juce::ComboBox::outlineColourId, brass);
-    setColour(juce::Label::textColourId, ivory);
-    setColour(juce::ToggleButton::textColourId, ivory);
-    setColour(juce::TabbedButtonBar::tabOutlineColourId, brass);
-    setColour(juce::TabbedButtonBar::frontOutlineColourId, brass);
- }
- void drawRotarySlider(juce::Graphics& g,int x,int y,int w,int h,float position,
-                      float start,float end,juce::Slider& slider) override {
-#ifdef STEAMMASTER_HAS_ARTWORK
-    const juce::Image* sprite = nullptr;
-    if(slider.getComponentID()=="global_input_db") sprite=&globalInput;
-    if(slider.getComponentID()=="global_output_db") sprite=&globalOutput;
-    if(sprite!=nullptr && sprite->isValid()) {
-       const float diameter=(float)juce::jmin(w,h)*0.80f;
-       const float scale=diameter/(float)juce::jmax(sprite->getWidth(),sprite->getHeight());
-       const float angle=start+position*(end-start);
-       const float imageW=(float)sprite->getWidth(),imageH=(float)sprite->getHeight();
-       juce::Graphics::ScopedSaveState saved(g);
-       auto matrix=juce::AffineTransform::rotation(angle,imageW/2.f,imageH/2.f)
-                       .scaled(scale).translated((float)x+w/2.f-imageW*scale/2.f,
-                                                  (float)y+h/2.f-imageH*scale/2.f);
-       g.drawImageTransformed(*sprite,matrix,false);
-       return;
+        setColour(juce::Slider::textBoxTextColourId, ivory);
+        setColour(juce::Slider::textBoxBackgroundColourId, deep);
+        setColour(juce::Slider::textBoxOutlineColourId, brass.withAlpha(0.45f));
+        setColour(juce::ComboBox::backgroundColourId, steel);
+        setColour(juce::ComboBox::textColourId, ivory);
+        setColour(juce::ComboBox::outlineColourId, brass);
+        setColour(juce::Label::textColourId, ivory);
+        setColour(juce::ToggleButton::textColourId, ivory);
     }
+    void drawRotarySlider(juce::Graphics& g, int x, int y, int w, int h,
+                          float position, float start, float end, juce::Slider& slider) override {
+#ifdef STEAMMASTER_HAS_ARTWORK
+        const auto it = knobs.find(slider.getComponentID());
+        if (it != knobs.end() && it->second.isValid()) {
+            const auto& sprite = it->second;
+            const float diameter = (float) juce::jmin(w, h) * 0.72f;
+            const float scale = diameter / (float) juce::jmax(sprite.getWidth(), sprite.getHeight());
+            const float angle = start + position * (end - start);
+            const float imageW = (float) sprite.getWidth(), imageH = (float) sprite.getHeight();
+            juce::Graphics::ScopedSaveState saved(g);
+            auto transform = juce::AffineTransform::rotation(angle, imageW / 2.f, imageH / 2.f)
+                   .scaled(scale)
+                   .translated((float)x + w / 2.f - imageW * scale / 2.f,
+                               (float)y + h / 2.f - imageH * scale / 2.f);
+            // SteamVox lesson: full-colour sprites must NOT be drawn as alpha masks.
+            g.drawImageTransformed(sprite, transform, false);
+            return;
+        }
 #endif
-    auto bounds=juce::Rectangle<float>((float)x,(float)y,(float)w,(float)h).reduced(7.f);
-    const float r=juce::jmin(bounds.getWidth(),bounds.getHeight())*0.43f;
-    const auto c=bounds.getCentre();
-    auto rim=juce::Rectangle<float>(c.x-r,c.y-r,2*r,2*r);
-    g.setColour(brass.darker(0.65f));g.fillEllipse(rim.expanded(4.f));
-    g.setColour(brass);g.drawEllipse(rim.expanded(3.f),2.f);
-    juce::ColourGradient gradient(juce::Colour(0xff64717b),c.x-r,c.y-r,
-                                  juce::Colour(0xff161e25),c.x+r,c.y+r,false);
-    gradient.addColour(0.48,juce::Colour(0xffc6b9a1));
-    g.setGradientFill(gradient);g.fillEllipse(rim);
-    g.setColour(ivory.withAlpha(.42f));g.drawEllipse(rim.reduced(3.f),1.f);
-    const float theta=start+position*(end-start);
-    auto tip=c+juce::Point<float>(std::sin(theta),-std::cos(theta))*(r*.79f);
-    auto base=c+juce::Point<float>(std::sin(theta),-std::cos(theta))*(r*.20f);
-    g.setColour(juce::Colours::black);g.drawLine(base.x+1,base.y+1,tip.x+1,tip.y+1,4.f);
-    g.setColour(juce::Colour(0xffffe8b2));g.drawLine(base.x,base.y,tip.x,tip.y,3.f);
-    g.setColour(brass);g.fillEllipse(juce::Rectangle<float>(c.x-4,c.y-4,8,8));
- }
+        auto bounds = juce::Rectangle<float>((float)x, (float)y, (float)w, (float)h).reduced(7.f);
+        const float radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) * 0.43f;
+        const auto centre = bounds.getCentre();
+        auto rim = juce::Rectangle<float>(centre.x-radius, centre.y-radius, 2*radius, 2*radius);
+        g.setColour(brass.darker(0.65f)); g.fillEllipse(rim.expanded(4.f));
+        g.setColour(brass); g.drawEllipse(rim.expanded(3.f), 2.f);
+        juce::ColourGradient gradient(juce::Colour(0xff64717b), centre.x-radius, centre.y-radius,
+                                      juce::Colour(0xff161e25), centre.x+radius, centre.y+radius, false);
+        gradient.addColour(0.48, juce::Colour(0xffc6b9a1));
+        g.setGradientFill(gradient); g.fillEllipse(rim);
+        const float theta = start + position*(end-start);
+        auto tip = centre + juce::Point<float>(std::sin(theta),-std::cos(theta))*(radius*.79f);
+        auto base = centre + juce::Point<float>(std::sin(theta),-std::cos(theta))*(radius*.20f);
+        g.setColour(juce::Colour(0xffffe8b2));
+        g.drawLine(base.x,base.y,tip.x,tip.y,3.f);
+    }
+
  void drawToggleButton(juce::Graphics& g,juce::ToggleButton& b,bool over,bool down) override {
     auto r=b.getLocalBounds().toFloat().reduced(3);
     const bool on=b.getToggleState();
