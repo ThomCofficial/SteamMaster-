@@ -139,6 +139,33 @@ public:
             juce::ImageFileFormat::loadFrom(BinaryData::Bax_Link_On_Lit_png, (size_t)BinaryData::Bax_Link_On_Lit_pngSize),
             juce::ImageFileFormat::loadFrom(BinaryData::Bax_Link_Off_Unlit_png, (size_t)BinaryData::Bax_Link_Off_Unlit_pngSize)));
 #endif
+#ifdef STEAMMASTER_HAS_ARTWORK
+        // The original Ocean/Furnace and Pultec packs contain transparent
+        // sprite atlases. Cut each cell deterministically in JUCE, never by AI.
+        auto atlas = [this](const void* data, size_t bytes, int cols, int rows,
+                            const std::vector<juce::String>& ids) {
+            auto sheet = juce::ImageFileFormat::loadFrom(data, bytes);
+            if (!sheet.isValid()) return;
+            const int cw = sheet.getWidth() / cols;
+            const int ch = sheet.getHeight() / rows;
+            for (int i = 0; i < (int)ids.size(); ++i) {
+                if (ids[(size_t)i].isEmpty()) continue;
+                const int column = i % cols, row = i / cols;
+                knobs[ids[(size_t)i]] = sheet.getClippedImage(
+                    juce::Rectangle<int>(column*cw, row*ch, cw, ch));
+            }
+        };
+        atlas(BinaryData::Ocean_Furnace_Knobs_Sprite_Sheet_png,
+              (size_t)BinaryData::Ocean_Furnace_Knobs_Sprite_Sheet_pngSize, 4, 3,
+              {"ocean_threshold_db","ocean_ratio","ocean_attack_ms","ocean_recovery",
+               "ocean_sc_hpf","ocean_mix","furnace_threshold_db","furnace_ratio",
+               "furnace_attack","furnace_release","furnace_sc_hpf","furnace_mix"});
+        atlas(BinaryData::Pultec_EQ_Knobs_and_IN_Button_Sheet_png,
+              (size_t)BinaryData::Pultec_EQ_Knobs_and_IN_Button_Sheet_pngSize, 4, 3,
+              {"pultec_low_freq","pultec_low_boost","pultec_low_atten","pultec_high_boost_freq",
+               "pultec_high_boost","pultec_high_atten_freq","pultec_high_atten","pultec_bandwidth",
+               "pultec_output_db","pultec_mix","",""});
+#endif
         setColour(juce::Slider::textBoxTextColourId, ivory);
         setColour(juce::Slider::textBoxBackgroundColourId, deep);
         setColour(juce::Slider::textBoxOutlineColourId, brass.withAlpha(0.45f));
