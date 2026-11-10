@@ -600,6 +600,15 @@ void SteamMasterEditor::Page::resized() {
                 if (ids[(size_t)i] == furnaceIDs[k]) p = {furnaceXs[k], 180.f};
             }
         }
+        // Remap the legacy artwork coordinates to the approved replacement
+        // faceplates. All positions are in native image pixels before scaling.
+        if (p.x >= 0.f && section == "Parametric") { p.x *= 2.92f; p.y *= 1.02f; }
+        else if (p.x >= 0.f && section == "Shadow") { p.x *= 3.05f; p.y *= 0.70f; }
+        else if (p.x >= 0.f && section == "Exciter") { p.x *= 3.00f; p.y *= 0.88f; }
+        else if (p.x >= 0.f && section == "Bax") { p.x *= 1.15f; p.y = (p.y - 300.f) * 0.44f; }
+        else if (p.x >= 0.f && section == "Tape") { p.x *= 3.05f; p.y *= 0.85f; }
+        else if (p.x >= 0.f && section == "Stereo + Limiter") { p.x *= 1.64f; p.y *= 1.05f; }
+        else if (p.x >= 0.f && section == "Global") { p.x *= 0.82f; p.y *= 1.10f; }
         const bool embedded=artValid&&p.x>=0&&p.y>=0;
         int x,y,w,h;
         if(embedded) {
