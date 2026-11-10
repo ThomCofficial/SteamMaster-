@@ -247,8 +247,9 @@ void SteamMasterModule::timerCallback(){
         auto* b=dynamic_cast<juce::TextButton*>(c->widget.get());
         auto* p=dynamic_cast<juce::AudioParameterChoice*>(processor.state.getParameter(c->parameterId));
         if(b && p) {
+            const auto* raw=processor.state.getRawParameterValue(c->parameterId);
             const int index=juce::jlimit(0,p->choices.size()-1,
-                              (int)std::round(p->convertFrom0to1(p->getValue())));
+                              raw?(int)std::round(raw->load(std::memory_order_relaxed)):0);
             b->setButtonText(p->choices[index]);
         }
     }
