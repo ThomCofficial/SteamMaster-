@@ -1,5 +1,8 @@
 #include "PluginEditor.h"
 #include <cmath>
+#ifdef STEAMMASTER_HAS_ARTWORK
+#include <BinaryData.h>
+#endif
 
 namespace {
 constexpr auto brass = juce::Colour(0xffbb9353);
@@ -69,6 +72,24 @@ void paintPanel(juce::Graphics& g,juce::Rectangle<int> b,const juce::String& tit
 
 SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcessorValueTreeState& state,
                                const juce::String& s):section(s) {
+    // Decode the approved source art once, on the message thread, never in paint/audio callbacks.
+#ifdef STEAMMASTER_HAS_ARTWORK
+    const char* asset = nullptr;
+    int assetSize = 0;
+    if (section == "Global") { asset=BinaryData::global_header_png; assetSize=BinaryData::global_header_pngSize; }
+    else if(section == "Ocean") { asset=BinaryData::ocean_png; assetSize=BinaryData::ocean_pngSize; }
+    else if(section == "Furnace") { asset=BinaryData::furnace_png; assetSize=BinaryData::furnace_pngSize; }
+    else if(section == "Parametric") { asset=BinaryData::parametric_png; assetSize=BinaryData::parametric_pngSize; }
+    else if(section == "Pultec") { asset=BinaryData::pultec_png; assetSize=BinaryData::pultec_pngSize; }
+    else if(section == "Shadow") { asset=BinaryData::shadow_png; assetSize=BinaryData::shadow_pngSize; }
+    else if(section == "Exciter") { asset=BinaryData::exciter_png; assetSize=BinaryData::exciter_pngSize; }
+    else if(section == "Bax Mid" || section == "Bax Side") { asset=BinaryData::bax_png; assetSize=BinaryData::bax_pngSize; }
+    else if(section == "Tape") { asset=BinaryData::tape_png; assetSize=BinaryData::tape_pngSize; }
+    else if(section == "Stereo" || section == "Limiter") { asset=BinaryData::stereo_limiter_png; assetSize=BinaryData::stereo_limiter_pngSize; }
+    if (asset != nullptr && assetSize > 0) {
+       art = juce::ImageFileFormat::loadFrom(asset, (size_t)assetSize);
+    }
+#endif
     addAndMakeVisible(viewport);
     viewport.setViewedComponent(&contents,false);
     viewport.setScrollBarsShown(true,false);
@@ -110,10 +131,18 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
 void SteamMasterEditor::Page::paint(juce::Graphics& g) {
     g.fillAll(deep);
     paintPanel(g,getLocalBounds(),section);
+    if(art.isValid()){
+       auto area = getLocalBounds().reduced(23);
+       area.removeFromTop(55);
+       area.setHeight(juce::jmin(180,juce::jmax(95,getHeight()/3)));
+       g.setColour(brass.darker(0.55f));
+       g.fillRoundedRectangle(area.toFloat().expanded(3),6.f);
+       g.drawImageWithin(art,area.getX(),area.getY(),area.getWidth(),area.getHeight(),juce::RectanglePlacement::centred);
+    }
 }
 void SteamMasterEditor::Page::resized() {
     auto area=getLocalBounds().reduced(16);
-    area.removeFromTop(55);
+    area.removeFromTop(art.isValid() ? juce::jmin(247,juce::jmax(160,getHeight()/3+55)) : 55);
     viewport.setBounds(area);
     const int cellW=158,cellH=145;
     const int cols=juce::jmax(1,(area.getWidth()-20)/cellW);
