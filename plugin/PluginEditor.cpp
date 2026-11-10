@@ -685,7 +685,7 @@ void SteamMasterEditor::Page::ArtCanvas::drawMeterNeedle(
     juce::Graphics& g,const juce::Image& needle,float cx,float cy,
     float radius,float fraction) {
     if (!needle.isValid()) return;
-    const float scale=radius*0.72f/(float)juce::jmax(needle.getWidth(),needle.getHeight());
+    const float scale=radius*0.90f/(float)juce::jmax(needle.getWidth(),needle.getHeight());
     const float angle=juce::jmap(juce::jlimit(0.f,1.f,fraction),-0.85f,0.85f);
     const float sw=(float)needle.getWidth(), sh=(float)needle.getHeight();
     auto transform=juce::AffineTransform::rotation(angle,sw*0.5f,sh*0.82f)
@@ -750,8 +750,10 @@ void SteamMasterEditor::Page::ArtCanvas::paintHeaderInstruments(juce::Graphics& 
 }
 void SteamMasterEditor::Page::ArtCanvas::paintMovingParts(juce::Graphics& g) {
     if (!processor || !art.isValid()) return;
-    const float sx=(float)getWidth()/art.getWidth();
-    const float sy=(float)artHeight/art.getHeight();
+    // All approved mapping coordinates use the 1145px reference raster.
+    // Never divide again by a 4x PNG's native pixel width.
+    const float sx=(float)getWidth()/1145.f;
+    const float sy=(float)artHeight/((float)art.getHeight()*1145.f/art.getWidth());
     const auto read=[](const std::atomic<float>& v){
         return v.load(std::memory_order_relaxed);
     };
@@ -795,7 +797,7 @@ void SteamMasterEditor::Page::ArtCanvas::paintMovingParts(juce::Graphics& g) {
     } else if(section=="Shadow") {
         const float reduction=juce::jmax(0.f,-read(processor->meterShadowOpticalGr))
                             +juce::jmax(0.f,-read(processor->meterShadowDiscreteGr));
-        drawMeterNeedle(g,shadowNeedle,570.f*sx,109.f*sy,78.f*sx,
+        drawMeterNeedle(g,shadowNeedle,462.f*sx,127.f*sy,75.f*sx,
                         juce::jlimit(0.f,1.f,reduction/20.f));
     } else if(section=="Exciter") {
         drawMeterNeedle(g,exciterNeedle,565.f*sx,76.f*sy,70.f*sx,
