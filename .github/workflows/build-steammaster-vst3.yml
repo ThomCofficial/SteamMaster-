@@ -1,8 +1,8 @@
 name: SteamMaster Windows VST3
 on:
   workflow_dispatch:
-  push:
-    branches: [ui-development-assets-integration]
+  pull_request:
+    branches: [vst3/v1.7-performance-character]
     paths:
       - 'plugin/**'
       - 'src/**'
@@ -10,7 +10,7 @@ on:
       - 'CMakeLists.txt'
       - '.github/workflows/build-steammaster-vst3.yml'
 concurrency:
-  group: steammaster-vst3-${{ github.ref }}
+  group: steammaster-vst3-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
   windows-vst3:
