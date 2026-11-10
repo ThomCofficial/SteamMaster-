@@ -12,6 +12,7 @@ const juce::Colour steel (0xff263742);
 const juce::Colour deep (0xff10191d);
 class SteamLook final : public juce::LookAndFeel_V4 {
     std::map<juce::String, juce::Image> knobs;
+    std::map<juce::String, std::pair<juce::Image, juce::Image>> switches;
 public:
     SteamLook() {
 #ifdef STEAMMASTER_HAS_ARTWORK
@@ -103,6 +104,41 @@ public:
         load("bax_side_lpf", BinaryData::Bax_LPF_png, (size_t) BinaryData::Bax_LPF_pngSize);
         load("bax_side_output_db", BinaryData::Bax_Output_png, (size_t) BinaryData::Bax_Output_pngSize);
 #endif
+#ifdef STEAMMASTER_HAS_ARTWORK
+        switches.emplace("shadow_in", std::make_pair(
+            juce::ImageFileFormat::loadFrom(BinaryData::Global_IN_ON_png, (size_t)BinaryData::Global_IN_ON_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Global_IN_OFF_png, (size_t)BinaryData::Global_IN_OFF_pngSize)));
+        switches.emplace("shadow_optical_in", std::make_pair(
+            juce::ImageFileFormat::loadFrom(BinaryData::Optical_IN_ON_png, (size_t)BinaryData::Optical_IN_ON_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Optical_IN_OFF_png, (size_t)BinaryData::Optical_IN_OFF_pngSize)));
+        switches.emplace("shadow_discrete_in", std::make_pair(
+            juce::ImageFileFormat::loadFrom(BinaryData::Discrete_IN_ON_png, (size_t)BinaryData::Discrete_IN_ON_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Discrete_IN_OFF_png, (size_t)BinaryData::Discrete_IN_OFF_pngSize)));
+        switches.emplace("exciter_in", std::make_pair(
+            juce::ImageFileFormat::loadFrom(BinaryData::IN_ON_png, (size_t)BinaryData::IN_ON_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::IN_OFF_png, (size_t)BinaryData::IN_OFF_pngSize)));
+        switches.emplace("tape_in", std::make_pair(
+            juce::ImageFileFormat::loadFrom(BinaryData::IN_On_FrontOn_png, (size_t)BinaryData::IN_On_FrontOn_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::IN_Off_FrontOn_png, (size_t)BinaryData::IN_Off_FrontOn_pngSize)));
+        switches.emplace("limiter_in", std::make_pair(
+            juce::ImageFileFormat::loadFrom(BinaryData::IN_On_png, (size_t)BinaryData::IN_On_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::IN_Off_png, (size_t)BinaryData::IN_Off_pngSize)));
+        switches.emplace("limiter_true_peak", std::make_pair(
+            juce::ImageFileFormat::loadFrom(BinaryData::True_Peak_On_png, (size_t)BinaryData::True_Peak_On_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::True_Peak_Off_png, (size_t)BinaryData::True_Peak_Off_pngSize)));
+        switches.emplace("limiter_auto_release", std::make_pair(
+            juce::ImageFileFormat::loadFrom(BinaryData::Auto_Release_On_png, (size_t)BinaryData::Auto_Release_On_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Auto_Release_Off_png, (size_t)BinaryData::Auto_Release_Off_pngSize)));
+        switches.emplace("bax_mid_in", std::make_pair(
+            juce::ImageFileFormat::loadFrom(BinaryData::Bax_Channel_IN_Lit_png, (size_t)BinaryData::Bax_Channel_IN_Lit_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Bax_Channel_IN_Unlit_png, (size_t)BinaryData::Bax_Channel_IN_Unlit_pngSize)));
+        switches.emplace("bax_side_in", std::make_pair(
+            juce::ImageFileFormat::loadFrom(BinaryData::Bax_Channel_IN_Lit_png, (size_t)BinaryData::Bax_Channel_IN_Lit_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Bax_Channel_IN_Unlit_png, (size_t)BinaryData::Bax_Channel_IN_Unlit_pngSize)));
+        switches.emplace("stereo_link", std::make_pair(
+            juce::ImageFileFormat::loadFrom(BinaryData::Bax_Link_On_Lit_png, (size_t)BinaryData::Bax_Link_On_Lit_pngSize),
+            juce::ImageFileFormat::loadFrom(BinaryData::Bax_Link_Off_Unlit_png, (size_t)BinaryData::Bax_Link_Off_Unlit_pngSize)));
+#endif
         setColour(juce::Slider::textBoxTextColourId, ivory);
         setColour(juce::Slider::textBoxBackgroundColourId, deep);
         setColour(juce::Slider::textBoxOutlineColourId, brass.withAlpha(0.45f));
@@ -150,6 +186,17 @@ public:
     }
 
  void drawToggleButton(juce::Graphics& g,juce::ToggleButton& b,bool over,bool down) override {
+#ifdef STEAMMASTER_HAS_ARTWORK
+    auto it = switches.find(b.getComponentID());
+    if (it != switches.end()) {
+        const auto& sprite = b.getToggleState() ? it->second.first : it->second.second;
+        if (sprite.isValid()) {
+            g.drawImageWithin(sprite, 0, 0, b.getWidth(), b.getHeight(),
+                              juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize, false);
+            return;
+        }
+    }
+#endif
     auto r=b.getLocalBounds().toFloat().reduced(3);
     const bool on=b.getToggleState();
     g.setColour(juce::Colour(0xff080e12));g.fillRoundedRectangle(r,5.f);
@@ -365,6 +412,7 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
             }
         } else if(dynamic_cast<juce::AudioParameterBool*>(p)) {
             auto b=std::make_unique<juce::ToggleButton>();
+            b->setComponentID(id);
             b->setButtonText(id.endsWith("_in")?"IN":id.contains("link")?"LINK":id.contains("auto")?"AUTO":id.contains("peak")?"TP":"ON");
             contents.addAndMakeVisible(*b);
             buttons.push_back(std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(state,id,*b));
