@@ -375,7 +375,7 @@ juce::Point<float> approvedPosition(const juce::String& id) {
         {"shadow_output_db", 875.f, 126.f},
         {"exciter_in", 167.f, 54.f},
         {"exciter_mix", 1050.f, 50.f},
-        {"exciter_mode", 260.f, 54.f},
+        {"exciter_mode", 264.f, 54.f},
         {"exciter_low_drive", 351.f, 50.f},
         {"exciter_low_freq", 419.f, 50.f},
         {"exciter_high_drive", 716.f, 50.f},
@@ -398,7 +398,7 @@ juce::Point<float> approvedPosition(const juce::String& id) {
         {"bax_side_high_gain", 677.f, 161.f},
         {"bax_side_lpf", 879.f, 161.f},
         {"bax_side_output_db", 978.f, 161.f},
-        {"stereo_routing", 75.f, 78.f},
+        {"stereo_routing", 104.f, 82.f},
         {"stereo_link", 75.f, 159.f},
         {"tape_in", 360.f, 56.f},
         {"tape_mix", 779.f, 73.f},
@@ -411,7 +411,7 @@ juce::Point<float> approvedPosition(const juce::String& id) {
         {"stereo_width_percent", 197.f, 90.f},
         {"stereo_width_freq", 279.f, 90.f},
         {"limiter_in", 538.f, 98.f},
-        {"limiter_mode", 678.f, 155.f},
+        {"limiter_mode", 678.f, 162.f},
         {"limiter_threshold_db", 599.f, 78.f},
         {"limiter_ceiling_dbtp", 678.f, 78.f},
         {"limiter_release_ms", 759.f, 78.f},
@@ -476,6 +476,24 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
         contents.headerMeterAtlas=loadImage(
             BinaryData::nautical_steampunk_meter_and_display_sprite_sheet_png,
             (size_t)BinaryData::nautical_steampunk_meter_and_display_sprite_sheet_pngSize);
+    }
+    if(section=="Exciter") {
+        contents.exciterModes={
+            loadImage(BinaryData::Tube_ON_png, (size_t)BinaryData::Tube_ON_pngSize),
+            loadImage(BinaryData::Tube_OFF_png, (size_t)BinaryData::Tube_OFF_pngSize),
+            loadImage(BinaryData::Tape_ON_png, (size_t)BinaryData::Tape_ON_pngSize),
+            loadImage(BinaryData::Tape_OFF_png, (size_t)BinaryData::Tape_OFF_pngSize),
+            loadImage(BinaryData::Transformer_ON_png, (size_t)BinaryData::Transformer_ON_pngSize),
+            loadImage(BinaryData::Transformer_OFF_png, (size_t)BinaryData::Transformer_OFF_pngSize)};
+    }
+    if(section=="Stereo + Limiter") {
+        contents.limiterModes={
+            loadImage(BinaryData::Mode_CLEAN_On_png, (size_t)BinaryData::Mode_CLEAN_On_pngSize),
+            loadImage(BinaryData::Mode_CLEAN_Off_png, (size_t)BinaryData::Mode_CLEAN_Off_pngSize),
+            loadImage(BinaryData::Mode_PUNCH_On_png, (size_t)BinaryData::Mode_PUNCH_On_pngSize),
+            loadImage(BinaryData::Mode_PUNCH_Off_png, (size_t)BinaryData::Mode_PUNCH_Off_pngSize),
+            loadImage(BinaryData::Mode_MODERN_On_png, (size_t)BinaryData::Mode_MODERN_On_pngSize),
+            loadImage(BinaryData::Mode_MODERN_Off_png, (size_t)BinaryData::Mode_MODERN_Off_pngSize)};
     }
     if(section=="Tape") {
         contents.leftReel=loadImage(BinaryData::Reel_Left_FrontOn_png,
@@ -745,6 +763,32 @@ void SteamMasterEditor::Page::ArtCanvas::paintMovingParts(juce::Graphics& g) {
                .scaled(scale).translated(x-diameter/2.f,y-diameter/2.f);
         g.drawImageTransformed(sprite,t,false);
     };
+    auto modeValue=[&](const char* id) {
+        if(auto* v=processor->state.getRawParameterValue(id))
+            return juce::jlimit(0,2,juce::roundToInt(v->load(std::memory_order_relaxed)));
+        return 0;
+    };
+    auto drawButtonSprite=[&](const juce::Image& artSprite,float x,float y,float w,float h){
+        if(artSprite.isValid()) g.drawImage(artSprite,juce::Rectangle<float>(
+            x*sx,y*sy,w*sx,h*sy),juce::RectanglePlacement::stretchToFit,false);
+    };
+    if(section=="Exciter"){
+        const int mode=modeValue("exciter_mode");
+        for(int i=0;i<3;++i) {
+            const float xs[]={198.f,238.f,270.f};
+            const float widths[]={40.f,31.f,58.f};
+            drawButtonSprite(exciterModes[(size_t)(i*2+(mode==i?0:1))],
+                             xs[i],43.f,widths[i],22.f);
+        }
+    }
+    if(section=="Stereo + Limiter"){
+        const int mode=modeValue("limiter_mode");
+        for(int i=0;i<3;++i) {
+            const float xs[]={595.f,651.f,710.f};
+            drawButtonSprite(limiterModes[(size_t)(i*2+(mode==i?0:1))],
+                             xs[i],146.f,47.f,31.f);
+        }
+    }
     if(section=="Tape") {
         drawReel(leftReel,174.f*sx,70.f*sy,136.f*sx);
         drawReel(rightReel,969.f*sx,70.f*sy,136.f*sx);
@@ -810,9 +854,11 @@ void SteamMasterEditor::Page::resized() {
                          id=="limiter_mode" || id=="exciter_mode";
         const float diameter=(section=="Global")
              ? (id=="global_in"?185.f:(combo?72.f:56.f))
-             : (small?(toggle?25.f:(combo?56.f:30.f)):38.f);
+             : (id=="exciter_mode"?133.f:(id=="limiter_mode"?169.f:
+                (id=="stereo_routing"?104.f:
+                (small?(toggle?25.f:(combo?56.f:30.f)):38.f))));
         const int w=juce::jmax(14,juce::roundToInt((id=="global_in"?94.f:diameter)*sx));
-        const int h=juce::jmax(14,juce::roundToInt((id=="global_in"?185.f:(combo?34.f:diameter))*sy));
+        const int h=juce::jmax(14,juce::roundToInt((id=="global_in"?185.f:(combo?(id=="exciter_mode"?26.f:(id=="limiter_mode"?36.f:34.f)):diameter))*sy));
         const int x=juce::roundToInt(p.x*sx)-w/2;
         const int y=juce::roundToInt(p.y*sy)-h/2;
         control->setBounds(x,y,w,h);
