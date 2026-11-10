@@ -71,56 +71,117 @@ void paintPanel(juce::Graphics& g,juce::Rectangle<int> b,const juce::String& tit
 }
 
 
-// Positions are in the approved source-art pixel coordinate system.
-// Never use them as DSP ranges: value ranges come solely from APVTS.
-// A missing position is placed in the fully functional auxiliary control row.
-juce::Point<float> approvedPosition(const juce::String& section,int i) {
-    using P=juce::Point<float>;
-    auto pick=[i](std::initializer_list<P> positions)->P {
-       return i>=0 && i<(int)positions.size()?*(positions.begin()+i):P(-1,-1);
+juce::Point<float> approvedPosition(const juce::String& id) {
+    struct Placement {const char* id;float x,y;};
+    static constexpr Placement positions[] = {
+       {"global_in",130.f,384.f},
+       {"global_input_db",284.f,413.f},
+       {"global_output_db",465.f,413.f},
+       {"global_oversampling",751.f,464.f},
+       {"ocean_in",214.f,282.f},
+       {"ocean_mix",586.f,292.f},
+       {"ocean_threshold_db",129.f,176.f},
+       {"ocean_ratio",289.f,176.f},
+       {"ocean_attack_ms",430.f,176.f},
+       {"ocean_recovery",586.f,176.f},
+       {"ocean_sc_hpf",344.f,292.f},
+       {"furnace_in",210.f,283.f},
+       {"furnace_mix",587.f,293.f},
+       {"furnace_threshold_db",109.f,177.f},
+       {"furnace_ratio",268.f,176.f},
+       {"furnace_attack",429.f,176.f},
+       {"furnace_release",584.f,176.f},
+       {"furnace_sc_hpf",343.f,293.f},
+       {"parametric_in",88.f,414.f},
+       {"parametric_mix",1377.f,412.f},
+       {"parametric_output_db",607.f,411.f},
+       {"pultec_in",224.f,567.f},
+       {"pultec_mix",1960.f,555.f},
+       {"pultec_low_freq",237.f,330.f},
+       {"pultec_low_boost",538.f,328.f},
+       {"pultec_low_atten",841.f,328.f},
+       {"pultec_high_boost_freq",1143.f,328.f},
+       {"pultec_high_boost",1360.f,328.f},
+       {"pultec_bandwidth",1555.f,328.f},
+       {"pultec_high_atten_freq",1770.f,328.f},
+       {"pultec_high_atten",1970.f,327.f},
+       {"pultec_output_db",1651.f,557.f},
+       {"shadow_in",103.f,669.f},
+       {"shadow_mix",1279.f,673.f},
+       {"shadow_optical_in",131.f,275.f},
+       {"shadow_optical_threshold",159.f,376.f},
+       {"shadow_optical_makeup",421.f,375.f},
+       {"shadow_discrete_in",1391.f,287.f},
+       {"shadow_discrete_threshold",1045.f,288.f},
+       {"shadow_discrete_gain",1385.f,377.f},
+       {"shadow_discrete_ratio",1262.f,287.f},
+       {"shadow_discrete_attack",1050.f,377.f},
+       {"shadow_discrete_recovery",1240.f,379.f},
+       {"shadow_sc_hpf",274.f,674.f},
+       {"shadow_output_db",1010.f,677.f},
+       {"exciter_in",123.f,399.f},
+       {"exciter_mix",1450.f,399.f},
+       {"exciter_mode",123.f,310.f},
+       {"exciter_low_drive",286.f,311.f},
+       {"exciter_low_freq",428.f,311.f},
+       {"exciter_high_drive",858.f,310.f},
+       {"exciter_high_freq",998.f,310.f},
+       {"exciter_crossover",1198.f,309.f},
+       {"exciter_output_db",1321.f,395.f},
+       {"bax_mid_in",136.f,467.f},
+       {"bax_mid_hpf",290.f,466.f},
+       {"bax_mid_low_freq",476.f,471.f},
+       {"bax_mid_low_gain",670.f,471.f},
+       {"bax_mid_high_freq",865.f,471.f},
+       {"bax_mid_high_gain",1063.f,471.f},
+       {"bax_mid_lpf",1255.f,470.f},
+       {"bax_mid_output_db",1421.f,472.f},
+       {"bax_side_in",136.f,781.f},
+       {"bax_side_hpf",290.f,786.f},
+       {"bax_side_low_freq",476.f,789.f},
+       {"bax_side_low_gain",670.f,789.f},
+       {"bax_side_high_freq",865.f,789.f},
+       {"bax_side_high_gain",1063.f,789.f},
+       {"bax_side_lpf",1255.f,787.f},
+       {"bax_side_output_db",1421.f,789.f},
+       {"tape_in",102.f,339.f},
+       {"tape_mix",1425.f,341.f},
+       {"tape_type",289.f,377.f},
+       {"tape_speed",493.f,339.f},
+       {"tape_drive_db",739.f,343.f},
+       {"tape_bias",973.f,344.f},
+       {"tape_hf_trim_db",1196.f,344.f},
+       {"stereo_mono_maker_hz",507.f,150.f},
+       {"stereo_width_percent",758.f,150.f},
+       {"stereo_width_freq",996.f,150.f},
+       {"limiter_in",360.f,351.f},
+       {"limiter_mode",1312.f,356.f},
+       {"limiter_threshold_db",486.f,346.f},
+       {"limiter_ceiling_dbtp",650.f,346.f},
+       {"limiter_release_ms",810.f,349.f},
+       {"limiter_auto_release",957.f,357.f},
+       {"limiter_lookahead_ms",1091.f,353.f},
+       {"limiter_stereo_link",1198.f,354.f},
+       {"limiter_true_peak",1260.f,406.f},
+       {"parametric_band_1_type",165.f,358.f},
+       {"parametric_band_1_freq",221.f,225.f},
+       {"parametric_band_1_q",345.f,225.f},
+       {"parametric_band_1_gain",100.f,225.f},
+       {"parametric_band_2_type",563.f,358.f},
+       {"parametric_band_2_freq",619.f,225.f},
+       {"parametric_band_2_q",743.f,225.f},
+       {"parametric_band_2_gain",498.f,225.f},
+       {"parametric_band_3_type",919.f,358.f},
+       {"parametric_band_3_freq",975.f,225.f},
+       {"parametric_band_3_q",1099.f,225.f},
+       {"parametric_band_3_gain",854.f,225.f},
+       {"parametric_band_4_type",1270.f,358.f},
+       {"parametric_band_4_freq",1326.f,225.f},
+       {"parametric_band_4_q",1450.f,225.f},
+       {"parametric_band_4_gain",1205.f,225.f}
     };
-    if(section=="Global") return pick({{130,384},{284,413},{465,413},{751,464}});
-    if(section=="Ocean") return pick({{214,282},{586,292},{129,176},{289,176},{430,176},{586,176},{344,292}});
-    if(section=="Furnace") return pick({{210,283},{587,293},{109,177},{268,176},{429,176},{584,176},{343,293}});
-    if(section=="Parametric") return pick({
-        {88,414},{1377,412},{607,411},
-        {175,358},{100,225},{345,225},{221,225},
-        {573,356},{498,225},{724,225},{619,225},
-        {963,356},{854,225},{1107,225},{980,225},
-        {1321,356},{1205,225},{1450,225},{1325,225}
-    });
-    if(section=="Pultec") return pick({
-        {224,567},{1960,555},{237,330},{538,328},{841,328},
-        {1143,328},{1360,328},{1555,328},{1770,328},{1970,327},{1651,557}
-    });
-    if(section=="Shadow") return pick({
-        {103,669},{1279,673},{131,275},{159,376},{421,375},
-        {1391,287},{1045,288},{1385,377},{1262,287},
-        {1050,377},{1240,379},{274,674},{1010,677}
-    });
-    if(section=="Exciter") return pick({
-        {123,399},{1450,399},{123,310},{286,311},{428,311},
-        {858,310},{998,310},{1198,309},{1321,395}
-    });
-    if(section=="Bax Mid") return pick({
-        {136,467},{290,466},{476,471},{670,471},
-        {865,471},{1063,471},{1255,470},{1421,472}
-    });
-    if(section=="Bax Side") return pick({
-        {136,781},{290,786},{476,789},{670,789},
-        {865,789},{1063,789},{1255,787},{1421,789}
-    });
-    if(section=="Tape") return pick({
-        {102,339},{1425,341},{289,377},{493,339},{739,343},{973,344},{1196,344}
-    });
-    if(section=="Stereo") return pick({
-        {-1,-1},{-1,-1},{507,150},{758,150},{996,150}
-    });
-    if(section=="Limiter") return pick({
-        {360,351},{1312,356},{486,346},{650,346},{810,349},
-        {957,357},{1091,353},{1198,354},{1260,406}
-    });
-    return P(-1,-1);
+    for(const auto& p:positions) if(id==p.id)return {p.x,p.y};
+    return {-1.f,-1.f};
 }
 
 SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcessorValueTreeState& state,
@@ -136,9 +197,9 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
     else if(section == "Pultec") { asset=BinaryData::pultec_png; assetSize=BinaryData::pultec_pngSize; }
     else if(section == "Shadow") { asset=BinaryData::shadow_png; assetSize=BinaryData::shadow_pngSize; }
     else if(section == "Exciter") { asset=BinaryData::exciter_png; assetSize=BinaryData::exciter_pngSize; }
-    else if(section == "Bax Mid" || section == "Bax Side") { asset=BinaryData::bax_png; assetSize=BinaryData::bax_pngSize; }
+    else if(section == "Bax") { asset=BinaryData::bax_png; assetSize=BinaryData::bax_pngSize; }
     else if(section == "Tape") { asset=BinaryData::tape_png; assetSize=BinaryData::tape_pngSize; }
-    else if(section == "Stereo" || section == "Limiter") { asset=BinaryData::stereo_limiter_png; assetSize=BinaryData::stereo_limiter_pngSize; }
+    else if(section == "Stereo + Limiter") { asset=BinaryData::stereo_limiter_png; assetSize=BinaryData::stereo_limiter_pngSize; }
     if (asset != nullptr && assetSize > 0) {
        contents.art = juce::ImageFileFormat::loadFrom(asset, (size_t)assetSize);
     }
@@ -148,8 +209,18 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
     viewport.setScrollBarsShown(true,false);
     for(auto* p:processor.getParameters()) {
         auto* withID=dynamic_cast<juce::AudioProcessorParameterWithID*>(p);
-        if(!withID||!withID->getName(200).startsWith(section+" / "))continue;
+        if(!withID)continue;
+        const auto fullName=withID->getName(200);
+        const bool groupBax=section=="Bax" &&
+            (fullName.startsWith("Bax Mid / ") || fullName.startsWith("Bax Side / ") ||
+             fullName=="Stereo / Routing" || fullName=="Stereo / Link");
+        const bool groupStereo=section=="Stereo + Limiter" &&
+            (fullName.startsWith("Limiter / ") ||
+             (fullName.startsWith("Stereo / ") &&
+              fullName!="Stereo / Routing" && fullName!="Stereo / Link"));
+        if(!groupBax && !groupStereo && !fullName.startsWith(section+" / "))continue;
         const auto id=withID->paramID;
+        ids.push_back(id);
         auto label=std::make_unique<juce::Label>();
         label->setText(withID->getName(200).fromFirstOccurrenceOf(" / ",false,false),juce::dontSendNotification);
         label->setJustificationType(juce::Justification::centred);
@@ -204,7 +275,7 @@ void SteamMasterEditor::Page::resized() {
     const float sy=artValid?(float)artHeight/contents.art.getHeight():1.f;
     int overflow=0;
     for(int i=0;i<(int)controls.size();++i)
-       if(approvedPosition(section,i).x<0)++overflow;
+       if(approvedPosition(ids[(size_t)i]).x<0)++overflow;
     const int cellW=140,cellH=105;
     const int cols=juce::jmax(1,artWidth/cellW);
     const int extraRows=(overflow+cols-1)/cols;
@@ -241,22 +312,38 @@ void SteamMasterEditor::Page::resized() {
         control->setName(labels[(size_t)i]->getText());
     }
 }
-SteamMasterEditor::SteamMasterEditor(SteamMasterProcessor& p):AudioProcessorEditor(&p),processor(p) {
+int SteamMasterEditor::Page::desiredHeight(int width) const {
+    const int artW=juce::jmax(500,width-35);
+    const auto& art=contents.art;
+    const int artH=art.isValid()
+      ?juce::jmax(140,juce::roundToInt(artW*(double)art.getHeight()/art.getWidth()))
+      :260;
+    int missing=0;
+    for(const auto& id:ids) if(approvedPosition(id).x<0) ++missing;
+    const int cols=juce::jmax(1,artW/140);
+    return artH+62+(missing?((missing+cols-1)/cols)*105+28:0);
+}
+SteamMasterEditor::SteamMasterEditor(SteamMasterProcessor& p)
+:AudioProcessorEditor(&p),processor(p) {
     setOpaque(true);
     theme=std::make_unique<SteamLook>();
     setLookAndFeel(theme.get());
-    addAndMakeVisible(tabs);
+    addAndMakeVisible(rackViewport);
+    rackViewport.setViewedComponent(&rackContent,false);
+    rackViewport.setScrollBarsShown(true,false);
     for(const auto* section:{"Global","Ocean","Furnace","Parametric","Pultec","Shadow",
-                              "Exciter","Bax Mid","Bax Side","Tape","Stereo","Limiter"}) {
-       auto* page=new Page(processor,processor.state,section);
-       tabs.addTab(section,juce::Colour(0xff273540),page,true);
+                              "Exciter","Bax","Tape","Stereo + Limiter"}) {
+        auto page=std::make_unique<Page>(processor,processor.state,section);
+        rackContent.addAndMakeVisible(*page);
+        modules.push_back(std::move(page));
     }
     setResizable(true,true);
-    setResizeLimits(760,500,1800,1100);
-    setSize(1120,730);
+    setResizeLimits(760,520,1850,1300);
+    setSize(1120,780);
 }
 SteamMasterEditor::~SteamMasterEditor(){
-    tabs.clearTabs();
+    rackViewport.setViewedComponent(nullptr,false);
+    modules.clear();
     setLookAndFeel(nullptr);
 }
 void SteamMasterEditor::paint(juce::Graphics& g) {
@@ -265,4 +352,15 @@ void SteamMasterEditor::paint(juce::Graphics& g) {
     g.setColour(brass);
     g.drawRoundedRectangle(r,8.f,2.f);
 }
-void SteamMasterEditor::resized(){tabs.setBounds(getLocalBounds().reduced(9));}
+void SteamMasterEditor::resized(){
+    auto r=getLocalBounds().reduced(9);
+    rackViewport.setBounds(r);
+    const int width=juce::jmax(540,r.getWidth()-18);
+    int y=0;
+    for(auto& module:modules){
+       const int height=module->desiredHeight(width);
+       module->setBounds(0,y,width,height);
+       y+=height+8;
+    }
+    rackContent.setSize(width,y);
+}
