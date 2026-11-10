@@ -196,6 +196,31 @@ if(STEAMMASTER_BUILD_VST3)
     "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Toggles/Auto_Release_On.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Toggles/Auto_Release_Off.png"
   )
+  list(APPEND STEAMMASTER_ART_FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Knobs/Optical_Threshold.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Knobs/Optical_Gain.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Knobs/Discrete_Threshold.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Knobs/Discrete_Gain.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Knobs/Discrete_Ratio.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Knobs/Discrete_Attack.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Knobs/Discrete_Recovery.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Knobs/Sidechain_HPF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Knobs/Low_Frequency_Brass_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Knobs/High_Drive_Brass_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Knobs/High_Frequency_Brass_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Knobs/Crossover_Brass_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Knobs/Output_Brass_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Knobs/Mix_Brass_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band2_Gain.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band2_Frequency.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band2_Q.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band3_Gain.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band3_Frequency.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band3_Q.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band4_Gain.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band4_Frequency.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band4_Q.png"
+  )
   foreach(ART_FILE IN LISTS STEAMMASTER_ART_FILES)
     if(NOT EXISTS "${ART_FILE}")
       message(FATAL_ERROR "STEAMMASTER MISSING APPROVED ASSET: ${ART_FILE}")
