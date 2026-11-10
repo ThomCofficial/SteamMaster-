@@ -333,7 +333,6 @@ void SteamMasterEditor::Page::savePreset() {
 void SteamMasterEditor::Page::navigatePreset(int direction) {
     const auto dir=presetDirectory();
     auto files=dir.findChildFiles(juce::File::findFiles,false,"*.xml");
-    files.sort();
     if(files.isEmpty()){
        if(presetLabel)presetLabel->setText("No saved presets",juce::dontSendNotification);
        return;
