@@ -1,16 +1,8 @@
-name: SteamMaster Windows VST3
+name: SteamMaster Windows VST3 — production artwork
 on:
   workflow_dispatch:
-  pull_request:
-    branches: [vst3/v1.7-performance-character]
-    paths:
-      - 'plugin/**'
-      - 'src/**'
-      - 'include/**'
-      - 'CMakeLists.txt'
-      - '.github/workflows/build-steammaster-vst3.yml'
 concurrency:
-  group: steammaster-vst3-${{ github.event.pull_request.number || github.ref }}
+  group: steammaster-vst3-production-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   windows-vst3:
@@ -18,19 +10,36 @@ jobs:
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
-      - name: Exercise the embedded-artwork compiler path
+      - name: Verify real approved artwork before compiling
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Path plugin/assets -Force | Out-Null
-          $png = [Convert]::FromBase64String('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/EioAAAAASUVORK5CYII=')
-          foreach ($name in @('global_header','ocean','furnace','parametric','pultec','shadow','exciter','bax','tape','stereo_limiter')) {
-            [IO.File]::WriteAllBytes((Join-Path (Resolve-Path plugin/assets).Path "$name.png"),$png)
+          $names = @('global_header','ocean','furnace','parametric','pultec','shadow','exciter','bax','tape','stereo_limiter')
+          $missing = @()
+          foreach ($name in $names) {
+            $path = "plugin/assets/$name.png"
+            if (!(Test-Path $path)) {
+              $missing += $path
+              continue
+            }
+            $file = Get-Item $path
+            if ($file.Length -lt 10240) {
+              throw "Invalid/placeholder image: $path is only $($file.Length) bytes. Approved full-resolution assets required."
+            }
+            $bytes = [IO.File]::ReadAllBytes((Resolve-Path $path).Path)
+            $pngSignature = [byte[]](137,80,78,71,13,10,26,10)
+            for($i=0;$i -lt 8;$i++) {
+              if($bytes[$i] -ne $pngSignature[$i]) { throw "Not a PNG: $path" }
+            }
+            Write-Host "VERIFIED $path ($($file.Length) bytes)"
+          }
+          if ($missing.Count -gt 0) {
+            throw "Real SteamMaster artwork is missing: $($missing -join ', '). No placeholder build will be produced."
           }
       - name: Configure Release VST3 and test suite
         run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DSTEAMMASTER_BUILD_VST3=ON -DBUILD_TESTING=ON
       - name: Build Release
         run: cmake --build build --config Release --parallel 4
-      - name: DSP and host regression suite
+      - name: DSP and plugin host regression suite
         run: ctest --test-dir build -C Release --output-on-failure
       - name: Stage VST3 bundle
         shell: pwsh
@@ -39,10 +48,9 @@ jobs:
           if (-not $vst) { throw "Windows VST3 bundle was not produced" }
           New-Item -ItemType Directory -Path dist -Force | Out-Null
           Copy-Item -Path $vst.FullName -Destination dist -Recurse
-          Get-ChildItem -Path dist -Recurse | Select-Object FullName
       - uses: actions/upload-artifact@v4
         with:
-          name: SteamMaster-Windows-VST3-Release
+          name: SteamMaster-Windows-VST3-Real-Artwork
           path: dist/
           if-no-files-found: error
           retention-days: 30
