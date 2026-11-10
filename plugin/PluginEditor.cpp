@@ -346,8 +346,7 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
     const char* asset = nullptr;
     int assetSize = 0;
     if (section == "Global") { asset=BinaryData::abyssal_steampunk_mastering_faceplate_png; assetSize=BinaryData::abyssal_steampunk_mastering_faceplate_pngSize; }
-    else if(section == "Ocean") { asset=BinaryData::Ocean_Furnace_Clean_Faceplate_png; assetSize=BinaryData::Ocean_Furnace_Clean_Faceplate_pngSize; }
-    else if(section == "Furnace") { asset=BinaryData::Ocean_Furnace_Clean_Faceplate_png; assetSize=BinaryData::Ocean_Furnace_Clean_Faceplate_pngSize; }
+    else if(section == "Ocean + Furnace") { asset=BinaryData::Ocean_Furnace_Clean_Faceplate_png; assetSize=BinaryData::Ocean_Furnace_Clean_Faceplate_pngSize; }
     else if(section == "Parametric") { asset=BinaryData::Parametric_EQ_Clean_Faceplate_png; assetSize=BinaryData::Parametric_EQ_Clean_Faceplate_pngSize; }
     else if(section == "Pultec") { asset=BinaryData::Pultec_EQ_Faceplate_png; assetSize=BinaryData::Pultec_EQ_Faceplate_pngSize; }
     else if(section == "Shadow") { asset=BinaryData::Shadow_Clean_Faceplate_EmptySockets_4x_png; assetSize=BinaryData::Shadow_Clean_Faceplate_EmptySockets_4x_pngSize; }
@@ -357,6 +356,8 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
     else if(section == "Stereo + Limiter") { asset=BinaryData::StereoImage_Limiter_Clean_Redesigned_png; assetSize=BinaryData::StereoImage_Limiter_Clean_Redesigned_pngSize; }
     if (asset != nullptr && assetSize > 0) {
        contents.art = juce::ImageFileFormat::loadFrom(asset, (size_t)assetSize);
+       if (section == "Ocean + Furnace" && contents.art.isValid())
+           contents.art = contents.art.getClippedImage(juce::Rectangle<int>(0, 215, 2172, 300));
     }
 #endif
     addAndMakeVisible(contents);
@@ -364,6 +365,8 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
         auto* withID=dynamic_cast<juce::AudioProcessorParameterWithID*>(p);
         if(!withID)continue;
         const auto fullName=withID->getName(200);
+        const bool groupCompressors=section=="Ocean + Furnace" &&
+            (fullName.startsWith("Ocean / ") || fullName.startsWith("Furnace / "));
         const bool groupBax=section=="Bax" &&
             (fullName.startsWith("Bax Mid / ") || fullName.startsWith("Bax Side / ") ||
              fullName=="Stereo / Routing" || fullName=="Stereo / Link");
@@ -371,7 +374,7 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
             (fullName.startsWith("Limiter / ") ||
              (fullName.startsWith("Stereo / ") &&
               fullName!="Stereo / Routing" && fullName!="Stereo / Link"));
-        if(!groupBax && !groupStereo && !fullName.startsWith(section+" / "))continue;
+        if(!groupCompressors && !groupBax && !groupStereo && !fullName.startsWith(section+" / "))continue;
         const auto id=withID->paramID;
         ids.push_back(id);
         auto label=std::make_unique<juce::Label>();
@@ -585,6 +588,18 @@ void SteamMasterEditor::Page::resized() {
     int extra=0;
     for(int i=0;i<(int)controls.size();++i) {
         auto p=approvedPosition(ids[(size_t)i]);
+        if (section == "Ocean + Furnace") {
+            static constexpr float oceanXs[] = { 180.f, 290.f, 410.f, 530.f, 650.f, 775.f, 895.f };
+            static constexpr float furnaceXs[] = { 1290.f, 1395.f, 1515.f, 1635.f, 1760.f, 1880.f, 2010.f };
+            const juce::String oceanIDs[] = {"ocean_in","ocean_threshold_db","ocean_ratio",
+                                              "ocean_attack_ms","ocean_recovery","ocean_sc_hpf","ocean_mix"};
+            const juce::String furnaceIDs[] = {"furnace_in","furnace_threshold_db","furnace_ratio",
+                                                "furnace_attack","furnace_release","furnace_sc_hpf","furnace_mix"};
+            for (int k = 0; k < 7; ++k) {
+                if (ids[(size_t)i] == oceanIDs[k]) p = {oceanXs[k], 180.f};
+                if (ids[(size_t)i] == furnaceIDs[k]) p = {furnaceXs[k], 180.f};
+            }
+        }
         const bool embedded=artValid&&p.x>=0&&p.y>=0;
         int x,y,w,h;
         if(embedded) {
@@ -631,7 +646,7 @@ SteamMasterEditor::SteamMasterEditor(SteamMasterProcessor& p)
     addAndMakeVisible(rackViewport);
     rackViewport.setViewedComponent(&rackContent,false);
     rackViewport.setScrollBarsShown(true,false);
-    for(const auto* section:{"Global","Ocean","Furnace","Parametric","Pultec","Shadow",
+    for(const auto* section:{"Global","Ocean + Furnace","Parametric","Pultec","Shadow",
                               "Exciter","Bax","Tape","Stereo + Limiter"}) {
         auto page=std::make_unique<Page>(processor,processor.state,section);
         rackContent.addAndMakeVisible(*page);
