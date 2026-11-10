@@ -59,6 +59,23 @@ def prepare_plate_and_atlas(name: str, meta: dict) -> None:
         atlas[dy0:dy1,dx0:dx1]=region[dy0-desty:dy1-desty,dx0-destx:dx1-destx]
         # Conservatively erase only baked rotor body; do not remove printed rings.
         cut_mask=np.maximum(cut_mask,np.uint8(dist<=core*.98)*255)
+    if name == "tape":
+        # The two real photographed reels are separated from the dark wood
+        # backing; only those source reels rotate, never the entire panel.
+        reels=np.zeros((256,512,4),np.uint8)
+        for ri,(rx,ry) in enumerate(((395,141),(1151,141))):
+            rr=114.0
+            yy,xx=np.ogrid[:h,:w]
+            dd=np.sqrt((xx-rx)**2+(yy-ry)**2)
+            aa=np.clip((rr-dd)/2.5,0,1)
+            x0=max(0,rx-128);x1=min(w,rx+128)
+            y0=max(0,ry-128);y1=min(h,ry+128)
+            cropped=rgb[y0:y1,x0:x1].copy()
+            cropped[:,:,3]=np.uint8(cropped[:,:,3]*aa[y0:y1,x0:x1])
+            dx=ri*256+128-(rx-x0);dy=128-(ry-y0)
+            reels[dy:dy+cropped.shape[0],dx:dx+cropped.shape[1]]=cropped
+            cut_mask=np.maximum(cut_mask,np.uint8(dd<=rr*.97)*255)
+        save(reels,"tape_reels.png")
     # RGB inpaint preserves nearby parchment, wood and metal texture better than
     # compositing the original baked rotor beneath an independent rotating rotor.
     bgr=cv2.cvtColor(rgb[:,:,:3],cv2.COLOR_RGB2BGR)
