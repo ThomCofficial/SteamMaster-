@@ -74,10 +74,10 @@ void paintPanel(juce::Graphics& g,juce::Rectangle<int> b,const juce::String& tit
 juce::Point<float> approvedPosition(const juce::String& id) {
     struct Placement {const char* id;float x,y;};
     static constexpr Placement positions[] = {
-       {"global_in",130.f,264.f},
-       {"global_input_db",284.f,293.f},
-       {"global_output_db",465.f,293.f},
-       {"global_oversampling",751.f,344.f},
+       {"global_in",130.f,384.f},
+       {"global_input_db",283.f,417.f},
+       {"global_output_db",466.f,417.f},
+       {"global_oversampling",750.f,462.f},
        {"ocean_in",214.f,282.f},
        {"ocean_mix",586.f,292.f},
        {"ocean_threshold_db",129.f,176.f},
@@ -106,19 +106,19 @@ juce::Point<float> approvedPosition(const juce::String& id) {
        {"pultec_high_atten_freq",1770.f,328.f},
        {"pultec_high_atten",1970.f,327.f},
        {"pultec_output_db",1651.f,557.f},
-       {"shadow_in",103.f,669.f},
-       {"shadow_mix",1279.f,673.f},
-       {"shadow_optical_in",131.f,275.f},
+       {"shadow_in",232.f,646.f},
+       {"shadow_mix",1277.f,641.f},
+       {"shadow_optical_in",280.f,245.f},
        {"shadow_optical_threshold",159.f,376.f},
        {"shadow_optical_makeup",421.f,375.f},
-       {"shadow_discrete_in",1391.f,287.f},
+       {"shadow_discrete_in",1417.f,229.f},
        {"shadow_discrete_threshold",1045.f,288.f},
-       {"shadow_discrete_gain",1385.f,377.f},
+       {"shadow_discrete_gain",1366.f,451.f},
        {"shadow_discrete_ratio",1262.f,287.f},
-       {"shadow_discrete_attack",1050.f,377.f},
-       {"shadow_discrete_recovery",1240.f,379.f},
-       {"shadow_sc_hpf",274.f,674.f},
-       {"shadow_output_db",1010.f,677.f},
+       {"shadow_discrete_attack",957.f,455.f},
+       {"shadow_discrete_recovery",1156.f,454.f},
+       {"shadow_sc_hpf",546.f,641.f},
+       {"shadow_output_db",909.f,641.f},
        {"exciter_in",123.f,339.f},
        {"exciter_mix",1450.f,339.f},
        {"exciter_mode",123.f,250.f},
@@ -128,41 +128,41 @@ juce::Point<float> approvedPosition(const juce::String& id) {
        {"exciter_high_freq",998.f,250.f},
        {"exciter_crossover",1198.f,249.f},
        {"exciter_output_db",1321.f,335.f},
-       {"bax_mid_in",136.f,467.f},
+       {"bax_mid_in",115.f,500.f},
        {"bax_mid_hpf",290.f,466.f},
        {"bax_mid_low_freq",476.f,471.f},
-       {"bax_mid_low_gain",670.f,471.f},
-       {"bax_mid_high_freq",865.f,471.f},
-       {"bax_mid_high_gain",1063.f,471.f},
-       {"bax_mid_lpf",1255.f,470.f},
-       {"bax_mid_output_db",1421.f,472.f},
-       {"bax_side_in",136.f,781.f},
-       {"bax_side_hpf",290.f,786.f},
-       {"bax_side_low_freq",476.f,789.f},
-       {"bax_side_low_gain",670.f,789.f},
-       {"bax_side_high_freq",865.f,789.f},
-       {"bax_side_high_gain",1063.f,789.f},
-       {"bax_side_lpf",1255.f,787.f},
-       {"bax_side_output_db",1421.f,789.f},
+       {"bax_mid_low_gain",668.f,473.f},
+       {"bax_mid_high_freq",1007.f,478.f},
+       {"bax_mid_high_gain",845.f,473.f},
+       {"bax_mid_lpf",1186.f,475.f},
+       {"bax_mid_output_db",1393.f,474.f},
+       {"bax_side_in",115.f,835.f},
+       {"bax_side_hpf",289.f,807.f},
+       {"bax_side_low_freq",479.f,808.f},
+       {"bax_side_low_gain",675.f,808.f},
+       {"bax_side_high_freq",1011.f,810.f},
+       {"bax_side_high_gain",845.f,805.f},
+       {"bax_side_lpf",1189.f,809.f},
+       {"bax_side_output_db",1395.f,811.f},
        {"tape_in",102.f,339.f},
-       {"tape_mix",1425.f,341.f},
+       {"tape_mix",1392.f,362.f},
        {"tape_type",289.f,377.f},
-       {"tape_speed",493.f,339.f},
-       {"tape_drive_db",739.f,343.f},
-       {"tape_bias",973.f,344.f},
-       {"tape_hf_trim_db",1196.f,344.f},
-       {"stereo_mono_maker_hz",507.f,150.f},
-       {"stereo_width_percent",758.f,150.f},
-       {"stereo_width_freq",996.f,150.f},
-       {"limiter_in",360.f,351.f},
-       {"limiter_mode",1312.f,356.f},
-       {"limiter_threshold_db",486.f,346.f},
-       {"limiter_ceiling_dbtp",650.f,346.f},
-       {"limiter_release_ms",810.f,349.f},
-       {"limiter_auto_release",957.f,357.f},
-       {"limiter_lookahead_ms",1091.f,353.f},
-       {"limiter_stereo_link",1198.f,354.f},
-       {"limiter_true_peak",1260.f,406.f},
+       {"tape_speed",512.f,377.f},
+       {"tape_drive_db",726.f,361.f},
+       {"tape_bias",949.f,361.f},
+       {"tape_hf_trim_db",1174.f,363.f},
+       {"stereo_mono_maker_hz",507.f,151.f},
+       {"stereo_width_percent",758.f,152.f},
+       {"stereo_width_freq",1006.f,153.f},
+       {"limiter_in",354.f,378.f},
+       {"limiter_mode",1107.f,417.f},
+       {"limiter_threshold_db",477.f,383.f},
+       {"limiter_ceiling_dbtp",638.f,382.f},
+       {"limiter_release_ms",807.f,383.f},
+       {"limiter_auto_release",861.f,438.f},
+       {"limiter_lookahead_ms",991.f,325.f},
+       {"limiter_stereo_link",1138.f,325.f},
+       {"limiter_true_peak",962.f,415.f},
        {"parametric_band_1_type",165.f,358.f},
        {"parametric_band_1_freq",221.f,225.f},
        {"parametric_band_1_q",345.f,225.f},
@@ -179,6 +179,8 @@ juce::Point<float> approvedPosition(const juce::String& id) {
        {"parametric_band_4_freq",1326.f,225.f},
        {"parametric_band_4_q",1450.f,225.f},
        {"parametric_band_4_gain",1205.f,225.f}
+       {"stereo_routing",616.f,228.f},
+       {"stereo_link",838.f,226.f},
     };
     for(const auto& p:positions) if(id==p.id)return {p.x,p.y};
     return {-1.f,-1.f};
@@ -412,18 +414,18 @@ void SteamMasterEditor::Page::resized() {
     contents.artHeight=artHeight;
     contents.setSize(artWidth,totalHeight);
     if(section=="Global" && contents.art.isValid() && headerButtons.size()==5) {
-       // Artwork was trimmed by 120 source pixels at the top in the build kit.
+       // Original uploaded header art uses untrimmed 2048x682 source coordinates.
        const auto scaled=[sx,sy](int x,int y,int w,int h) {
           return juce::Rectangle<int>(juce::roundToInt(x*sx),juce::roundToInt(y*sy),
                                       juce::jmax(18,juce::roundToInt(w*sx)),
                                       juce::jmax(18,juce::roundToInt(h*sy)));
        };
-       headerButtons[0]->setBounds(scaled(966,303,78,62));
-       headerButtons[1]->setBounds(scaled(1046,303,78,62));
-       headerButtons[2]->setBounds(scaled(1177,304,52,62));
-       headerButtons[3]->setBounds(scaled(1463,304,52,62));
-       headerButtons[4]->setBounds(scaled(1531,304,54,62));
-       if(presetLabel)presetLabel->setBounds(scaled(1238,310,220,51));
+       headerButtons[0]->setBounds(scaled(966,423,78,62));
+       headerButtons[1]->setBounds(scaled(1046,423,78,62));
+       headerButtons[2]->setBounds(scaled(1177,424,52,62));
+       headerButtons[3]->setBounds(scaled(1463,424,52,62));
+       headerButtons[4]->setBounds(scaled(1531,424,54,62));
+       if(presetLabel)presetLabel->setBounds(scaled(1238,430,220,51));
     }
 
     int extra=0;
