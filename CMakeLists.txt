@@ -112,6 +112,7 @@ if(STEAMMASTER_BUILD_VST3)
   set(STEAMMASTER_ART_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/01_Header/abyssal_steampunk_mastering_faceplate.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/01_Header/brass_steampunk_knob_sprite_sheet.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/01_Header/nautical_steampunk_meter_and_display_sprite_sheet.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/01_Header/steampunk_brass_ui_button_sprite_sheet.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/01_Header/steampunk_global_in_toggle_set.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/02_Ocean_Furnace/01_Combined_Faceplate/Ocean_Furnace_Clean_Faceplate.png"
