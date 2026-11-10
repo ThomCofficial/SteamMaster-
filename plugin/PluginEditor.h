@@ -16,9 +16,14 @@ private:
         void resized() override;
         void paint(juce::Graphics&) override;
         juce::String section;
-        juce::Image art;
         juce::Viewport viewport;
-        juce::Component contents;
+        struct ArtCanvas final : juce::Component {
+            juce::Image art;
+            void paint(juce::Graphics& g) override {
+                if(art.isValid()) g.drawImage(art, getLocalBounds().toFloat());
+                else g.fillAll(juce::Colour(0xff26333a));
+            }
+        } contents;
         std::vector<std::unique_ptr<juce::Component>> controls;
         std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>> sliders;
         std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>> buttons;
