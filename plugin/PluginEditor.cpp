@@ -185,7 +185,7 @@ juce::Point<float> approvedPosition(const juce::String& id) {
 }
 
 SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcessorValueTreeState& state,
-                               const juce::String& s):section(s) {
+                               const juce::String& s):source(static_cast<SteamMasterProcessor&>(processor)),section(s) {
     // Decode the approved source art once, on the message thread, never in paint/audio callbacks.
 #ifdef STEAMMASTER_HAS_ARTWORK
     const char* asset = nullptr;
@@ -251,8 +251,10 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
             controls.push_back(std::move(slider));
         }
     }
+    startTimerHz(30);
 }
 
+void SteamMasterEditor::Page::timerCallback(){repaint(juce::Rectangle<int>(getWidth()-295,0,290,30));}
 void SteamMasterEditor::Page::paint(juce::Graphics& g) {
     g.fillAll(deep);
     g.setColour(brass);
@@ -261,6 +263,37 @@ void SteamMasterEditor::Page::paint(juce::Graphics& g) {
     g.setColour(ivory);
     g.drawText(section.toUpperCase(),getLocalBounds().removeFromTop(27).reduced(12,0),
                juce::Justification::centredLeft);
+    // Tiny independent steampunk instrument: no audio thread paints directly.
+    // These measurements represent real processor telemetry, not knob positions.
+    auto meter = [this,&g](const juce::String& label,float value,float low,float high,int x) {
+       if(getWidth()<800)return;
+       const float normalized=juce::jlimit(0.f,1.f,(value-low)/(high-low));
+       juce::Rectangle<float> plate((float)x,4.f,128.f,21.f);
+       g.setColour(juce::Colour(0xff3d2d23));g.fillRoundedRectangle(plate,4.f);
+       g.setColour(brass);g.drawRoundedRectangle(plate,4.f,1.f);
+       g.setFont(juce::Font(juce::FontOptions(9.5f,juce::Font::bold)));
+       g.setColour(ivory);g.drawText(label,plate.withWidth(49.f),juce::Justification::centred,true);
+       auto active=plate.withTrimmedLeft(51.f).reduced(4.f);
+       g.setColour(juce::Colour(0xff131a1c));g.fillRect(active);
+       g.setColour(juce::Colour(0xffd7ac69));
+       g.fillRect(active.withWidth(active.getWidth()*normalized));
+       g.setColour(juce::Colour(0xffffe4a3));
+       const float needleX=active.getX()+active.getWidth()*normalized;
+       g.drawLine(needleX,active.getY()-2.f,needleX,active.getBottom()+2.f,1.5f);
+    };
+    const auto read=[](const std::atomic<float>& p){return p.load(std::memory_order_relaxed);};
+    int pos=getWidth()-279;
+    if(section=="Ocean")meter("GR dB",-read(source.meterOceanGr),0.f,20.f,pos+145);
+    else if(section=="Furnace")meter("GR dB",-read(source.meterFurnaceGr),0.f,20.f,pos+145);
+    else if(section=="Shadow") {
+       meter("OPTO",-read(source.meterShadowOpticalGr),0.f,20.f,pos);
+       meter("DISC",-read(source.meterShadowDiscreteGr),0.f,20.f,pos+145);
+    }
+    else if(section=="Stereo + Limiter") {
+       meter("CORR",read(source.meterCorrelation),-1.f,1.f,pos);
+       meter("GR dB",read(source.meterLimiterGr),0.f,20.f,pos+145);
+    }
+    else if(section=="Global")meter("dBFS",read(source.meterOutputDb),-60.f,0.f,pos+145);
 }
 void SteamMasterEditor::Page::resized() {
     auto area=getLocalBounds().reduced(10);
