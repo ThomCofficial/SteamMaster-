@@ -230,6 +230,31 @@ if(STEAMMASTER_BUILD_VST3)
     "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Buttons/IN_ON.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Buttons/IN_OFF.png"
   )
+  list(APPEND STEAMMASTER_ART_FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band1_Peak_OFF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band1_Low_Shelf_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band1_Low_Shelf_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band1_High_Shelf_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band1_High_Shelf_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band2_Peak_OFF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band2_Peak_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band2_Low_Shelf_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band2_Low_Shelf_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band2_High_Shelf_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band2_High_Shelf_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band3_Peak_OFF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band3_Peak_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band3_Low_Shelf_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band3_Low_Shelf_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band3_High_Shelf_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band3_High_Shelf_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band4_Peak_OFF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band4_Peak_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band4_Low_Shelf_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band4_Low_Shelf_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band4_High_Shelf_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band4_High_Shelf_OriginalState.png"
+  )
   foreach(ART_FILE IN LISTS STEAMMASTER_ART_FILES)
     if(NOT EXISTS "${ART_FILE}")
       message(FATAL_ERROR "STEAMMASTER MISSING APPROVED ASSET: ${ART_FILE}")
