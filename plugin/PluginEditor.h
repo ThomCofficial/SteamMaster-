@@ -19,7 +19,6 @@ private:
         void timerCallback() override;
         SteamMasterProcessor& source;
         juce::String section;
-        juce::Viewport viewport;
         struct ArtCanvas final : juce::Component {
             juce::Image art;
             int artHeight = 0;
