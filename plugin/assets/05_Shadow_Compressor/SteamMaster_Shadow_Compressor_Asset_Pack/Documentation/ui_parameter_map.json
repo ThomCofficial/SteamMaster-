@@ -1,0 +1,306 @@
+{
+  "asset_version": "1.0",
+  "reference_dimensions": [
+    1145,
+    140
+  ],
+  "generated_assets_target_dims": [
+    4580,
+    560
+  ],
+  "verification_level": "Cross-checked against agreed user specifications, not current VST3 source code",
+  "module": "Shadow Compressor - Optical + Discrete",
+  "expected_rotary_count": 10,
+  "found_rotary_count": 10,
+  "expected_IN_count": 3,
+  "visible_IN_count": 2,
+  "controls": [
+    {
+      "id": "Optical_Threshold",
+      "group": "Optical",
+      "type": "continuous",
+      "range": "-40 to +10 dB",
+      "values": [
+        -40,
+        10
+      ],
+      "center_px": [
+        229,
+        83
+      ],
+      "center_normalized": [
+        0.2,
+        0.592857
+      ],
+      "knob_sprite": "Knobs/Optical_Threshold.png",
+      "scale_sprite": "Value_Dials/Optical_Threshold_Exact_Scale.png"
+    },
+    {
+      "id": "Optical_Gain",
+      "group": "Optical",
+      "type": "continuous",
+      "range": "-12 to +18 dB",
+      "values": [
+        -12,
+        18
+      ],
+      "center_px": [
+        313,
+        83
+      ],
+      "center_normalized": [
+        0.273362,
+        0.592857
+      ],
+      "knob_sprite": "Knobs/Optical_Gain.png",
+      "scale_sprite": "Value_Dials/Optical_Gain_Exact_Scale.png"
+    },
+    {
+      "id": "Discrete_Threshold",
+      "group": "Discrete",
+      "type": "continuous",
+      "range": "-40 to +10 dB",
+      "values": [
+        -40,
+        10
+      ],
+      "center_px": [
+        648,
+        83
+      ],
+      "center_normalized": [
+        0.565939,
+        0.592857
+      ],
+      "knob_sprite": "Knobs/Discrete_Threshold.png",
+      "scale_sprite": "Value_Dials/Discrete_Threshold_Exact_Scale.png"
+    },
+    {
+      "id": "Discrete_Gain",
+      "group": "Discrete",
+      "type": "continuous",
+      "range": "-12 to +18 dB",
+      "values": [
+        -12,
+        18
+      ],
+      "center_px": [
+        706,
+        83
+      ],
+      "center_normalized": [
+        0.616594,
+        0.592857
+      ],
+      "knob_sprite": "Knobs/Discrete_Gain.png",
+      "scale_sprite": "Value_Dials/Discrete_Gain_Exact_Scale.png"
+    },
+    {
+      "id": "Discrete_Ratio",
+      "group": "Discrete",
+      "type": "stepped",
+      "range": "1.2 / 2 / 3 / 4 / 6 / 20",
+      "values": [
+        "1.2",
+        "2",
+        "3",
+        "4",
+        "6",
+        "20"
+      ],
+      "center_px": [
+        778,
+        84
+      ],
+      "center_normalized": [
+        0.679476,
+        0.6
+      ],
+      "knob_sprite": "Knobs/Discrete_Ratio.png",
+      "scale_sprite": "Value_Dials/Discrete_Ratio_Exact_Scale.png"
+    },
+    {
+      "id": "Discrete_Attack",
+      "group": "Discrete",
+      "type": "stepped",
+      "range": "0.1 / 0.3 / 1 / 3 / 10 / 30 ms",
+      "values": [
+        "0.1",
+        "0.3",
+        "1",
+        "3",
+        "10",
+        "30"
+      ],
+      "center_px": [
+        845,
+        85
+      ],
+      "center_normalized": [
+        0.737991,
+        0.607143
+      ],
+      "knob_sprite": "Knobs/Discrete_Attack.png",
+      "scale_sprite": "Value_Dials/Discrete_Attack_Exact_Scale.png"
+    },
+    {
+      "id": "Discrete_Recovery",
+      "group": "Discrete",
+      "type": "stepped",
+      "range": "0.1 / 0.2 / 0.4 / 0.6 / 0.8 / 1.2 / Dual",
+      "values": [
+        "0.1",
+        "0.2",
+        "0.4",
+        "0.6",
+        "0.8",
+        "1.2",
+        "Dual"
+      ],
+      "center_px": [
+        913,
+        85
+      ],
+      "center_normalized": [
+        0.79738,
+        0.607143
+      ],
+      "knob_sprite": "Knobs/Discrete_Recovery.png",
+      "scale_sprite": "Value_Dials/Discrete_Recovery_Exact_Scale.png"
+    },
+    {
+      "id": "Sidechain_HPF",
+      "group": "Shared",
+      "type": "stepped",
+      "range": "Off / 40 / 80 / 160 / 320 / 500 Hz",
+      "values": [
+        "Off",
+        "40",
+        "80",
+        "160",
+        "320",
+        "500"
+      ],
+      "center_px": [
+        608,
+        126
+      ],
+      "center_normalized": [
+        0.531004,
+        0.9
+      ],
+      "knob_sprite": "Knobs/Sidechain_HPF.png",
+      "scale_sprite": "Value_Dials/Sidechain_HPF_Exact_Scale.png"
+    },
+    {
+      "id": "Output",
+      "group": "Shared",
+      "type": "continuous",
+      "range": "-12 to +12 dB",
+      "values": [
+        -12,
+        12
+      ],
+      "center_px": [
+        875,
+        126
+      ],
+      "center_normalized": [
+        0.764192,
+        0.9
+      ],
+      "knob_sprite": "Knobs/Output.png",
+      "scale_sprite": "Value_Dials/Output_Exact_Scale.png"
+    },
+    {
+      "id": "Mix",
+      "group": "Shared",
+      "type": "continuous",
+      "range": "0 to 100%",
+      "values": [
+        0,
+        100
+      ],
+      "center_px": [
+        949,
+        125
+      ],
+      "center_normalized": [
+        0.828821,
+        0.892857
+      ],
+      "knob_sprite": "Knobs/Mix.png",
+      "scale_sprite": "Value_Dials/Mix_Exact_Scale.png"
+    }
+  ],
+  "buttons": [
+    {
+      "id": "Optical_IN",
+      "center": [
+        158,
+        73
+      ],
+      "exists_in_reference": true
+    },
+    {
+      "id": "Discrete_IN",
+      "center": [
+        589,
+        73
+      ],
+      "exists_in_reference": true
+    },
+    {
+      "id": "Global_IN",
+      "center": null,
+      "exists_in_reference": false
+    }
+  ],
+  "noted_reference_discrepancies": [
+    "Global IN is absent from the supplied image; stand-alone Global IN ON/OFF sprites are provided but location requires review.",
+    "Sidechain HPF printed values in the supplied screenshot omit/duplicate a value; the exact overlay corrects Off/40/80/160/320/500 Hz.",
+    "Original analog gain-reduction meter includes a static needle; an alternate meter and separate needle were generated for later animation.",
+    "Original reference resolution is only 1145x140; its 4x versions are upscaled, not genuine high-resolution source artwork."
+  ],
+  "authoritative_parameters": {
+    "Optical Threshold": "-40 to +10 dB",
+    "Optical Gain": "-12 to +18 dB",
+    "Discrete Threshold": "-40 to +10 dB",
+    "Discrete Gain": "-12 to +18 dB",
+    "Ratio": [
+      "1.2",
+      "2",
+      "3",
+      "4",
+      "6",
+      "20"
+    ],
+    "Attack ms": [
+      "0.1",
+      "0.3",
+      "1",
+      "3",
+      "10",
+      "30"
+    ],
+    "Recovery": [
+      "0.1",
+      "0.2",
+      "0.4",
+      "0.6",
+      "0.8",
+      "1.2",
+      "Dual"
+    ],
+    "SC HPF Hz": [
+      "Off",
+      "40",
+      "80",
+      "160",
+      "320",
+      "500"
+    ],
+    "Output": "-12 to +12 dB",
+    "Mix": "0 to 100%"
+  }
+}
