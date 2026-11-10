@@ -165,8 +165,10 @@ void SteamMasterModule::resized() {
     for(auto& ctrl:controls) {
         auto center=pointAt(ctrl->x,ctrl->y);
         const bool slider=ctrl->kind=="knob";
-        const float rad=ctrl->r*(slider?1.98f:1.5f)*scale;
-        int w=juce::jmax(5,juce::roundToInt(rad*2.f));
+        // The rotor is a 160x160 source-space atlas cell with an alpha-masked
+        // original hardware core; scale the entire cell by source-image scale.
+        const float diameter=slider?160.f:ctrl->r*3.f;
+        int w=juce::jmax(5,juce::roundToInt(diameter*scale));
         int h=w;
         if(ctrl->kind=="cycle"){w=juce::jmax(23,juce::roundToInt(ctrl->r*2.0f*scale));h=juce::jmax(12,juce::roundToInt(28.f*scale));}
         ctrl->widget->setBounds(juce::roundToInt(center.x-w/2.f),
