@@ -28,6 +28,8 @@ public:
     juce::AudioProcessorValueTreeState state;
     std::unique_ptr<steammaster::MasteringRack> rack;
     std::atomic<float> meterOutputDb{-90.f};
+    std::atomic<float> meterLeftDb{-90.f};
+    std::atomic<float> meterRightDb{-90.f};
     std::atomic<float> meterOceanGr{0.f};
     std::atomic<float> meterFurnaceGr{0.f};
     std::atomic<float> meterShadowOpticalGr{0.f};
