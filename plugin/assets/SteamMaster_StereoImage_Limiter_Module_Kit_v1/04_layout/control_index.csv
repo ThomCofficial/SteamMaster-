@@ -1,0 +1,16 @@
+index,key,label,kind,center_x,center_y,source_crop,ui_parameter_id,parameter_range,status
+1,stereo_in,Stereo IN,toggle,359,155,"[307, 61, 412, 250]",,,UNMAPPED
+2,mono_maker,Mono Maker,knob,507,151,"[455, 99, 560, 204]",stereo_mono_maker_hz,0–300 Hz; 0 = Off,VERIFIED
+3,stereo_width,Stereo Width,knob,758,152,"[707, 101, 810, 204]",stereo_width_percent,0–200%; default 100%,VERIFIED
+4,width_frequency,Width Freq,knob,1006,153,"[955, 102, 1058, 205]",stereo_width_freq,800–5000 Hz,VERIFIED
+5,correlation_meter,Correlation,meter,1294,133,"[1162, 36, 1427, 231]",,Read-only −1…+1,BRIDGE REQUIRED
+6,limiter_in,Limiter IN,toggle,354,378,"[302, 295, 407, 462]",limiter_in,On / Off,VERIFIED
+7,limiter_threshold,Threshold,knob,477,383,"[431, 337, 524, 430]",limiter_threshold_db,−24…0 dB,"VERIFIED, SCALE CORRECTION"
+8,limiter_ceiling,Ceiling,knob,638,382,"[592, 336, 685, 429]",limiter_ceiling_dbtp,−2…0 dBTP,"VERIFIED, SCALE CORRECTION"
+9,limiter_release,Release,knob,807,383,"[761, 337, 854, 430]",limiter_release_ms,10–1000 ms,VERIFIED
+10,limiter_auto,Auto Release,button,861,438,"[813, 422, 910, 455]",limiter_auto_release,On / Off,VERIFIED
+11,limiter_lookahead,Lookahead,knob,991,325,"[961, 295, 1022, 356]",limiter_lookahead_ms,0.1–5 ms,VERIFIED
+12,limiter_link,Stereo Link,knob,1138,325,"[1108, 295, 1169, 356]",limiter_stereo_link,0–100%,VERIFIED
+13,limiter_tp,True Peak,toggle,962,415,"[928, 371, 997, 460]",limiter_true_peak,On / Off,VERIFIED
+14,limiter_mode,Mode,radio,1107,417,"[1089, 363, 1126, 472]",limiter_mode,Clean / Punch / Modern,VERIFIED
+15,limiter_gr,Gain Reduction,meter,1336,365,"[1213, 274, 1460, 457]",,Read-only stereo gain reduction dB,BRIDGE REQUIRED

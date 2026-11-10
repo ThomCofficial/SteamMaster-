@@ -1,0 +1,282 @@
+{
+  "module": "Shadow Compressor / Optical + Discrete",
+  "reference_image_size": [
+    1536,
+    768
+  ],
+  "coordinate_system": "source image pixels",
+  "control_count_dsp": 13,
+  "mapped_controls": [
+    {
+      "id": "optical_threshold",
+      "kind": "rotary",
+      "parameter_id": "shadow_optical_threshold",
+      "center_px": [
+        159,
+        376
+      ],
+      "radius_px": 74,
+      "normalized_center": [
+        0.103516,
+        0.489583
+      ],
+      "values": [
+        -40,
+        10
+      ],
+      "units": "dB"
+    },
+    {
+      "id": "optical_gain",
+      "kind": "rotary",
+      "parameter_id": "shadow_optical_makeup",
+      "center_px": [
+        421,
+        375
+      ],
+      "radius_px": 74,
+      "normalized_center": [
+        0.274089,
+        0.488281
+      ],
+      "values": [
+        -12,
+        18
+      ],
+      "units": "dB"
+    },
+    {
+      "id": "discrete_threshold",
+      "kind": "rotary",
+      "parameter_id": "shadow_discrete_threshold",
+      "center_px": [
+        1045,
+        288
+      ],
+      "radius_px": 57,
+      "normalized_center": [
+        0.680339,
+        0.375
+      ],
+      "values": [
+        -40,
+        10
+      ],
+      "units": "dB"
+    },
+    {
+      "id": "discrete_ratio",
+      "kind": "rotary",
+      "parameter_id": "shadow_discrete_ratio",
+      "center_px": [
+        1262,
+        287
+      ],
+      "radius_px": 54,
+      "normalized_center": [
+        0.821615,
+        0.373698
+      ],
+      "values": [
+        "1.2:1",
+        "2:1",
+        "3:1",
+        "4:1",
+        "6:1",
+        "FLOOD"
+      ],
+      "units": "choice"
+    },
+    {
+      "id": "discrete_attack",
+      "kind": "rotary",
+      "parameter_id": "shadow_discrete_attack",
+      "center_px": [
+        957,
+        455
+      ],
+      "radius_px": 50,
+      "normalized_center": [
+        0.623047,
+        0.592448
+      ],
+      "values": [
+        "0.1",
+        "0.3",
+        "1",
+        "3",
+        "10",
+        "30"
+      ],
+      "units": "ms"
+    },
+    {
+      "id": "discrete_recovery",
+      "kind": "rotary",
+      "parameter_id": "shadow_discrete_recovery",
+      "center_px": [
+        1156,
+        454
+      ],
+      "radius_px": 51,
+      "normalized_center": [
+        0.752604,
+        0.591146
+      ],
+      "values": [
+        "0.1",
+        "0.2",
+        "0.4",
+        "0.6",
+        "0.8",
+        "1.2",
+        "DUAL"
+      ],
+      "units": "s"
+    },
+    {
+      "id": "discrete_gain",
+      "kind": "rotary",
+      "parameter_id": "shadow_discrete_gain",
+      "center_px": [
+        1366,
+        451
+      ],
+      "radius_px": 59,
+      "normalized_center": [
+        0.889323,
+        0.58724
+      ],
+      "values": [
+        -12,
+        18
+      ],
+      "units": "dB"
+    },
+    {
+      "id": "sc_hpf",
+      "kind": "rotary",
+      "parameter_id": "shadow_sc_hpf",
+      "center_px": [
+        546,
+        641
+      ],
+      "radius_px": 43,
+      "normalized_center": [
+        0.355469,
+        0.834635
+      ],
+      "values": [
+        "OFF",
+        "40",
+        "80",
+        "160",
+        "320",
+        "500"
+      ],
+      "units": "Hz"
+    },
+    {
+      "id": "output",
+      "kind": "rotary",
+      "parameter_id": "shadow_output_db",
+      "center_px": [
+        909,
+        641
+      ],
+      "radius_px": 43,
+      "normalized_center": [
+        0.591797,
+        0.834635
+      ],
+      "values": [
+        -12,
+        12
+      ],
+      "units": "dB"
+    },
+    {
+      "id": "mix",
+      "kind": "rotary",
+      "parameter_id": "shadow_mix",
+      "center_px": [
+        1277,
+        641
+      ],
+      "radius_px": 44,
+      "normalized_center": [
+        0.83138,
+        0.834635
+      ],
+      "values": [
+        0,
+        100
+      ],
+      "units": "%"
+    },
+    {
+      "id": "optical_in",
+      "kind": "button",
+      "parameter_id": "shadow_optical_in",
+      "bbox_px": [
+        229,
+        219,
+        332,
+        271
+      ]
+    },
+    {
+      "id": "discrete_in",
+      "kind": "button",
+      "parameter_id": "shadow_discrete_in",
+      "bbox_px": [
+        1364,
+        205,
+        1473,
+        254
+      ]
+    },
+    {
+      "id": "master_in",
+      "kind": "button",
+      "parameter_id": "shadow_in",
+      "bbox_px": [
+        141,
+        592,
+        325,
+        700
+      ]
+    },
+    {
+      "id": "meter_selector",
+      "kind": "3_position_toggle",
+      "parameter_id": null,
+      "choices": [
+        "OPTICAL",
+        "DISCRETE",
+        "OUTPUT"
+      ],
+      "center_px": [
+        699,
+        486
+      ],
+      "note": "OUTPUT mode unresolved with fixed gain reduction scale; recommended TOTAL GR in UI."
+    },
+    {
+      "id": "gain_reduction_vu",
+      "kind": "meter",
+      "parameter_id": null,
+      "bbox_px": [
+        546,
+        173,
+        846,
+        402
+      ],
+      "data": [
+        "Shadow::opticalReductionDb()",
+        "Shadow::discreteReductionDb()"
+      ]
+    }
+  ],
+  "automation_ids_from": "plugin/PluginProcessor.cpp (vst3/v1.7-performance-character)"
+}
