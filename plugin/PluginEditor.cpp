@@ -972,6 +972,19 @@ void SteamMasterEditor::paint(juce::Graphics& g) {
     g.setColour(brass);
     // Rack edges are supplied by the artwork; avoid double borders.
 }
+bool SteamMasterEditor::saveFullRackPreview(const juce::File& destination){
+    // Snapshot the actual assembled JUCE control tree, not an asset collage.
+    // The complete rack is captured, including panels below the viewport.
+    resized();
+    if(rackContent.getWidth()<1 || rackContent.getHeight()<1)return false;
+    auto snapshot=rackContent.createComponentSnapshot(rackContent.getLocalBounds(),
+                                                     true,1.0f);
+    if(!snapshot.isValid())return false;
+    auto stream=destination.createOutputStream();
+    if(!stream)return false;
+    juce::PNGImageFormat png;
+    return png.writeImageToStream(snapshot,*stream);
+}
 void SteamMasterEditor::resized(){
     auto r=getLocalBounds();
     rackViewport.setBounds(r);
