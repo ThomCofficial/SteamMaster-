@@ -37,6 +37,15 @@ private:
         std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>> combos;
         std::vector<std::unique_ptr<juce::Label>> labels;
         std::vector<juce::String> ids;
+        std::vector<std::unique_ptr<juce::TextButton>> headerButtons;
+        std::unique_ptr<juce::Label> presetLabel;
+        juce::ValueTree slotA,slotB;
+        bool usingB=false;
+        juce::String presetTitle="Default";
+        void navigatePreset(int direction);
+        void savePreset();
+        void switchSlot(bool toB);
+        static juce::File presetDirectory();
     };
     SteamMasterProcessor& processor;
     juce::Viewport rackViewport;
