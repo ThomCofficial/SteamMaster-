@@ -1,0 +1,790 @@
+{
+  "format": 1,
+  "notes": "Coordinates derive from approved uploaded manifests; generated assets reconstructed from source artwork. Module components compose in one resizable JUCE editor.",
+  "modules": {
+    "ocean": {
+      "width": 768,
+      "height": 391,
+      "source": "SteamMaster_Ocean_Furnace_Asset_Prep_v1/ocean_module_source.png",
+      "controls": [
+        {
+          "id": "ocean_in",
+          "x": 214,
+          "y": 282,
+          "r": 0,
+          "kind": "button"
+        },
+        {
+          "id": "ocean_mix",
+          "x": 586,
+          "y": 292,
+          "r": 37,
+          "kind": "knob"
+        },
+        {
+          "id": "ocean_threshold_db",
+          "x": 129,
+          "y": 176,
+          "r": 42,
+          "kind": "knob"
+        },
+        {
+          "id": "ocean_ratio",
+          "x": 289,
+          "y": 176,
+          "r": 42,
+          "kind": "knob"
+        },
+        {
+          "id": "ocean_attack_ms",
+          "x": 430,
+          "y": 176,
+          "r": 42,
+          "kind": "knob"
+        },
+        {
+          "id": "ocean_recovery",
+          "x": 586,
+          "y": 176,
+          "r": 42,
+          "kind": "knob"
+        },
+        {
+          "id": "ocean_sc_hpf",
+          "x": 344,
+          "y": 292,
+          "r": 37,
+          "kind": "knob"
+        }
+      ]
+    },
+    "furnace": {
+      "width": 768,
+      "height": 391,
+      "source": "SteamMaster_Ocean_Furnace_Asset_Prep_v1/furnace_module_source.png",
+      "controls": [
+        {
+          "id": "furnace_in",
+          "x": 210,
+          "y": 283,
+          "r": 0,
+          "kind": "button"
+        },
+        {
+          "id": "furnace_mix",
+          "x": 587,
+          "y": 293,
+          "r": 37,
+          "kind": "knob"
+        },
+        {
+          "id": "furnace_threshold_db",
+          "x": 109,
+          "y": 177,
+          "r": 42,
+          "kind": "knob"
+        },
+        {
+          "id": "furnace_ratio",
+          "x": 268,
+          "y": 176,
+          "r": 42,
+          "kind": "knob"
+        },
+        {
+          "id": "furnace_attack",
+          "x": 429,
+          "y": 176,
+          "r": 42,
+          "kind": "knob"
+        },
+        {
+          "id": "furnace_release",
+          "x": 584,
+          "y": 176,
+          "r": 42,
+          "kind": "knob"
+        },
+        {
+          "id": "furnace_sc_hpf",
+          "x": 343,
+          "y": 293,
+          "r": 37,
+          "kind": "knob"
+        }
+      ]
+    },
+    "parametric": {
+      "width": 1536,
+      "height": 512,
+      "source": "SteamMaster_ParametricEQ_Asset_Prep_v1/parametric_eq_module_source.png",
+      "controls": [
+        {
+          "id": "parametric_in",
+          "x": 88,
+          "y": 414,
+          "r": 0,
+          "kind": "button"
+        },
+        {
+          "id": "parametric_mix",
+          "x": 1377,
+          "y": 412,
+          "r": 31,
+          "kind": "knob"
+        },
+        {
+          "id": "parametric_output_db",
+          "x": 607,
+          "y": 411,
+          "r": 31,
+          "kind": "knob"
+        },
+        {
+          "id": "parametric_band_1_type",
+          "x": 165,
+          "y": 358,
+          "r": 31,
+          "kind": "cycle"
+        },
+        {
+          "id": "parametric_band_1_freq",
+          "x": 221,
+          "y": 225,
+          "r": 31,
+          "kind": "knob"
+        },
+        {
+          "id": "parametric_band_1_q",
+          "x": 345,
+          "y": 225,
+          "r": 31,
+          "kind": "knob"
+        },
+        {
+          "id": "parametric_band_1_gain",
+          "x": 100,
+          "y": 225,
+          "r": 31,
+          "kind": "knob"
+        },
+        {
+          "id": "parametric_band_2_type",
+          "x": 563,
+          "y": 358,
+          "r": 31,
+          "kind": "cycle"
+        },
+        {
+          "id": "parametric_band_2_freq",
+          "x": 619,
+          "y": 225,
+          "r": 31,
+          "kind": "knob"
+        },
+        {
+          "id": "parametric_band_2_q",
+          "x": 743,
+          "y": 225,
+          "r": 31,
+          "kind": "knob"
+        },
+        {
+          "id": "parametric_band_2_gain",
+          "x": 498,
+          "y": 225,
+          "r": 31,
+          "kind": "knob"
+        },
+        {
+          "id": "parametric_band_3_type",
+          "x": 919,
+          "y": 358,
+          "r": 31,
+          "kind": "cycle"
+        },
+        {
+          "id": "parametric_band_3_freq",
+          "x": 975,
+          "y": 225,
+          "r": 31,
+          "kind": "knob"
+        },
+        {
+          "id": "parametric_band_3_q",
+          "x": 1099,
+          "y": 225,
+          "r": 31,
+          "kind": "knob"
+        },
+        {
+          "id": "parametric_band_3_gain",
+          "x": 854,
+          "y": 225,
+          "r": 31,
+          "kind": "knob"
+        },
+        {
+          "id": "parametric_band_4_type",
+          "x": 1270,
+          "y": 358,
+          "r": 31,
+          "kind": "cycle"
+        },
+        {
+          "id": "parametric_band_4_freq",
+          "x": 1326,
+          "y": 225,
+          "r": 31,
+          "kind": "knob"
+        },
+        {
+          "id": "parametric_band_4_q",
+          "x": 1450,
+          "y": 225,
+          "r": 31,
+          "kind": "knob"
+        },
+        {
+          "id": "parametric_band_4_gain",
+          "x": 1205,
+          "y": 225,
+          "r": 31,
+          "kind": "knob"
+        }
+      ]
+    },
+    "pultec": {
+      "width": 2170,
+      "height": 725,
+      "source": "SteamMaster_Pultec_EQ_DSP_Locked_Handoff/artwork/Pultec_Approved_Reference.png",
+      "controls": [
+        {
+          "id": "pultec_in",
+          "x": 245,
+          "y": 569,
+          "r": 44.64,
+          "kind": "button"
+        },
+        {
+          "id": "pultec_mix",
+          "x": 1782,
+          "y": 581,
+          "r": 57.96,
+          "kind": "knob"
+        },
+        {
+          "id": "pultec_low_freq",
+          "x": 237,
+          "y": 330,
+          "r": 71.64,
+          "kind": "knob"
+        },
+        {
+          "id": "pultec_low_boost",
+          "x": 538,
+          "y": 328,
+          "r": 72.36,
+          "kind": "knob"
+        },
+        {
+          "id": "pultec_low_atten",
+          "x": 798,
+          "y": 328,
+          "r": 70.92,
+          "kind": "knob"
+        },
+        {
+          "id": "pultec_high_boost_freq",
+          "x": 1100,
+          "y": 333,
+          "r": 78.11999999999999,
+          "kind": "knob"
+        },
+        {
+          "id": "pultec_high_boost",
+          "x": 1424,
+          "y": 329,
+          "r": 70.92,
+          "kind": "knob"
+        },
+        {
+          "id": "pultec_bandwidth",
+          "x": 763,
+          "y": 580,
+          "r": 56.519999999999996,
+          "kind": "knob"
+        },
+        {
+          "id": "pultec_high_atten_freq",
+          "x": 1695,
+          "y": 340,
+          "r": 60.839999999999996,
+          "kind": "knob"
+        },
+        {
+          "id": "pultec_high_atten",
+          "x": 1991,
+          "y": 328,
+          "r": 69.48,
+          "kind": "knob"
+        },
+        {
+          "id": "pultec_output_db",
+          "x": 1274,
+          "y": 585,
+          "r": 57.96,
+          "kind": "knob"
+        }
+      ]
+    },
+    "shadow": {
+      "width": 1536,
+      "height": 768,
+      "source": "SteamMaster_Shadow_Complete_Module_Kit_v1/01_reference/Shadow_Source_Locked.png",
+      "controls": [
+        {
+          "id": "shadow_in",
+          "x": 232,
+          "y": 646,
+          "r": 0,
+          "kind": "button"
+        },
+        {
+          "id": "shadow_mix",
+          "x": 1277,
+          "y": 641,
+          "r": 44,
+          "kind": "knob"
+        },
+        {
+          "id": "shadow_optical_in",
+          "x": 280,
+          "y": 245,
+          "r": 0,
+          "kind": "button"
+        },
+        {
+          "id": "shadow_optical_threshold",
+          "x": 159,
+          "y": 376,
+          "r": 74,
+          "kind": "knob"
+        },
+        {
+          "id": "shadow_optical_makeup",
+          "x": 421,
+          "y": 375,
+          "r": 74,
+          "kind": "knob"
+        },
+        {
+          "id": "shadow_discrete_in",
+          "x": 1417,
+          "y": 229,
+          "r": 0,
+          "kind": "button"
+        },
+        {
+          "id": "shadow_discrete_threshold",
+          "x": 1045,
+          "y": 288,
+          "r": 57,
+          "kind": "knob"
+        },
+        {
+          "id": "shadow_discrete_gain",
+          "x": 1366,
+          "y": 451,
+          "r": 59,
+          "kind": "knob"
+        },
+        {
+          "id": "shadow_discrete_ratio",
+          "x": 1262,
+          "y": 287,
+          "r": 54,
+          "kind": "knob"
+        },
+        {
+          "id": "shadow_discrete_attack",
+          "x": 957,
+          "y": 455,
+          "r": 50,
+          "kind": "knob"
+        },
+        {
+          "id": "shadow_discrete_recovery",
+          "x": 1156,
+          "y": 454,
+          "r": 51,
+          "kind": "knob"
+        },
+        {
+          "id": "shadow_sc_hpf",
+          "x": 546,
+          "y": 641,
+          "r": 43,
+          "kind": "knob"
+        },
+        {
+          "id": "shadow_output_db",
+          "x": 909,
+          "y": 641,
+          "r": 43,
+          "kind": "knob"
+        }
+      ]
+    },
+    "exciter": {
+      "width": 1536,
+      "height": 402,
+      "source": "SteamMaster_Exciter_Complete_Asset_Prep_v1/SteamMaster_Exciter_Complete_Asset_Prep_v1/source/Exciter_panel_uncorrected_1536x402.png",
+      "controls": [
+        {
+          "id": "exciter_in",
+          "x": 122,
+          "y": 338,
+          "r": 0,
+          "kind": "button"
+        },
+        {
+          "id": "exciter_mix",
+          "x": 1448,
+          "y": 269,
+          "r": 34,
+          "kind": "knob"
+        },
+        {
+          "id": "exciter_mode",
+          "x": 123,
+          "y": 294,
+          "r": 35,
+          "kind": "cycle"
+        },
+        {
+          "id": "exciter_low_drive",
+          "x": 290,
+          "y": 260,
+          "r": 45,
+          "kind": "knob"
+        },
+        {
+          "id": "exciter_low_freq",
+          "x": 419,
+          "y": 270,
+          "r": 34,
+          "kind": "knob"
+        },
+        {
+          "id": "exciter_high_drive",
+          "x": 854,
+          "y": 260,
+          "r": 46,
+          "kind": "knob"
+        },
+        {
+          "id": "exciter_high_freq",
+          "x": 986,
+          "y": 272,
+          "r": 34,
+          "kind": "knob"
+        },
+        {
+          "id": "exciter_crossover",
+          "x": 1148,
+          "y": 270,
+          "r": 34,
+          "kind": "knob"
+        },
+        {
+          "id": "exciter_output_db",
+          "x": 1301,
+          "y": 271,
+          "r": 33,
+          "kind": "knob"
+        }
+      ]
+    },
+    "bax": {
+      "width": 1536,
+      "height": 1024,
+      "source": "SteamMaster_BaxandallEQ_Module_Kit_v1/01_reference/baxandall_module_trimmed_reference.png",
+      "controls": [
+        {
+          "id": "bax_mid_in",
+          "x": 115,
+          "y": 500,
+          "r": 0,
+          "kind": "button"
+        },
+        {
+          "id": "bax_mid_hpf",
+          "x": 290,
+          "y": 466,
+          "r": 55,
+          "kind": "knob"
+        },
+        {
+          "id": "bax_mid_low_freq",
+          "x": 476,
+          "y": 471,
+          "r": 55,
+          "kind": "knob"
+        },
+        {
+          "id": "bax_mid_low_gain",
+          "x": 668,
+          "y": 473,
+          "r": 55,
+          "kind": "knob"
+        },
+        {
+          "id": "bax_mid_high_freq",
+          "x": 1007,
+          "y": 478,
+          "r": 55,
+          "kind": "knob"
+        },
+        {
+          "id": "bax_mid_high_gain",
+          "x": 845,
+          "y": 473,
+          "r": 55,
+          "kind": "knob"
+        },
+        {
+          "id": "bax_mid_lpf",
+          "x": 1186,
+          "y": 475,
+          "r": 55,
+          "kind": "knob"
+        },
+        {
+          "id": "bax_mid_output_db",
+          "x": 1393,
+          "y": 474,
+          "r": 55,
+          "kind": "knob"
+        },
+        {
+          "id": "bax_side_in",
+          "x": 115,
+          "y": 835,
+          "r": 0,
+          "kind": "button"
+        },
+        {
+          "id": "bax_side_hpf",
+          "x": 289,
+          "y": 807,
+          "r": 55,
+          "kind": "knob"
+        },
+        {
+          "id": "bax_side_low_freq",
+          "x": 479,
+          "y": 808,
+          "r": 55,
+          "kind": "knob"
+        },
+        {
+          "id": "bax_side_low_gain",
+          "x": 675,
+          "y": 808,
+          "r": 55,
+          "kind": "knob"
+        },
+        {
+          "id": "bax_side_high_freq",
+          "x": 1011,
+          "y": 810,
+          "r": 55,
+          "kind": "knob"
+        },
+        {
+          "id": "bax_side_high_gain",
+          "x": 845,
+          "y": 805,
+          "r": 55,
+          "kind": "knob"
+        },
+        {
+          "id": "bax_side_lpf",
+          "x": 1189,
+          "y": 809,
+          "r": 55,
+          "kind": "knob"
+        },
+        {
+          "id": "bax_side_output_db",
+          "x": 1395,
+          "y": 811,
+          "r": 55,
+          "kind": "knob"
+        },
+        {
+          "id": "stereo_routing",
+          "x": 616,
+          "y": 228,
+          "r": 55,
+          "kind": "cycle"
+        },
+        {
+          "id": "stereo_link",
+          "x": 838,
+          "y": 226,
+          "r": 0,
+          "kind": "button"
+        }
+      ]
+    },
+    "tape": {
+      "width": 1536,
+      "height": 469,
+      "source": "SteamMaster_Tape_Complete_Module_Kit_v1/source/Tape_Module_Reference_1536x469.png",
+      "controls": [
+        {
+          "id": "tape_in",
+          "x": 102,
+          "y": 339,
+          "r": 0,
+          "kind": "button"
+        },
+        {
+          "id": "tape_mix",
+          "x": 1392,
+          "y": 362,
+          "r": 49,
+          "kind": "knob"
+        },
+        {
+          "id": "tape_type",
+          "x": 289,
+          "y": 377,
+          "r": 45,
+          "kind": "knob"
+        },
+        {
+          "id": "tape_speed",
+          "x": 512,
+          "y": 377,
+          "r": 44,
+          "kind": "knob"
+        },
+        {
+          "id": "tape_drive_db",
+          "x": 726,
+          "y": 361,
+          "r": 48,
+          "kind": "knob"
+        },
+        {
+          "id": "tape_bias",
+          "x": 949,
+          "y": 361,
+          "r": 48,
+          "kind": "knob"
+        },
+        {
+          "id": "tape_hf_trim_db",
+          "x": 1174,
+          "y": 363,
+          "r": 48,
+          "kind": "knob"
+        }
+      ]
+    },
+    "stereo_limiter": {
+      "width": 1536,
+      "height": 512,
+      "source": "SteamMaster_StereoImage_Limiter_Module_Kit_v1/00_source/stereo_limiter_approved_source.png",
+      "controls": [
+        {
+          "id": "stereo_mono_maker_hz",
+          "x": 507,
+          "y": 151,
+          "r": 49,
+          "kind": "knob"
+        },
+        {
+          "id": "stereo_width_percent",
+          "x": 758,
+          "y": 152,
+          "r": 48,
+          "kind": "knob"
+        },
+        {
+          "id": "stereo_width_freq",
+          "x": 1006,
+          "y": 153,
+          "r": 48,
+          "kind": "knob"
+        },
+        {
+          "id": "limiter_in",
+          "x": 354,
+          "y": 378,
+          "r": 0,
+          "kind": "button"
+        },
+        {
+          "id": "limiter_mode",
+          "x": 1107,
+          "y": 417,
+          "r": 43,
+          "kind": "cycle"
+        },
+        {
+          "id": "limiter_threshold_db",
+          "x": 477,
+          "y": 383,
+          "r": 43,
+          "kind": "knob"
+        },
+        {
+          "id": "limiter_ceiling_dbtp",
+          "x": 638,
+          "y": 382,
+          "r": 43,
+          "kind": "knob"
+        },
+        {
+          "id": "limiter_release_ms",
+          "x": 807,
+          "y": 383,
+          "r": 43,
+          "kind": "knob"
+        },
+        {
+          "id": "limiter_auto_release",
+          "x": 861,
+          "y": 438,
+          "r": 0,
+          "kind": "button"
+        },
+        {
+          "id": "limiter_lookahead_ms",
+          "x": 991,
+          "y": 325,
+          "r": 27,
+          "kind": "knob"
+        },
+        {
+          "id": "limiter_stereo_link",
+          "x": 1138,
+          "y": 325,
+          "r": 27,
+          "kind": "knob"
+        },
+        {
+          "id": "limiter_true_peak",
+          "x": 962,
+          "y": 415,
+          "r": 0,
+          "kind": "button"
+        }
+      ]
+    }
+  }
+}

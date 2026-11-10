@@ -1,0 +1,567 @@
+{
+  "module": "SteamMaster Baxandall EQ",
+  "source": "/mnt/data/1000032020.png",
+  "source_size": [
+    1536,
+    1087
+  ],
+  "trimmed_reference_crop": [
+    0,
+    0,
+    1536,
+    1024
+  ],
+  "ready_state": "module reference, masked source rotors, coordinate layout, exact parameter specs; not yet clean separation / runnable JUCE UI",
+  "knob_center_precision": "approximate; must calibrate in JUCE screenshot",
+  "knob_positions": [
+    {
+      "name": "bax_mid_hpf",
+      "kind": "rotary",
+      "type": "choice",
+      "center": [
+        290,
+        466
+      ],
+      "radius": 55,
+      "source_knob_sprite": "02_controls/knobs/bax_mid_hpf_reference_cutout.png",
+      "native_ui_value": [
+        "OUT",
+        "12",
+        "18",
+        "24",
+        "30",
+        "36",
+        "43",
+        "54"
+      ],
+      "notes": "Knob sprite = source cutout only; must remove baked rotor from plate before JUCE deployment"
+    },
+    {
+      "name": "bax_mid_low_freq",
+      "kind": "rotary",
+      "type": "choice",
+      "center": [
+        476,
+        471
+      ],
+      "radius": 55,
+      "source_knob_sprite": "02_controls/knobs/bax_mid_low_freq_reference_cutout.png",
+      "native_ui_value": [
+        "74",
+        "84",
+        "98",
+        "116",
+        "131",
+        "166",
+        "230",
+        "361"
+      ],
+      "notes": "Knob sprite = source cutout only; must remove baked rotor from plate before JUCE deployment"
+    },
+    {
+      "name": "bax_mid_low_gain",
+      "kind": "rotary",
+      "type": "float",
+      "center": [
+        668,
+        473
+      ],
+      "radius": 55,
+      "source_knob_sprite": "02_controls/knobs/bax_mid_low_gain_reference_cutout.png",
+      "native_ui_value": "-5 to +5 dB",
+      "notes": "Knob sprite = source cutout only; must remove baked rotor from plate before JUCE deployment"
+    },
+    {
+      "name": "bax_mid_high_gain",
+      "kind": "rotary",
+      "type": "float",
+      "center": [
+        845,
+        473
+      ],
+      "radius": 55,
+      "source_knob_sprite": "02_controls/knobs/bax_mid_high_gain_reference_cutout.png",
+      "native_ui_value": "-5 to +5 dB",
+      "notes": "Knob sprite = source cutout only; must remove baked rotor from plate before JUCE deployment"
+    },
+    {
+      "name": "bax_mid_high_freq",
+      "kind": "rotary",
+      "type": "choice",
+      "center": [
+        1007,
+        478
+      ],
+      "radius": 55,
+      "source_knob_sprite": "02_controls/knobs/bax_mid_high_freq_reference_cutout.png",
+      "native_ui_value": [
+        "1.6",
+        "1.8",
+        "2.1",
+        "2.5",
+        "3.4",
+        "4.8",
+        "7.1",
+        "18"
+      ],
+      "notes": "Knob sprite = source cutout only; must remove baked rotor from plate before JUCE deployment",
+      "visual_order_note": "Visual clockwise sequence 18, 7.1, 4.8, 3.4, 2.5, 2.1, 1.8, 1.6 kHz (reverse of APVTS choice-index sequence). Place by value, not array index."
+    },
+    {
+      "name": "bax_mid_lpf",
+      "kind": "rotary",
+      "type": "choice",
+      "center": [
+        1186,
+        475
+      ],
+      "radius": 55,
+      "source_knob_sprite": "02_controls/knobs/bax_mid_lpf_reference_cutout.png",
+      "native_ui_value": [
+        "OUT",
+        "70",
+        "28",
+        "18",
+        "12.6",
+        "11.1",
+        "9",
+        "7.5"
+      ],
+      "notes": "Knob sprite = source cutout only; must remove baked rotor from plate before JUCE deployment"
+    },
+    {
+      "name": "bax_mid_output_db",
+      "kind": "rotary",
+      "type": "float",
+      "center": [
+        1393,
+        474
+      ],
+      "radius": 55,
+      "source_knob_sprite": "02_controls/knobs/bax_mid_output_db_reference_cutout.png",
+      "native_ui_value": "-4 to +4 dB",
+      "notes": "Knob sprite = source cutout only; must remove baked rotor from plate before JUCE deployment"
+    },
+    {
+      "name": "bax_side_hpf",
+      "kind": "rotary",
+      "type": "choice",
+      "center": [
+        289,
+        807
+      ],
+      "radius": 55,
+      "source_knob_sprite": "02_controls/knobs/bax_side_hpf_reference_cutout.png",
+      "native_ui_value": [
+        "OUT",
+        "12",
+        "18",
+        "24",
+        "30",
+        "36",
+        "43",
+        "54"
+      ],
+      "notes": "Knob sprite = source cutout only; must remove baked rotor from plate before JUCE deployment"
+    },
+    {
+      "name": "bax_side_low_freq",
+      "kind": "rotary",
+      "type": "choice",
+      "center": [
+        479,
+        808
+      ],
+      "radius": 55,
+      "source_knob_sprite": "02_controls/knobs/bax_side_low_freq_reference_cutout.png",
+      "native_ui_value": [
+        "74",
+        "84",
+        "98",
+        "116",
+        "131",
+        "166",
+        "230",
+        "361"
+      ],
+      "notes": "Knob sprite = source cutout only; must remove baked rotor from plate before JUCE deployment"
+    },
+    {
+      "name": "bax_side_low_gain",
+      "kind": "rotary",
+      "type": "float",
+      "center": [
+        675,
+        808
+      ],
+      "radius": 55,
+      "source_knob_sprite": "02_controls/knobs/bax_side_low_gain_reference_cutout.png",
+      "native_ui_value": "-5 to +5 dB",
+      "notes": "Knob sprite = source cutout only; must remove baked rotor from plate before JUCE deployment"
+    },
+    {
+      "name": "bax_side_high_gain",
+      "kind": "rotary",
+      "type": "float",
+      "center": [
+        845,
+        805
+      ],
+      "radius": 55,
+      "source_knob_sprite": "02_controls/knobs/bax_side_high_gain_reference_cutout.png",
+      "native_ui_value": "-5 to +5 dB",
+      "notes": "Knob sprite = source cutout only; must remove baked rotor from plate before JUCE deployment"
+    },
+    {
+      "name": "bax_side_high_freq",
+      "kind": "rotary",
+      "type": "choice",
+      "center": [
+        1011,
+        810
+      ],
+      "radius": 55,
+      "source_knob_sprite": "02_controls/knobs/bax_side_high_freq_reference_cutout.png",
+      "native_ui_value": [
+        "1.6",
+        "1.8",
+        "2.1",
+        "2.5",
+        "3.4",
+        "4.8",
+        "7.1",
+        "18"
+      ],
+      "notes": "Knob sprite = source cutout only; must remove baked rotor from plate before JUCE deployment",
+      "visual_order_note": "Visual clockwise sequence 18, 7.1, 4.8, 3.4, 2.5, 2.1, 1.8, 1.6 kHz (reverse of APVTS choice-index sequence). Place by value, not array index."
+    },
+    {
+      "name": "bax_side_lpf",
+      "kind": "rotary",
+      "type": "choice",
+      "center": [
+        1189,
+        809
+      ],
+      "radius": 55,
+      "source_knob_sprite": "02_controls/knobs/bax_side_lpf_reference_cutout.png",
+      "native_ui_value": [
+        "OUT",
+        "70",
+        "28",
+        "18",
+        "12.6",
+        "11.1",
+        "9",
+        "7.5"
+      ],
+      "notes": "Knob sprite = source cutout only; must remove baked rotor from plate before JUCE deployment"
+    },
+    {
+      "name": "bax_side_output_db",
+      "kind": "rotary",
+      "type": "float",
+      "center": [
+        1395,
+        811
+      ],
+      "radius": 55,
+      "source_knob_sprite": "02_controls/knobs/bax_side_output_db_reference_cutout.png",
+      "native_ui_value": "-4 to +4 dB",
+      "notes": "Knob sprite = source cutout only; must remove baked rotor from plate before JUCE deployment"
+    }
+  ],
+  "decorative_or_stateful_reference_crops": {
+    "ms_routing_button_reference": [
+      542,
+      194,
+      681,
+      257
+    ],
+    "link_button_reference": [
+      767,
+      193,
+      911,
+      259
+    ],
+    "mid_plaque_reference": [
+      43,
+      346,
+      187,
+      423
+    ],
+    "side_plaque_reference": [
+      41,
+      663,
+      187,
+      747
+    ],
+    "mid_bypass_lamp_reference": [
+      83,
+      469,
+      149,
+      534
+    ],
+    "side_bypass_lamp_reference": [
+      83,
+      806,
+      148,
+      870
+    ],
+    "left_ornament_lantern_reference": [
+      395,
+      157,
+      476,
+      286
+    ],
+    "right_ornament_lantern_reference": [
+      1020,
+      152,
+      1101,
+      286
+    ]
+  },
+  "parameter_mapping": [
+    {
+      "id": "bax_mid_in",
+      "type": "bool",
+      "default": true,
+      "visual": "row BYPASS lamp/button",
+      "behaviour": "APVTS IN true=processing; invert only if bypass visual is a true bypass indicator"
+    },
+    {
+      "id": "bax_mid_hpf",
+      "type": "choice",
+      "values": [
+        "Out",
+        "12",
+        "18",
+        "24",
+        "30",
+        "36",
+        "43",
+        "54"
+      ],
+      "default": "Out"
+    },
+    {
+      "id": "bax_mid_low_freq",
+      "type": "choice",
+      "values": [
+        "74",
+        "84",
+        "98",
+        "116",
+        "131",
+        "166",
+        "230",
+        "361"
+      ],
+      "default": "116"
+    },
+    {
+      "id": "bax_mid_low_gain",
+      "type": "float",
+      "range": [
+        -5,
+        5
+      ],
+      "default": 0,
+      "units": "dB",
+      "visually_recommended_step": 0.5
+    },
+    {
+      "id": "bax_mid_high_gain",
+      "type": "float",
+      "range": [
+        -5,
+        5
+      ],
+      "default": 0,
+      "units": "dB",
+      "visually_recommended_step": 0.5
+    },
+    {
+      "id": "bax_mid_high_freq",
+      "type": "choice",
+      "values": [
+        "1.6k",
+        "1.8k",
+        "2.1k",
+        "2.5k",
+        "3.4k",
+        "4.8k",
+        "7.1k",
+        "18k"
+      ],
+      "default": "3.4k",
+      "cw_visual": [
+        "18k",
+        "7.1k",
+        "4.8k",
+        "3.4k",
+        "2.5k",
+        "2.1k",
+        "1.8k",
+        "1.6k"
+      ]
+    },
+    {
+      "id": "bax_mid_lpf",
+      "type": "choice",
+      "values": [
+        "Out",
+        "70k",
+        "28k",
+        "18k",
+        "12.6k",
+        "11.1k",
+        "9k",
+        "7.5k"
+      ],
+      "default": "Out"
+    },
+    {
+      "id": "bax_mid_output_db",
+      "type": "float",
+      "range": [
+        -4,
+        4
+      ],
+      "default": 0,
+      "units": "dB"
+    },
+    {
+      "id": "bax_side_in",
+      "type": "bool",
+      "default": true,
+      "visual": "row BYPASS lamp/button",
+      "behaviour": "APVTS IN true=processing; invert only if bypass visual is a true bypass indicator"
+    },
+    {
+      "id": "bax_side_hpf",
+      "type": "choice",
+      "values": [
+        "Out",
+        "12",
+        "18",
+        "24",
+        "30",
+        "36",
+        "43",
+        "54"
+      ],
+      "default": "Out"
+    },
+    {
+      "id": "bax_side_low_freq",
+      "type": "choice",
+      "values": [
+        "74",
+        "84",
+        "98",
+        "116",
+        "131",
+        "166",
+        "230",
+        "361"
+      ],
+      "default": "116"
+    },
+    {
+      "id": "bax_side_low_gain",
+      "type": "float",
+      "range": [
+        -5,
+        5
+      ],
+      "default": 0,
+      "units": "dB",
+      "visually_recommended_step": 0.5
+    },
+    {
+      "id": "bax_side_high_gain",
+      "type": "float",
+      "range": [
+        -5,
+        5
+      ],
+      "default": 0,
+      "units": "dB",
+      "visually_recommended_step": 0.5
+    },
+    {
+      "id": "bax_side_high_freq",
+      "type": "choice",
+      "values": [
+        "1.6k",
+        "1.8k",
+        "2.1k",
+        "2.5k",
+        "3.4k",
+        "4.8k",
+        "7.1k",
+        "18k"
+      ],
+      "default": "3.4k",
+      "cw_visual": [
+        "18k",
+        "7.1k",
+        "4.8k",
+        "3.4k",
+        "2.5k",
+        "2.1k",
+        "1.8k",
+        "1.6k"
+      ]
+    },
+    {
+      "id": "bax_side_lpf",
+      "type": "choice",
+      "values": [
+        "Out",
+        "70k",
+        "28k",
+        "18k",
+        "12.6k",
+        "11.1k",
+        "9k",
+        "7.5k"
+      ],
+      "default": "Out"
+    },
+    {
+      "id": "bax_side_output_db",
+      "type": "float",
+      "range": [
+        -4,
+        4
+      ],
+      "default": 0,
+      "units": "dB"
+    },
+    {
+      "id": "stereo_routing",
+      "type": "choice",
+      "values": [
+        "Mid Side",
+        "Left Right"
+      ],
+      "default": "Mid Side",
+      "visual": "M/S button; MID/SIDE plaques become LEFT/RIGHT in LR mode"
+    },
+    {
+      "id": "stereo_link",
+      "type": "bool",
+      "default": false,
+      "visual": "LINK button",
+      "behaviour": "Stored APVTS flag; no DSP-side linking; UI/controller must synchronize parameters intentionally"
+    }
+  ],
+  "validation": {
+    "knob_count": 14,
+    "APVTS_parameters_for_module": 18,
+    "no_DSP_modified": true,
+    "no_GitHub_modified": true
+  }
+}

@@ -1,0 +1,148 @@
+{
+  "ocean": {
+    "source_bbox_in_uploaded_image": [
+      0,
+      215,
+      768,
+      606
+    ],
+    "controls": {
+      "threshold_knob": {
+        "center": [
+          129,
+          176
+        ],
+        "type": "large_knob"
+      },
+      "ratio_knob": {
+        "center": [
+          289,
+          176
+        ],
+        "type": "large_knob"
+      },
+      "attack_knob": {
+        "center": [
+          430,
+          176
+        ],
+        "type": "large_knob"
+      },
+      "release_knob": {
+        "center": [
+          586,
+          176
+        ],
+        "type": "large_knob"
+      },
+      "auto_lamp": {
+        "center": [
+          711,
+          191
+        ],
+        "type": "lamp"
+      },
+      "sc_hpf_button": {
+        "center": [
+          102,
+          282
+        ],
+        "type": "button"
+      },
+      "in_button": {
+        "center": [
+          214,
+          282
+        ],
+        "type": "button"
+      },
+      "sc_hpf_freq_knob": {
+        "center": [
+          344,
+          292
+        ],
+        "type": "small_knob"
+      },
+      "mix_knob": {
+        "center": [
+          586,
+          292
+        ],
+        "type": "small_knob"
+      }
+    }
+  },
+  "furnace": {
+    "source_bbox_in_uploaded_image": [
+      768,
+      215,
+      1536,
+      606
+    ],
+    "controls": {
+      "threshold_knob": {
+        "center": [
+          109,
+          177
+        ],
+        "type": "large_knob"
+      },
+      "ratio_knob": {
+        "center": [
+          268,
+          176
+        ],
+        "type": "large_knob"
+      },
+      "attack_knob": {
+        "center": [
+          429,
+          176
+        ],
+        "type": "large_knob"
+      },
+      "release_knob": {
+        "center": [
+          584,
+          176
+        ],
+        "type": "large_knob"
+      },
+      "auto_lamp": {
+        "center": [
+          711,
+          191
+        ],
+        "type": "lamp"
+      },
+      "sc_hpf_button": {
+        "center": [
+          100,
+          283
+        ],
+        "type": "button"
+      },
+      "in_button": {
+        "center": [
+          210,
+          283
+        ],
+        "type": "button"
+      },
+      "sc_hpf_freq_knob": {
+        "center": [
+          343,
+          292
+        ],
+        "type": "small_knob"
+      },
+      "mix_knob": {
+        "center": [
+          583,
+          292
+        ],
+        "type": "small_knob"
+      }
+    }
+  }
+}

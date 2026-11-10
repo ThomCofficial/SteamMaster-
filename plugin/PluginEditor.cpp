@@ -1,55 +1,81 @@
 #include "PluginEditor.h"
 
-SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcessorValueTreeState& state,const juce::String& section) {
-    addAndMakeVisible(viewport);
-    viewport.setViewedComponent(&contents,false);
-    viewport.setScrollBarsShown(true,false);
-    for(auto* p : processor.getParameters()) {
-        auto* withID=dynamic_cast<juce::AudioProcessorParameterWithID*>(p);
-        if(!withID || !withID->getName(200).startsWith(section+" / "))continue;
-        const auto id=withID->paramID;
-        auto label=std::make_unique<juce::Label>();
-        label->setText(withID->getName(200).fromFirstOccurrenceOf(" / ",false,false),juce::dontSendNotification);
-        label->setJustificationType(juce::Justification::centred);
-        contents.addAndMakeVisible(*label);
-        labels.push_back(std::move(label));
-        if(auto* choice=dynamic_cast<juce::AudioParameterChoice*>(p)) {
-            auto c=std::make_unique<juce::ComboBox>();
-            c->addItemList(choice->choices,1);
-            contents.addAndMakeVisible(*c);
-            combos.push_back(std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(state,id,*c));
-            controls.push_back(std::move(c));
-        } else if(dynamic_cast<juce::AudioParameterBool*>(p)) {
-            auto b=std::make_unique<juce::ToggleButton>();
-            contents.addAndMakeVisible(*b);
-            buttons.push_back(std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(state,id,*b));
-            controls.push_back(std::move(b));
-        } else {
-            auto s=std::make_unique<juce::Slider>();
-            s->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-            s->setTextBoxStyle(juce::Slider::TextBoxBelow,false,90,20);
-            contents.addAndMakeVisible(*s);
-            sliders.push_back(std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(state,id,*s));
-            controls.push_back(std::move(s));
+SteamMasterEditor::SteamMasterEditor(SteamMasterProcessor& p)
+    :AudioProcessorEditor(&p),header(p) {
+    setOpaque(true);
+    addAndMakeVisible(header);
+    const char* ids[]={"ocean","furnace","parametric",
+                       "pultec","shadow","exciter",
+                       "bax","tape","stereo_limiter"};
+    auto addNavigation=[this](const juce::String& title,const juce::String& id) {
+        auto b=std::make_unique<juce::TextButton>(title);
+        b->setColour(juce::TextButton::buttonColourId,juce::Colour(0xff231d15));
+        b->setColour(juce::TextButton::buttonOnColourId,juce::Colour(0xffa47636));
+        b->setColour(juce::TextButton::textColourOffId,juce::Colour(0xfff6dfb1));
+        b->setColour(juce::TextButton::textColourOnId,juce::Colour(0xff211409));
+        b->onClick=[this,id]{select(id);};
+        addAndMakeVisible(*b);
+        navigation.push_back(std::move(b));
+    };
+    addNavigation("ALL MODULES","");
+    for(auto id:ids) {
+        auto m=std::make_unique<SteamMasterModule>(p,id);
+        m->setFocusRequest([this](const juce::String& name){select(name);});
+        addAndMakeVisible(*m);
+        modules.push_back(std::move(m));
+        const juce::String pretty=juce::String(id).replace("_"," ").toUpperCase();
+        addNavigation(pretty,id);
+    }
+    setResizable(true,true);
+    setResizeLimits(1000,720,2600,2000);
+    setSize(1650,1140);
+    select("");
+}
+SteamMasterEditor::~SteamMasterEditor()=default;
+void SteamMasterEditor::select(const juce::String& id) {
+    selected=id;
+    for(auto& m:modules) {
+        const bool active=selected.isEmpty()||m->getModuleId()==selected;
+        m->setVisible(active);
+        m->setFocused(!selected.isEmpty()&&m->getModuleId()==selected);
+    }
+    for(size_t i=0;i<navigation.size();++i)
+        navigation[i]->setToggleState(i==0?selected.isEmpty():
+            modules[i-1]->getModuleId()==selected,juce::dontSendNotification);
+    resized();
+}
+void SteamMasterEditor::paint(juce::Graphics& g) {
+    g.fillAll(juce::Colour(0xff0e1416));
+    g.setColour(juce::Colour(0xffb38b4b));
+    g.drawRect(getLocalBounds(),2);
+}
+void SteamMasterEditor::resized() {
+    const auto area=getLocalBounds().reduced(8);
+    // Fit original header at the exact 2048:438 artwork aspect ratio.
+    const int hdr=juce::jmin(juce::roundToInt((float)area.getWidth()*438.f/2048.f),
+                            juce::jmax(170,getHeight()/3));
+    header.setBounds(area.getX(),area.getY(),area.getWidth(),hdr);
+    const int toolbarY=area.getY()+hdr+8;
+    const int barHeight=juce::jlimit(28,46,getHeight()/27);
+    const int gap=3;
+    const int buttons=(int)navigation.size();
+    const int baseWidth=(area.getWidth()-(buttons-1)*gap)/buttons;
+    for(int i=0;i<buttons;++i)navigation[(size_t)i]->setBounds(
+        area.getX()+i*(baseWidth+gap),toolbarY,baseWidth,barHeight);
+    auto body=juce::Rectangle<int>(area.getX(),toolbarY+barHeight+8,
+                                   area.getWidth(),juce::jmax(1,area.getBottom()-(toolbarY+barHeight+8)));
+    if(!selected.isEmpty()) {
+        for(auto& module:modules)if(module->getModuleId()==selected) {
+            module->setBounds(body.reduced(8));
         }
+        return;
+    }
+    constexpr int cols=3,rows=3;
+    const int pad=6,cellW=body.getWidth()/cols,cellH=body.getHeight()/rows;
+    for(int i=0;i<(int)modules.size();++i) {
+        auto cell=juce::Rectangle<int>(body.getX()+(i%cols)*cellW,
+                                       body.getY()+(i/cols)*cellH,
+                                       cellW,cellH).reduced(pad);
+        modules[(size_t)i]->setBounds(cell);
     }
 }
-void SteamMasterEditor::Page::resized() {
-    viewport.setBounds(getLocalBounds());
-    const int width=juce::jmax(480,getWidth()-18), cols=4, cellW=width/cols, cellH=130;
-    const int rows=(int(controls.size())+cols-1)/cols;
-    contents.setSize(width,juce::jmax(getHeight(),rows*cellH+12));
-    for(int i=0;i<int(controls.size());++i){const int x=(i%cols)*cellW,y=(i/cols)*cellH;
-        labels[size_t(i)]->setBounds(x+5,y+5,cellW-10,25);
-        controls[size_t(i)]->setBounds(x+8,y+32,cellW-16,88);
-    }
-}
-SteamMasterEditor::SteamMasterEditor(SteamMasterProcessor& p):AudioProcessorEditor(&p),processor(p) {
-    setOpaque(true);addAndMakeVisible(tabs);
-    for(const auto* section:{"Global","Ocean","Furnace","Parametric","Pultec","Shadow","Exciter","Bax Mid","Bax Side","Tape","Stereo","Limiter"}) {
-        auto* page=new Page(processor,processor.state,section);
-        tabs.addTab(section,juce::Colour(0xff19232d),page,true);
-    }
-    setSize(880,580);
-}
-void SteamMasterEditor::resized(){tabs.setBounds(getLocalBounds().reduced(8));}

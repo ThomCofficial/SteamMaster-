@@ -1,0 +1,28 @@
+{
+  "total_controls": 11,
+  "unique_ids": 11,
+  "all_11_expected_ids_present": true,
+  "low_freq_labels": [
+    "30",
+    "60",
+    "100"
+  ],
+  "high_boost_freq_labels": [
+    "8k",
+    "12k",
+    "16k"
+  ],
+  "high_atten_freq_labels": [
+    "5k",
+    "10k",
+    "20k"
+  ],
+  "dsp_changed": false,
+  "github_modified": false,
+  "visual_design": "approved original preserved; optional 3-scale retouch concept separate and not yet approved",
+  "rotor_extraction": "existing prototypes are not clean enough for final interactive sprites",
+  "visual_qa_passed": false,
+  "physical_assets_production_ready": false,
+  "reconstruction_preview_rejected": true,
+  "cpp_scale_header_syntax_check": "passed: g++ -std=c++17 -fsyntax-only"
+}

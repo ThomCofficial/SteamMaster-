@@ -119,14 +119,102 @@ SteamMasterProcessor::SteamMasterProcessor():juce::AudioProcessor(juce::AudioPro
     for(size_t i=0;i<monitored_.size() && i<size_t(params.size());++i)monitored_[i]=params[int(i)];
 }
 bool SteamMasterProcessor::isBusesLayoutSupported(const BusesLayout& l) const {return l.getMainInputChannelSet()==juce::AudioChannelSet::stereo() && l.getMainOutputChannelSet()==juce::AudioChannelSet::stereo();}
-void SteamMasterProcessor::prepareToPlay(double fs,int){rack->prepare(fs);snapshotValid_=false;updateDSP();setLatencySamples(int(rack->latencySamples()));}
+void SteamMasterProcessor::prepareToPlay(double fs,int){
+    rack->prepare(fs);snapshotValid_=false;updateDSP();
+    resetLoudness(fs);
+    setLatencySamples(int(rack->latencySamples()));
+}
+void SteamMasterProcessor::resetLoudness(double fs){
+    fs=juce::jmax(8000.0,fs);
+    const double gain=juce::Decibels::decibelsToGain(3.99984385);
+    auto shelf=juce::dsp::IIR::Coefficients<double>::makeHighShelf(
+        fs,1681.974450955533,0.7071752369554196,gain);
+    auto pass=juce::dsp::IIR::Coefficients<double>::makeHighPass(
+        fs,38.13547087602444,0.5003270373238773);
+    kShelfL_.coefficients=shelf;kShelfR_.coefficients=shelf;
+    kPassL_.coefficients=pass;kPassR_.coefficients=pass;
+    kShelfL_.reset();kShelfR_.reset();kPassL_.reset();kPassR_.reset();
+    kBlock_.assign((size_t)juce::jmax(1,(int)std::round(fs*.4)),0.);
+    kShort_.assign((size_t)juce::jmax(1,(int)std::round(fs*3.)),0.);
+    kStep_=juce::jmax(1,(int)std::round(fs*.1));
+    kBlockPos_=0;kShortPos_=0;kBlockSum_=0.;kShortSum_=0.;kSamples_=0;
+    kGatedSums_.fill(0.);kGatedCounts_.fill(0);
+    meterIntegratedLufs.store(-90.f,std::memory_order_relaxed);
+    meterShortTermLufs.store(-90.f,std::memory_order_relaxed);
+}
+void SteamMasterProcessor::measureLoudness(double left,double right) noexcept {
+    if(kBlock_.empty()||kShort_.empty())return;
+    // BS.1770 channel weighting G=1 for left/right, no cross-coupling.
+    left=kPassL_.processSample(kShelfL_.processSample(left));
+    right=kPassR_.processSample(kShelfR_.processSample(right));
+    const double e=left*left+right*right;
+    if(!std::isfinite(e))return;
+    kBlockSum_+=e-kBlock_[kBlockPos_];
+    kBlock_[kBlockPos_]=e;
+    if(++kBlockPos_==kBlock_.size())kBlockPos_=0;
+    kShortSum_+=e-kShort_[kShortPos_];
+    kShort_[kShortPos_]=e;
+    if(++kShortPos_==kShort_.size())kShortPos_=0;
+    ++kSamples_;
+    if(kSamples_%((uint64_t)kStep_)!=0)return;
+    const auto loud=[](double mean){
+        return -0.691+10.0*std::log10(juce::jmax(1.0e-15,mean));
+    };
+    if(kSamples_>=kShort_.size())
+        meterShortTermLufs.store((float)loud(kShortSum_/kShort_.size()),std::memory_order_relaxed);
+    if(kSamples_<kBlock_.size())return;
+    const double energy=juce::jmax(0.0,kBlockSum_/(double)kBlock_.size());
+    const double blockLufs=loud(energy);
+    if(blockLufs>=-70.0){
+        const int bucket=juce::jlimit(0,1199,(int)std::floor((blockLufs+70.)*10.));
+        kGatedSums_[(size_t)bucket]+=energy;
+        ++kGatedCounts_[(size_t)bucket];
+    }
+    double ungatedSum=0.;uint64_t ungatedCount=0;
+    for(size_t i=0;i<kGatedSums_.size();++i){
+        ungatedSum+=kGatedSums_[i];ungatedCount+=kGatedCounts_[i];
+    }
+    if(!ungatedCount)return;
+    const double relativeGate=loud(ungatedSum/(double)ungatedCount)-10.;
+    const int first=juce::jlimit(0,1199,(int)std::ceil((relativeGate+70.)*10.));
+    double gatedSum=0.;uint64_t gatedCount=0;
+    for(int i=first;i<1200;++i){
+        gatedSum+=kGatedSums_[(size_t)i];gatedCount+=kGatedCounts_[(size_t)i];
+    }
+    if(gatedCount)
+        meterIntegratedLufs.store((float)loud(gatedSum/(double)gatedCount),std::memory_order_relaxed);
+}
 void SteamMasterProcessor::processBlock(juce::AudioBuffer<float>& buffer,juce::MidiBuffer&){
     juce::ScopedNoDenormals noDenormals;
     if(buffer.getNumChannels()<2)return;
     updateDSP();
     auto* left=buffer.getWritePointer(0);auto* right=buffer.getWritePointer(1);
-    for(int i=0;i<buffer.getNumSamples();++i){const auto y=rack->process({double(left[i]),double(right[i])});left[i]=float(y.l);right[i]=float(y.r);}
-    for(int c=2;c<buffer.getNumChannels();++c)buffer.clear(c,0,buffer.getNumSamples());
+    float peak=0.f, peakLeft=0.f, peakRight=0.f;
+    for(int i=0;i<buffer.getNumSamples();++i){
+        const auto y=rack->process({double(left[i]),double(right[i])});
+        left[i]=float(y.l);right[i]=float(y.r);
+        measureLoudness(y.l,y.r);
+        peakLeft=juce::jmax(peakLeft,std::abs(left[i]));
+        peakRight=juce::jmax(peakRight,std::abs(right[i]));
+        peak=juce::jmax(peak,peakLeft,peakRight);
+    }
+    for(int channel=2;channel<buffer.getNumChannels();++channel)
+        buffer.clear(channel,0,buffer.getNumSamples());
+    if(buffer.getNumSamples()>0){
+        // GUI telemetry is lock-free, published only once per processing block.
+        // No file access, allocations, locks, or message-thread calls here.
+        meterOutputDb.store(20.f*std::log10(juce::jmax(1.0e-6f,peak)),std::memory_order_relaxed);
+        meterLeftDb.store(20.f*std::log10(juce::jmax(1.0e-6f,peakLeft)),std::memory_order_relaxed);
+        meterRightDb.store(20.f*std::log10(juce::jmax(1.0e-6f,peakRight)),std::memory_order_relaxed);
+        meterTruePeakDb.store((float)(20.*std::log10(juce::jmax(1.0e-6,rack->limiter.measuredOutputTruePeak()))),std::memory_order_relaxed);
+        meterOceanGr.store((float)rack->firstSix.ocean.gainReductionDb(),std::memory_order_relaxed);
+        meterFurnaceGr.store((float)rack->firstSix.furnace.gainReductionDb(),std::memory_order_relaxed);
+        meterShadowOpticalGr.store((float)rack->firstSix.shadow.opticalReductionDb(),std::memory_order_relaxed);
+        meterShadowDiscreteGr.store((float)rack->firstSix.shadow.discreteReductionDb(),std::memory_order_relaxed);
+        const auto gr=rack->limiter.gainReductionDb();
+        meterLimiterGr.store((float)juce::jmax(std::abs(gr.l),std::abs(gr.r)),std::memory_order_relaxed);
+        meterCorrelation.store((float)rack->stereo.correlation(),std::memory_order_relaxed);
+    }
 }
 juce::AudioProcessorEditor* SteamMasterProcessor::createEditor(){return new SteamMasterEditor(*this);}
 void SteamMasterProcessor::getStateInformation(juce::MemoryBlock& dest){if(auto xml=state.copyState().createXml())copyXmlToBinary(*xml,dest);}

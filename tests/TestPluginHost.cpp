@@ -89,6 +89,21 @@ int main(){
     {
       std::unique_ptr<juce::AudioProcessorEditor> editor(p->createEditor());
       if(!editor || editor->getWidth()<300)throw std::runtime_error("editor invalid");
+      if(editor->getNumChildComponents()<20)
+          throw std::runtime_error("unified UI does not contain Header + all nine modules + navigation");
+      if(fs==48000.) {
+          // Actual JUCE software-rendered screenshot of the complete plugin,
+          // produced in CI before the VST3 is offered for Cubase testing.
+          auto shot=editor->createComponentSnapshot(editor->getLocalBounds(),true);
+          if(!shot.isValid() || shot.getWidth()<1000 || shot.getHeight()<700)
+              throw std::runtime_error("failed to render full SteamMaster UI");
+          auto target=juce::File::getCurrentWorkingDirectory()
+                        .getChildFile("SteamMaster_UI_Preview.png");
+          auto stream=target.createOutputStream();
+          juce::PNGImageFormat png;
+          if(!stream || !png.writeImageToStream(shot,*stream))
+              throw std::runtime_error("failed to save full SteamMaster UI preview");
+      }
     }
     juce::AudioBuffer<float> audio(2,512);
     juce::MidiBuffer midi;

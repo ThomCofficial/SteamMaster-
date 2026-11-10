@@ -1,0 +1,89 @@
+name: SteamMaster Windows VST3 — real artwork
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [vst3/v1.7-performance-character]
+    paths:
+      - 'plugin/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/build-steammaster-vst3.yml'
+concurrency:
+  group: steammaster-vst3-real-art-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  windows-vst3:
+    runs-on: windows-2022
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify all 12 original visual assets
+        shell: pwsh
+        run: |
+          $names = @(
+            'plugin/assets/SteamMaster_Global_Header_Complete_v2/header_faceplate_blank_candidate.png',
+            'plugin/assets/SteamMaster_Ocean_Furnace_Asset_Prep_v1/ocean_module_source.png',
+            'plugin/assets/SteamMaster_Ocean_Furnace_Asset_Prep_v1/furnace_module_source.png',
+            'plugin/assets/SteamMaster_ParametricEQ_Asset_Prep_v1/parametric_eq_module_source.png',
+            'plugin/assets/SteamMaster_Pultec_EQ_DSP_Locked_Handoff/artwork/Pultec_Approved_Reference.png',
+            'plugin/assets/SteamMaster_Shadow_Complete_Module_Kit_v1/01_reference/Shadow_Source_Locked.png',
+            'plugin/assets/SteamMaster_Exciter_Complete_Asset_Prep_v1/SteamMaster_Exciter_Complete_Asset_Prep_v1/source/Exciter_panel_uncorrected_1536x402.png',
+            'plugin/assets/SteamMaster_BaxandallEQ_Module_Kit_v1/01_reference/baxandall_module_trimmed_reference.png',
+            'plugin/assets/SteamMaster_Tape_Complete_Module_Kit_v1/source/Tape_Module_Reference_1536x469.png',
+            'plugin/assets/SteamMaster_StereoImage_Limiter_Module_Kit_v1/00_source/stereo_limiter_approved_source.png',
+            'plugin/assets/SteamMaster_Global_Header_Complete_v2/knob_input_silver.png',
+            'plugin/assets/SteamMaster_Global_Header_Complete_v2/knob_output_silver.png'
+          )
+          foreach ($path in $names) {
+            if (!(Test-Path $path)) { throw "MISSING ORIGINAL ARTWORK: $path" }
+            $file = Get-Item $path
+            if ($file.Length -lt 10240) { throw "REJECTED PLACEHOLDER ASSET: $path ($($file.Length) bytes)" }
+            $bytes = [IO.File]::ReadAllBytes((Resolve-Path $path).Path)
+            $magic = [byte[]](137,80,78,71,13,10,26,10)
+            for ($i=0; $i -lt 8; $i++) {
+              if($bytes[$i] -ne $magic[$i]) { throw "INVALID PNG SIGNATURE: $path" }
+            }
+            Write-Host "Original artwork verified: $path ($($file.Length) bytes)"
+          }
+      - name: Install original-artwork compositor
+        run: python -m pip install --disable-pip-version-check --quiet numpy pillow opencv-python-headless
+      - name: Verify every DSP control is covered once, with correct source geometry
+        run: python tools/validate_ui_layout.py
+      - name: Prepare all nine real faceplates and 100+ hardware rotors
+        run: python tools/prepare_unified_ui.py
+      - name: Verify generated art assets and control manifest
+        shell: pwsh
+        run: |
+          $modules = @('ocean','furnace','parametric','pultec','shadow','exciter','bax','tape','stereo_limiter')
+          foreach($name in $modules) {
+            foreach($kind in @('faceplate','rotors')) {
+              $file = "plugin/generated/${name}_${kind}.png"
+              if(!(Test-Path $file)) { throw "GENERATED ARTWORK MISSING: $file" }
+              if((Get-Item $file).Length -lt 2048) { throw "INVALID GENERATED ARTWORK: $file" }
+            }
+          }
+          if(!(Test-Path "plugin/generated/header_original_faceplate.png")) { throw "ORIGINAL HEADER MISSING" }
+          Write-Host "All 10 reconstructed original faceplates and 9 hardware rotor atlases verified."
+      - name: Configure Release VST3
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DSTEAMMASTER_BUILD_VST3=ON -DBUILD_TESTING=ON
+      - name: Compile SteamMaster with original artwork
+        run: cmake --build build --config Release --parallel 4
+      - name: Run DSP and host regression tests
+        run: ctest --test-dir build -C Release --output-on-failure
+      - name: Stage and verify VST3
+        shell: pwsh
+        run: |
+          $vst = Get-ChildItem -Path build -Directory -Recurse -Filter '*.vst3' | Select-Object -First 1
+          if (-not $vst) { throw "VST3 bundle missing after build" }
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
+          Copy-Item -Path $vst.FullName -Destination dist -Recurse
+          $preview = Get-ChildItem -Path build -File -Recurse -Filter 'SteamMaster_UI_Preview.png' | Select-Object -First 1
+          if (-not $preview) { throw "UI smoke test did not render screenshot; do not publish unverified UI" }
+          Copy-Item -Path $preview.FullName -Destination "dist/SteamMaster_UI_Preview.png"
+          Write-Host "Original artwork GUI snapshot staged."
+          Write-Host "Output: $($vst.FullName)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SteamMaster-Windows-VST3-Real-Artwork
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
