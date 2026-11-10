@@ -13,6 +13,8 @@ const juce::Colour deep (0xff10191d);
 class SteamLook final : public juce::LookAndFeel_V4 {
     std::map<juce::String, juce::Image> knobs;
     std::map<juce::String, std::pair<juce::Image, juce::Image>> switches;
+    std::map<juce::String, std::pair<juce::Image, juce::Image>> headerButtonsArt;
+    std::map<int, juce::Image> oversamplingArt;
 public:
     SteamLook() {
 #ifdef STEAMMASTER_HAS_ARTWORK
@@ -177,6 +179,33 @@ public:
                                       cut(pultec,1131,807,260,191)};
         }
 #endif
+#ifdef STEAMMASTER_HAS_ARTWORK
+        const auto buttonsSheet=juce::ImageFileFormat::loadFrom(
+            BinaryData::steampunk_brass_ui_button_sprite_sheet_png,
+            (size_t)BinaryData::steampunk_brass_ui_button_sprite_sheet_pngSize);
+        const auto inSheet=juce::ImageFileFormat::loadFrom(
+            BinaryData::steampunk_global_in_toggle_set_png,
+            (size_t)BinaryData::steampunk_global_in_toggle_set_pngSize);
+        if (buttonsSheet.isValid()) {
+            auto cutButton=[&](int x,int y,int w,int h) {
+                return buttonsSheet.getClippedImage({x,y,w,h});
+            };
+            headerButtonsArt["slotA"]={cutButton(97,453,262,156),cutButton(411,453,262,156)};
+            headerButtonsArt["slotB"]={cutButton(773,453,262,156),cutButton(1089,453,262,156)};
+            headerButtonsArt["previous"]={cutButton(126,648,242,184),cutButton(424,648,238,184)};
+            headerButtonsArt["next"]={cutButton(786,648,240,184),cutButton(1084,648,239,183)};
+            headerButtonsArt["save"]={cutButton(202,871,430,184),cutButton(810,871,430,185)};
+            oversamplingArt[0]=cutButton(401,47,275,165);
+            oversamplingArt[1]=cutButton(1081,47,277,165);
+            oversamplingArt[2]=cutButton(401,247,278,168);
+            oversamplingArt[3]=cutButton(1083,247,280,168);
+        }
+        if(inSheet.isValid()) {
+            switches["global_in"]={
+                inSheet.getClippedImage({66,152,386,763}),
+                inSheet.getClippedImage({531,152,385,763})};
+        }
+#endif
         setColour(juce::Slider::textBoxTextColourId, ivory);
         setColour(juce::Slider::textBoxBackgroundColourId, deep);
         setColour(juce::Slider::textBoxOutlineColourId, brass.withAlpha(0.45f));
@@ -190,9 +219,25 @@ public:
                       int, int, int, int, juce::ComboBox&) override {
         // The faceplate provides the switch housing. No JUCE rectangle or arrow.
     }
-    void drawButtonBackground(juce::Graphics&, juce::Button&, const juce::Colour&,
-                              bool, bool) override {
-        // Header preset controls are unobtrusive text on the original art.
+    void drawButtonBackground(juce::Graphics& g, juce::Button& button,
+                              const juce::Colour&, bool over, bool down) override {
+#ifdef STEAMMASTER_HAS_ARTWORK
+        auto it=headerButtonsArt.find(button.getComponentID());
+        if(it!=headerButtonsArt.end()) {
+            const bool selected=button.getToggleState()||down||over;
+            const auto& picture=selected?it->second.first:it->second.second;
+            if(picture.isValid()) {
+                g.drawImageWithin(picture,0,0,button.getWidth(),button.getHeight(),
+                    juce::RectanglePlacement::stretchToFit,false);
+                return;
+            }
+        }
+#endif
+    }
+    void drawButtonText(juce::Graphics& g, juce::TextButton& button,
+                        bool over, bool down) override {
+        if(headerButtonsArt.count(button.getComponentID())!=0)return;
+        juce::LookAndFeel_V4::drawButtonText(g,button,over,down);
     }
     void drawRotarySlider(juce::Graphics& g, int x, int y, int w, int h,
                           float position, float start, float end, juce::Slider& slider) override {
@@ -524,6 +569,7 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
         auto addButton=[this](juce::String title,juce::String name,std::function<void()> callback) {
             auto button=std::make_unique<juce::TextButton>(title);
             button->setName(name);
+            button->setComponentID(name);
             button->setColour(juce::TextButton::buttonColourId,juce::Colour(0xff4a3524));
             button->setColour(juce::TextButton::buttonOnColourId,juce::Colour(0xffc18c39));
             button->setColour(juce::TextButton::textColourOffId,juce::Colour(0xffffe2a6));
@@ -536,6 +582,7 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
         addButton("<","previous",[this]{navigatePreset(-1);});
         addButton(">","next",[this]{navigatePreset(1);});
         addButton("SAVE","save",[this]{savePreset();});
+        headerButtons[0]->setToggleState(true,juce::dontSendNotification);
         presetLabel=std::make_unique<juce::Label>();
         presetLabel->setJustificationType(juce::Justification::centred);
         presetLabel->setFont(juce::Font(juce::FontOptions(17.f,juce::Font::italic)));
@@ -558,6 +605,10 @@ void SteamMasterEditor::Page::switchSlot(bool toB) {
     auto state=toB?slotB:slotA;
     if(state.isValid()) source.state.replaceState(state.createCopy());
     usingB=toB;
+    if(headerButtons.size()>=2) {
+        headerButtons[0]->setToggleState(!toB,juce::dontSendNotification);
+        headerButtons[1]->setToggleState(toB,juce::dontSendNotification);
+    }
     if(presetLabel) presetLabel->setText(presetTitle+(toB?" [B]":" [A]"),juce::dontSendNotification);
 }
 void SteamMasterEditor::Page::savePreset() {
