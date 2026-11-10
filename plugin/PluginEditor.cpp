@@ -100,7 +100,7 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
             slider->setTextBoxStyle(juce::Slider::TextBoxBelow,false,92,23);
             slider->setRotaryParameters(juce::MathConstants<float>::pi*1.25f,
                       juce::MathConstants<float>::pi*2.75f,true);
-            slider->setDoubleClickReturnValue(true,p->getDefaultValue());
+            // APVTS attachments own the true parameter range; do not use the normalized default as a value.
             contents.addAndMakeVisible(*slider);
             sliders.push_back(std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(state,id,*slider));
             controls.push_back(std::move(slider));
