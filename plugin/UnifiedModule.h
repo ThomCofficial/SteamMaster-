@@ -32,7 +32,7 @@ private:
     };
     SteamMasterProcessor& processor;
     juce::String id;
-    juce::Image plate,rotorAtlas;
+    juce::Image plate,rotorAtlas,reelAtlas;
     int sourceWidth=1536, sourceHeight=512;
     std::vector<std::unique_ptr<Control>> controls;
     std::unique_ptr<LampLook> lampLook;
