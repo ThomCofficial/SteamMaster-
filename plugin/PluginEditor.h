@@ -3,6 +3,7 @@
 #include "PluginProcessor.h"
 #include <vector>
 #include <memory>
+#include <array>
 
 class SteamMasterEditor final : public juce::AudioProcessorEditor {
 public:
@@ -26,6 +27,7 @@ private:
             int artHeight = 0;
             juce::Image leftReel, rightReel;
             juce::Image headerMeterAtlas;
+            std::array<juce::Image,6> exciterModes, limiterModes;
             juce::Image shadowNeedle, exciterNeedle, correlationNeedle, limiterNeedle;
             juce::String section;
             SteamMasterProcessor* processor = nullptr;
