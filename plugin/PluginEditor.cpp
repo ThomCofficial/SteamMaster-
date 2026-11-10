@@ -186,7 +186,7 @@ public:
         setColour(juce::Label::textColourId, ivory);
         setColour(juce::ToggleButton::textColourId, ivory);
     }
-    void drawComboBox(juce::Graphics&, int, int, int, int, bool,
+    void drawComboBox(juce::Graphics&, int, int, bool,
                       int, int, int, int, juce::ComboBox&) override {
         // The faceplate provides the switch housing. No JUCE rectangle or arrow.
     }
