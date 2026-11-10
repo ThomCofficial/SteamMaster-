@@ -15,6 +15,7 @@ private:
         explicit Page(juce::AudioProcessor&,juce::AudioProcessorValueTreeState&,const juce::String&);
         void resized() override;
         void paint(juce::Graphics&) override;
+        int desiredHeight(int width) const;
         juce::String section;
         juce::Viewport viewport;
         struct ArtCanvas final : juce::Component {
@@ -33,10 +34,12 @@ private:
         std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>> buttons;
         std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>> combos;
         std::vector<std::unique_ptr<juce::Label>> labels;
+        std::vector<juce::String> ids;
     };
     SteamMasterProcessor& processor;
-    juce::TabbedComponent tabs{juce::TabbedButtonBar::TabsAtTop};
+    juce::Viewport rackViewport;
+    juce::Component rackContent;
+    std::vector<std::unique_ptr<Page>> modules;
     std::unique_ptr<juce::LookAndFeel_V4> theme;
-    std::unique_ptr<juce::ComponentBoundsConstrainer> boundsConstraint;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SteamMasterEditor)
 };
