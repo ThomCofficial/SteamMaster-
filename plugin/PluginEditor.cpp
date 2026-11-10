@@ -12,6 +12,7 @@ const juce::Colour steel (0xff263742);
 const juce::Colour deep (0xff10191d);
 class SteamLook final : public juce::LookAndFeel_V4 {
     std::map<juce::String, juce::Image> knobs;
+    std::map<juce::String, juce::Image> valueRings;
     std::map<juce::String, std::pair<juce::Image, juce::Image>> switches;
     std::map<juce::String, std::pair<juce::Image, juce::Image>> headerButtonsArt;
     std::map<int, juce::Image> oversamplingArt;
@@ -240,6 +241,100 @@ public:
             juce::ImageFileFormat::loadFrom(BinaryData::IN_OriginalState_png,(size_t)BinaryData::IN_OriginalState_pngSize),
             juce::ImageFileFormat::loadFrom(BinaryData::IN_OFF_png,(size_t)BinaryData::IN_OFF_pngSize)};
 #endif
+#ifdef STEAMMASTER_HAS_ARTWORK
+        // Accurate scales remain stationary. Only the metal knob rotates.
+        // Values originate in the approved module packs, not invented artwork.
+        valueRings["shadow_optical_threshold"]=juce::ImageFileFormat::loadFrom(BinaryData::Optical_Threshold_Exact_Scale_png,
+           (size_t)BinaryData::Optical_Threshold_Exact_Scale_pngSize);
+        valueRings["shadow_optical_makeup"]=juce::ImageFileFormat::loadFrom(BinaryData::Optical_Gain_Exact_Scale_png,
+           (size_t)BinaryData::Optical_Gain_Exact_Scale_pngSize);
+        valueRings["shadow_discrete_threshold"]=juce::ImageFileFormat::loadFrom(BinaryData::Discrete_Threshold_Exact_Scale_png,
+           (size_t)BinaryData::Discrete_Threshold_Exact_Scale_pngSize);
+        valueRings["shadow_discrete_gain"]=juce::ImageFileFormat::loadFrom(BinaryData::Discrete_Gain_Exact_Scale_png,
+           (size_t)BinaryData::Discrete_Gain_Exact_Scale_pngSize);
+        valueRings["shadow_discrete_ratio"]=juce::ImageFileFormat::loadFrom(BinaryData::Discrete_Ratio_Exact_Scale_png,
+           (size_t)BinaryData::Discrete_Ratio_Exact_Scale_pngSize);
+        valueRings["shadow_discrete_attack"]=juce::ImageFileFormat::loadFrom(BinaryData::Discrete_Attack_Exact_Scale_png,
+           (size_t)BinaryData::Discrete_Attack_Exact_Scale_pngSize);
+        valueRings["shadow_discrete_recovery"]=juce::ImageFileFormat::loadFrom(BinaryData::Discrete_Recovery_Exact_Scale_png,
+           (size_t)BinaryData::Discrete_Recovery_Exact_Scale_pngSize);
+        valueRings["shadow_sc_hpf"]=juce::ImageFileFormat::loadFrom(BinaryData::Sidechain_HPF_Exact_Scale_png,
+           (size_t)BinaryData::Sidechain_HPF_Exact_Scale_pngSize);
+        valueRings["shadow_output_db"]=juce::ImageFileFormat::loadFrom(BinaryData::Output_Exact_Scale_png,
+           (size_t)BinaryData::Output_Exact_Scale_pngSize);
+        valueRings["shadow_mix"]=juce::ImageFileFormat::loadFrom(BinaryData::Mix_Exact_Scale_png,
+           (size_t)BinaryData::Mix_Exact_Scale_pngSize);
+        valueRings["exciter_low_drive"]=juce::ImageFileFormat::loadFrom(BinaryData::Low_Drive_Exact_Value_Ring_png,
+           (size_t)BinaryData::Low_Drive_Exact_Value_Ring_pngSize);
+        valueRings["exciter_low_freq"]=juce::ImageFileFormat::loadFrom(BinaryData::Low_Frequency_Exact_Value_Ring_png,
+           (size_t)BinaryData::Low_Frequency_Exact_Value_Ring_pngSize);
+        valueRings["exciter_high_drive"]=juce::ImageFileFormat::loadFrom(BinaryData::High_Drive_Exact_Value_Ring_png,
+           (size_t)BinaryData::High_Drive_Exact_Value_Ring_pngSize);
+        valueRings["exciter_high_freq"]=juce::ImageFileFormat::loadFrom(BinaryData::High_Frequency_Exact_Value_Ring_png,
+           (size_t)BinaryData::High_Frequency_Exact_Value_Ring_pngSize);
+        valueRings["exciter_crossover"]=juce::ImageFileFormat::loadFrom(BinaryData::Crossover_Exact_Value_Ring_png,
+           (size_t)BinaryData::Crossover_Exact_Value_Ring_pngSize);
+        valueRings["exciter_output_db"]=juce::ImageFileFormat::loadFrom(BinaryData::Output_Exact_Value_Ring_png,
+           (size_t)BinaryData::Output_Exact_Value_Ring_pngSize);
+        valueRings["exciter_mix"]=juce::ImageFileFormat::loadFrom(BinaryData::Mix_Exact_Value_Ring_png,
+           (size_t)BinaryData::Mix_Exact_Value_Ring_pngSize);
+        valueRings["tape_type"]=juce::ImageFileFormat::loadFrom(BinaryData::Type_ValueRing_png,
+           (size_t)BinaryData::Type_ValueRing_pngSize);
+        valueRings["tape_speed"]=juce::ImageFileFormat::loadFrom(BinaryData::Speed_ValueRing_png,
+           (size_t)BinaryData::Speed_ValueRing_pngSize);
+        valueRings["tape_drive_db"]=juce::ImageFileFormat::loadFrom(BinaryData::Drive_ValueRing_png,
+           (size_t)BinaryData::Drive_ValueRing_pngSize);
+        valueRings["tape_bias"]=juce::ImageFileFormat::loadFrom(BinaryData::Bias_ValueRing_png,
+           (size_t)BinaryData::Bias_ValueRing_pngSize);
+        valueRings["tape_hf_trim_db"]=juce::ImageFileFormat::loadFrom(BinaryData::HF_Trim_ValueRing_png,
+           (size_t)BinaryData::HF_Trim_ValueRing_pngSize);
+        valueRings["tape_mix"]=juce::ImageFileFormat::loadFrom(BinaryData::Mix_ValueRing_png,
+           (size_t)BinaryData::Mix_ValueRing_pngSize);
+        valueRings["stereo_mono_maker_hz"]=juce::ImageFileFormat::loadFrom(BinaryData::Mono_Maker_Accurate_ValueRing_png,
+           (size_t)BinaryData::Mono_Maker_Accurate_ValueRing_pngSize);
+        valueRings["stereo_width_percent"]=juce::ImageFileFormat::loadFrom(BinaryData::Stereo_Width_Accurate_ValueRing_png,
+           (size_t)BinaryData::Stereo_Width_Accurate_ValueRing_pngSize);
+        valueRings["stereo_width_freq"]=juce::ImageFileFormat::loadFrom(BinaryData::Width_Frequency_Accurate_ValueRing_png,
+           (size_t)BinaryData::Width_Frequency_Accurate_ValueRing_pngSize);
+        valueRings["limiter_threshold_db"]=juce::ImageFileFormat::loadFrom(BinaryData::Threshold_Accurate_ValueRing_png,
+           (size_t)BinaryData::Threshold_Accurate_ValueRing_pngSize);
+        valueRings["limiter_ceiling_dbtp"]=juce::ImageFileFormat::loadFrom(BinaryData::Ceiling_Accurate_ValueRing_png,
+           (size_t)BinaryData::Ceiling_Accurate_ValueRing_pngSize);
+        valueRings["limiter_release_ms"]=juce::ImageFileFormat::loadFrom(BinaryData::Release_Accurate_ValueRing_png,
+           (size_t)BinaryData::Release_Accurate_ValueRing_pngSize);
+        valueRings["limiter_lookahead_ms"]=juce::ImageFileFormat::loadFrom(BinaryData::Lookahead_Accurate_ValueRing_png,
+           (size_t)BinaryData::Lookahead_Accurate_ValueRing_pngSize);
+        valueRings["limiter_stereo_link"]=juce::ImageFileFormat::loadFrom(BinaryData::Stereo_Link_Accurate_ValueRing_png,
+           (size_t)BinaryData::Stereo_Link_Accurate_ValueRing_pngSize);
+        valueRings["bax_mid_hpf"]=juce::ImageFileFormat::loadFrom(BinaryData::Bax_HPF_Scale_Concept_png,
+           (size_t)BinaryData::Bax_HPF_Scale_Concept_pngSize);
+        valueRings["bax_mid_low_freq"]=juce::ImageFileFormat::loadFrom(BinaryData::Bax_Low_Shelf_Frequency_Scale_Concept_png,
+           (size_t)BinaryData::Bax_Low_Shelf_Frequency_Scale_Concept_pngSize);
+        valueRings["bax_mid_low_gain"]=juce::ImageFileFormat::loadFrom(BinaryData::Bax_Low_Shelf_Gain_Scale_Concept_png,
+           (size_t)BinaryData::Bax_Low_Shelf_Gain_Scale_Concept_pngSize);
+        valueRings["bax_mid_high_gain"]=juce::ImageFileFormat::loadFrom(BinaryData::Bax_High_Shelf_Gain_Scale_Concept_png,
+           (size_t)BinaryData::Bax_High_Shelf_Gain_Scale_Concept_pngSize);
+        valueRings["bax_mid_high_freq"]=juce::ImageFileFormat::loadFrom(BinaryData::Bax_High_Shelf_Frequency_Scale_Concept_png,
+           (size_t)BinaryData::Bax_High_Shelf_Frequency_Scale_Concept_pngSize);
+        valueRings["bax_mid_lpf"]=juce::ImageFileFormat::loadFrom(BinaryData::Bax_LPF_Scale_Concept_png,
+           (size_t)BinaryData::Bax_LPF_Scale_Concept_pngSize);
+        valueRings["bax_mid_output_db"]=juce::ImageFileFormat::loadFrom(BinaryData::Bax_Output_Scale_Concept_png,
+           (size_t)BinaryData::Bax_Output_Scale_Concept_pngSize);
+        valueRings["bax_side_hpf"]=juce::ImageFileFormat::loadFrom(BinaryData::Bax_HPF_Scale_Concept_png,
+           (size_t)BinaryData::Bax_HPF_Scale_Concept_pngSize);
+        valueRings["bax_side_low_freq"]=juce::ImageFileFormat::loadFrom(BinaryData::Bax_Low_Shelf_Frequency_Scale_Concept_png,
+           (size_t)BinaryData::Bax_Low_Shelf_Frequency_Scale_Concept_pngSize);
+        valueRings["bax_side_low_gain"]=juce::ImageFileFormat::loadFrom(BinaryData::Bax_Low_Shelf_Gain_Scale_Concept_png,
+           (size_t)BinaryData::Bax_Low_Shelf_Gain_Scale_Concept_pngSize);
+        valueRings["bax_side_high_gain"]=juce::ImageFileFormat::loadFrom(BinaryData::Bax_High_Shelf_Gain_Scale_Concept_png,
+           (size_t)BinaryData::Bax_High_Shelf_Gain_Scale_Concept_pngSize);
+        valueRings["bax_side_high_freq"]=juce::ImageFileFormat::loadFrom(BinaryData::Bax_High_Shelf_Frequency_Scale_Concept_png,
+           (size_t)BinaryData::Bax_High_Shelf_Frequency_Scale_Concept_pngSize);
+        valueRings["bax_side_lpf"]=juce::ImageFileFormat::loadFrom(BinaryData::Bax_LPF_Scale_Concept_png,
+           (size_t)BinaryData::Bax_LPF_Scale_Concept_pngSize);
+        valueRings["bax_side_output_db"]=juce::ImageFileFormat::loadFrom(BinaryData::Bax_Output_Scale_Concept_png,
+           (size_t)BinaryData::Bax_Output_Scale_Concept_pngSize);
+#endif
         setColour(juce::Slider::textBoxTextColourId, ivory);
         setColour(juce::Slider::textBoxBackgroundColourId, deep);
         setColour(juce::Slider::textBoxOutlineColourId, brass.withAlpha(0.45f));
@@ -300,10 +395,19 @@ public:
     void drawRotarySlider(juce::Graphics& g, int x, int y, int w, int h,
                           float position, float start, float end, juce::Slider& slider) override {
 #ifdef STEAMMASTER_HAS_ARTWORK
-        const auto it = knobs.find(slider.getComponentID());
+        const auto& id=slider.getComponentID();
+        // Ring and knob share the same fixed, artwork-relative control rectangle.
+        const auto ring=valueRings.find(id);
+        if(ring!=valueRings.end() && ring->second.isValid())
+            g.drawImageWithin(ring->second,x,y,w,h,
+                juce::RectanglePlacement::centred,false);
+        const auto it = knobs.find(id);
         if (it != knobs.end() && it->second.isValid()) {
             const auto& sprite = it->second;
-            const float diameter = (float) juce::jmin(w, h) * 0.72f;
+            // Maintain a ring-to-knob size relationship; avoid giant controls
+            // and keep the visible knob centred when the editor is resized.
+            const float diameter = (float) juce::jmin(w, h) *
+                 (ring!=valueRings.end()?0.50f:0.74f);
             const float scale = diameter / (float) juce::jmax(sprite.getWidth(), sprite.getHeight());
             const float angle = start + position * (end - start);
             const float imageW = (float) sprite.getWidth(), imageH = (float) sprite.getHeight();
