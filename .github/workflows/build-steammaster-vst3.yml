@@ -74,6 +74,10 @@ jobs:
           if (-not $vst) { throw "VST3 bundle missing after build" }
           New-Item -ItemType Directory -Path dist -Force | Out-Null
           Copy-Item -Path $vst.FullName -Destination dist -Recurse
+          $preview = Get-ChildItem -Path build -File -Recurse -Filter 'SteamMaster_UI_Preview.png' | Select-Object -First 1
+          if (-not $preview) { throw "UI smoke test did not render screenshot; do not publish unverified UI" }
+          Copy-Item -Path $preview.FullName -Destination "dist/SteamMaster_UI_Preview.png"
+          Write-Host "Original artwork GUI snapshot staged."
           Write-Host "Output: $($vst.FullName)"
       - uses: actions/upload-artifact@v4
         with:
