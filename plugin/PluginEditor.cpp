@@ -140,40 +140,59 @@ public:
             juce::ImageFileFormat::loadFrom(BinaryData::Bax_Link_Off_Unlit_png, (size_t)BinaryData::Bax_Link_Off_Unlit_pngSize)));
 #endif
 #ifdef STEAMMASTER_HAS_ARTWORK
-        // The original Ocean/Furnace and Pultec packs contain transparent
-        // sprite atlases. Cut each cell deterministically in JUCE, never by AI.
-        auto atlas = [this](const void* data, size_t bytes, int cols, int rows,
-                            const std::vector<juce::String>& ids) {
-            auto sheet = juce::ImageFileFormat::loadFrom(data, bytes);
-            if (!sheet.isValid()) return;
-            const int cw = sheet.getWidth() / cols;
-            const int ch = sheet.getHeight() / rows;
-            for (int i = 0; i < (int)ids.size(); ++i) {
-                if (ids[(size_t)i].isEmpty()) continue;
-                const int column = i % cols, row = i / cols;
-                knobs[ids[(size_t)i]] = sheet.getClippedImage(
-                    juce::Rectangle<int>(column*cw, row*ch, cw, ch));
-            }
+        // Exact alpha-component bounds audited against the uploaded 1448x1086 sheets.
+        // The previous 4x3 grid cut knobs in half; these are twelve true isolated sprites.
+        const auto ocean = juce::ImageFileFormat::loadFrom(
+            BinaryData::Ocean_Furnace_Knobs_Sprite_Sheet_png,
+            (size_t)BinaryData::Ocean_Furnace_Knobs_Sprite_Sheet_pngSize);
+        const auto pultec = juce::ImageFileFormat::loadFrom(
+            BinaryData::Pultec_EQ_Knobs_and_IN_Button_Sheet_png,
+            (size_t)BinaryData::Pultec_EQ_Knobs_and_IN_Button_Sheet_pngSize);
+        auto cut = [](const juce::Image& sheet, int x, int y, int w, int h) {
+            return sheet.isValid() ? sheet.getClippedImage({x,y,w,h}) : juce::Image();
         };
-        atlas(BinaryData::Ocean_Furnace_Knobs_Sprite_Sheet_png,
-              (size_t)BinaryData::Ocean_Furnace_Knobs_Sprite_Sheet_pngSize, 4, 3,
-              {"ocean_threshold_db","ocean_ratio","ocean_attack_ms","ocean_recovery",
-               "ocean_sc_hpf","ocean_mix","furnace_threshold_db","furnace_ratio",
-               "furnace_attack","furnace_release","furnace_sc_hpf","furnace_mix"});
-        atlas(BinaryData::Pultec_EQ_Knobs_and_IN_Button_Sheet_png,
-              (size_t)BinaryData::Pultec_EQ_Knobs_and_IN_Button_Sheet_pngSize, 4, 3,
-              {"pultec_low_freq","pultec_low_boost","pultec_low_atten","pultec_high_boost_freq",
-               "pultec_high_boost","pultec_high_atten_freq","pultec_high_atten","pultec_bandwidth",
-               "pultec_output_db","pultec_mix","",""});
+        if (ocean.isValid()) {
+            const juce::Image oBig=cut(ocean,100,64,401,434), oLever=cut(ocean,611,123,294,303),
+                              oSmall=cut(ocean,1044,126,303,332), fBig=cut(ocean,97,573,405,437),
+                              fLever=cut(ocean,610,633,295,307), fSmall=cut(ocean,1041,634,304,333);
+            knobs["ocean_threshold_db"]=oBig; knobs["ocean_ratio"]=oLever;
+            knobs["ocean_attack_ms"]=oSmall; knobs["ocean_recovery"]=oLever;
+            knobs["ocean_sc_hpf"]=oLever; knobs["ocean_mix"]=oSmall;
+            knobs["furnace_threshold_db"]=fBig; knobs["furnace_ratio"]=fLever;
+            knobs["furnace_attack"]=fLever; knobs["furnace_release"]=fLever;
+            knobs["furnace_sc_hpf"]=fLever; knobs["furnace_mix"]=fSmall;
+        }
+        if (pultec.isValid()) {
+            knobs["pultec_low_freq"]=cut(pultec,132,74,301,303);
+            knobs["pultec_high_boost_freq"]=cut(pultec,572,74,301,303);
+            knobs["pultec_high_atten_freq"]=cut(pultec,1046,126,225,228);
+            knobs["pultec_low_boost"]=cut(pultec,91,447,253,259);
+            knobs["pultec_low_atten"]=cut(pultec,427,447,253,259);
+            knobs["pultec_high_boost"]=cut(pultec,764,447,253,259);
+            knobs["pultec_high_atten"]=cut(pultec,1102,447,253,259);
+            knobs["pultec_bandwidth"]=cut(pultec,68,795,194,199);
+            knobs["pultec_output_db"]=cut(pultec,316,795,194,199);
+            knobs["pultec_mix"]=cut(pultec,565,795,195,200);
+            switches["pultec_in"] = {cut(pultec,831,807,258,190),
+                                      cut(pultec,1131,807,260,191)};
+        }
 #endif
         setColour(juce::Slider::textBoxTextColourId, ivory);
         setColour(juce::Slider::textBoxBackgroundColourId, deep);
         setColour(juce::Slider::textBoxOutlineColourId, brass.withAlpha(0.45f));
-        setColour(juce::ComboBox::backgroundColourId, steel);
+        setColour(juce::ComboBox::backgroundColourId, juce::Colours::transparentBlack);
         setColour(juce::ComboBox::textColourId, ivory);
-        setColour(juce::ComboBox::outlineColourId, brass);
+        setColour(juce::ComboBox::outlineColourId, juce::Colours::transparentBlack);
         setColour(juce::Label::textColourId, ivory);
         setColour(juce::ToggleButton::textColourId, ivory);
+    }
+    void drawComboBox(juce::Graphics&, int, int, int, int, bool,
+                      int, int, int, int, juce::ComboBox&) override {
+        // The faceplate provides the switch housing. No JUCE rectangle or arrow.
+    }
+    void drawButtonBackground(juce::Graphics&, juce::Button&, const juce::Colour&,
+                              bool, bool) override {
+        // Header preset controls are unobtrusive text on the original art.
     }
     void drawRotarySlider(juce::Graphics& g, int x, int y, int w, int h,
                           float position, float start, float end, juce::Slider& slider) override {
@@ -224,16 +243,14 @@ public:
         }
     }
 #endif
-    auto r=b.getLocalBounds().toFloat().reduced(3);
+    // Fallback bypass LED, not a gold/black rectangular JUCE widget.
     const bool on=b.getToggleState();
-    g.setColour(juce::Colour(0xff080e12));g.fillRoundedRectangle(r,5.f);
-    g.setColour(on?brass:brass.withAlpha(.35f));g.drawRoundedRectangle(r,5.f,1.5f);
-    g.setColour(on?juce::Colour(0xffffd17c):juce::Colour(0xff526169));
-    g.fillEllipse(r.getX()+7,r.getCentreY()-4,8,8);
-    g.setColour(on?ivory:ivory.withAlpha(.72f));
-    g.setFont(juce::Font(juce::FontOptions(12.f,juce::Font::bold)));
-    g.drawText(b.getButtonText(),r.withTrimmedLeft(19),juce::Justification::centredLeft,true);
-    if(over||down){g.setColour(juce::Colours::white.withAlpha(.08f));g.fillRoundedRectangle(r,5.f);}
+    const float radius=juce::jmax(2.f,juce::jmin(b.getWidth(),b.getHeight())*0.14f);
+    auto c=b.getLocalBounds().toFloat().getCentre();
+    g.setColour(on ? juce::Colour(0xffffd78b) : juce::Colour(0xff536064));
+    g.fillEllipse(c.x-radius,c.y-radius,radius*2.f,radius*2.f);
+    g.setColour(juce::Colour(0xff28170b));
+    g.drawEllipse(c.x-radius,c.y-radius,radius*2.f,radius*2.f,1.f);
  }
 };
 void paintPanel(juce::Graphics& g,juce::Rectangle<int> b,const juce::String& title) {
@@ -425,7 +442,8 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
                 auto slider=std::make_unique<juce::Slider>();
                 slider->setComponentID(id);
             slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-                slider->setTextBoxStyle(juce::Slider::TextBoxBelow,false,108,23);
+                slider->setPopupDisplayEnabled(true, true, nullptr);
+                slider->setTextBoxStyle(juce::Slider::NoTextBox,false,0,0);
                 slider->setRange(0,juce::jmax(0,choice->choices.size()-1),1);
                 slider->setRotaryParameters(juce::MathConstants<float>::pi*1.25f,
                                              juce::MathConstants<float>::pi*2.75f,true);
@@ -451,7 +469,8 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
             auto slider=std::make_unique<juce::Slider>();
             slider->setComponentID(id);
             slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-            slider->setTextBoxStyle(juce::Slider::TextBoxBelow,false,92,23);
+                slider->setPopupDisplayEnabled(true, true, nullptr);
+            slider->setTextBoxStyle(juce::Slider::NoTextBox,false,0,0);
             slider->setRotaryParameters(juce::MathConstants<float>::pi*1.25f,
                       juce::MathConstants<float>::pi*2.75f,true);
             // APVTS attachments own the true parameter range; do not use the normalized default as a value.
