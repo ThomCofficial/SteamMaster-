@@ -77,8 +77,8 @@ SteamMasterHeader::ImageStateButton& SteamMasterHeader::button(
 }
 
 SteamMasterHeader::SteamMasterHeader(SteamMasterProcessor& p):processor(p) {
-    faceplate=crop(load(BinaryData::header_faceplate_blank_candidate_png,
-                        BinaryData::header_faceplate_blank_candidate_pngSize));
+    faceplate=crop(load(BinaryData::header_original_faceplate_png,
+                        BinaryData::header_original_faceplate_pngSize));
     dialLook=std::make_unique<DialLook>();
     const auto bindDial=[this](const char* id,int x,int y,std::unique_ptr<juce::Slider>& dial,
                                std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>& attachment){
@@ -171,35 +171,32 @@ void SteamMasterHeader::paintOverChildren(juce::Graphics& g) {
             juce::jmax(8.f,originalFontSize*getWidth()/sourceWidth))));
         g.drawFittedText(s,r.toNearestInt(),just,1);
     };
-    const auto raw=[this](const char* id)->float {
-        auto* v=processor.state.getRawParameterValue(id);
-        return v ? v->load(std::memory_order_relaxed):0.f;
-    };
-    text(juce::String(raw("global_input_db"),1)+" dB",
-         220,484,126,38,27.f,juce::Justification::centred);
-    text(juce::String(raw("global_output_db"),1)+" dB",
-         403,484,126,38,27.f,juce::Justification::centred);
+    // The original engraved dial labels and tick scales are preserved.
+    // Current gain values are available from host automation and slider tooltips,
+    // not pasted on top of the physical source artwork.
     text(presetName+(usingB?" [B]":" [A]"),1240,432,225,60,33.f,
          juce::Justification::centred);
 
-    // The DSP currently exposes output sample peaks, not integrated LUFS.
-    // Report actual peak data instead of inventing LUFS measurements.
-    text("PEAK",1665,295,134,40,23.f,juce::Justification::centred);
-    const float peak=processor.meterOutputDb.load(std::memory_order_relaxed);
-    text(juce::String(juce::jlimit(-90.f,12.f,peak),1)+" dBFS",
-         1665,348,134,65,39.f,juce::Justification::centred);
-    text("LUFS —",1665,425,134,46,24.f,juce::Justification::centred);
-
+    // The design's LUFS values were static mockup numbers; no fictitious
+    // loudness values are displayed in the running plugin.
     const auto meter=[this,&g](float db,float x) {
-        auto zone=mapped(x,244,40,235).toFloat();
-        auto norm=juce::jlimit(0.f,1.f,(db+60.f)/60.f);
-        g.setColour(juce::Colour(0xff091216).withAlpha(.94f));
-        g.fillRoundedRectangle(zone,3.f);
-        const auto bar=zone.withTrimmedTop((1.f-norm)*zone.getHeight());
-        g.setColour(db>-3.f?juce::Colour(0xffe29c43):juce::Colour(0xffbba060));
-        g.fillRoundedRectangle(bar,2.f);
-        g.setColour(juce::Colour(0xffe8d2a3));
-        g.drawRoundedRectangle(zone,2.f,1.f);
+        auto zone=mapped(x,242,34,244).toFloat();
+        g.setColour(juce::Colour(0xff081114));
+        g.fillRoundedRectangle(zone,2.f);
+        const int segments=28;
+        const float gap=juce::jmax(.5f,zone.getHeight()*.006f);
+        const float bh=(zone.getHeight()-gap*(segments-1))/segments;
+        const float active=juce::jlimit(0.f,1.f,(db+48.f)/48.f)*segments;
+        for(int i=0;i<segments;++i) {
+            const float y=zone.getBottom()-(i+1)*bh-i*gap;
+            const float frac=(float)i/segments;
+            auto colour=frac>.83f?juce::Colour(0xfff55c3e):
+                        frac>.60f?juce::Colour(0xffffd45a):
+                        frac>.27f?juce::Colour(0xff65dd73):
+                                    juce::Colour(0xff31c8a9);
+            g.setColour(colour.withAlpha(i<active?1.f:.13f));
+            g.fillRoundedRectangle(zone.getX(),y,zone.getWidth(),bh,1.f);
+        }
     };
     meter(processor.meterLeftDb.load(std::memory_order_relaxed),1869);
     meter(processor.meterRightDb.load(std::memory_order_relaxed),1938);
