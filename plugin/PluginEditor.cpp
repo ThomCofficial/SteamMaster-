@@ -268,118 +268,120 @@ void paintPanel(juce::Graphics& g,juce::Rectangle<int> b,const juce::String& tit
 }
 
 
+// Audited native 1145-pixel reference coordinate map. Each module scales
+// uniformly with the faceplate; never multiply old screenshots by guesses.
 juce::Point<float> approvedPosition(const juce::String& id) {
-    struct Placement {const char* id;float x,y;};
+    struct Placement { const char* id; float x,y; };
     static constexpr Placement positions[] = {
-       {"global_in",130.f,384.f},
-       {"global_input_db",283.f,417.f},
-       {"global_output_db",466.f,417.f},
-       {"global_oversampling",750.f,462.f},
-       {"ocean_in",214.f,282.f},
-       {"ocean_mix",586.f,292.f},
-       {"ocean_threshold_db",129.f,176.f},
-       {"ocean_ratio",289.f,176.f},
-       {"ocean_attack_ms",430.f,176.f},
-       {"ocean_recovery",586.f,176.f},
-       {"ocean_sc_hpf",344.f,292.f},
-       {"furnace_in",210.f,283.f},
-       {"furnace_mix",587.f,293.f},
-       {"furnace_threshold_db",109.f,177.f},
-       {"furnace_ratio",268.f,176.f},
-       {"furnace_attack",429.f,176.f},
-       {"furnace_release",584.f,176.f},
-       {"furnace_sc_hpf",343.f,293.f},
-       {"parametric_in",88.f,414.f},
-       {"parametric_mix",1377.f,412.f},
-       {"parametric_output_db",607.f,411.f},
-       {"pultec_in",224.f,567.f},
-       {"pultec_mix",1960.f,555.f},
-       {"pultec_low_freq",237.f,330.f},
-       {"pultec_low_boost",538.f,328.f},
-       {"pultec_low_atten",841.f,328.f},
-       {"pultec_high_boost_freq",1143.f,328.f},
-       {"pultec_high_boost",1360.f,328.f},
-       {"pultec_bandwidth",1555.f,328.f},
-       {"pultec_high_atten_freq",1770.f,328.f},
-       {"pultec_high_atten",1970.f,327.f},
-       {"pultec_output_db",1651.f,557.f},
-       {"shadow_in",232.f,646.f},
-       {"shadow_mix",1277.f,641.f},
-       {"shadow_optical_in",280.f,245.f},
-       {"shadow_optical_threshold",159.f,376.f},
-       {"shadow_optical_makeup",421.f,375.f},
-       {"shadow_discrete_in",1417.f,229.f},
-       {"shadow_discrete_threshold",1045.f,288.f},
-       {"shadow_discrete_gain",1366.f,451.f},
-       {"shadow_discrete_ratio",1262.f,287.f},
-       {"shadow_discrete_attack",957.f,455.f},
-       {"shadow_discrete_recovery",1156.f,454.f},
-       {"shadow_sc_hpf",546.f,641.f},
-       {"shadow_output_db",909.f,641.f},
-       {"exciter_in",123.f,339.f},
-       {"exciter_mix",1450.f,339.f},
-       {"exciter_mode",123.f,250.f},
-       {"exciter_low_drive",286.f,251.f},
-       {"exciter_low_freq",428.f,251.f},
-       {"exciter_high_drive",858.f,250.f},
-       {"exciter_high_freq",998.f,250.f},
-       {"exciter_crossover",1198.f,249.f},
-       {"exciter_output_db",1321.f,335.f},
-       {"bax_mid_in",115.f,500.f},
-       {"bax_mid_hpf",290.f,466.f},
-       {"bax_mid_low_freq",476.f,471.f},
-       {"bax_mid_low_gain",668.f,473.f},
-       {"bax_mid_high_freq",1007.f,478.f},
-       {"bax_mid_high_gain",845.f,473.f},
-       {"bax_mid_lpf",1186.f,475.f},
-       {"bax_mid_output_db",1393.f,474.f},
-       {"bax_side_in",115.f,835.f},
-       {"bax_side_hpf",289.f,807.f},
-       {"bax_side_low_freq",479.f,808.f},
-       {"bax_side_low_gain",675.f,808.f},
-       {"bax_side_high_freq",1011.f,810.f},
-       {"bax_side_high_gain",845.f,805.f},
-       {"bax_side_lpf",1189.f,809.f},
-       {"bax_side_output_db",1395.f,811.f},
-       {"tape_in",102.f,339.f},
-       {"tape_mix",1392.f,362.f},
-       {"tape_type",289.f,377.f},
-       {"tape_speed",512.f,377.f},
-       {"tape_drive_db",726.f,361.f},
-       {"tape_bias",949.f,361.f},
-       {"tape_hf_trim_db",1174.f,363.f},
-       {"stereo_mono_maker_hz",507.f,151.f},
-       {"stereo_width_percent",758.f,152.f},
-       {"stereo_width_freq",1006.f,153.f},
-       {"limiter_in",354.f,378.f},
-       {"limiter_mode",1107.f,417.f},
-       {"limiter_threshold_db",477.f,383.f},
-       {"limiter_ceiling_dbtp",638.f,382.f},
-       {"limiter_release_ms",807.f,383.f},
-       {"limiter_auto_release",861.f,438.f},
-       {"limiter_lookahead_ms",991.f,325.f},
-       {"limiter_stereo_link",1138.f,325.f},
-       {"limiter_true_peak",962.f,415.f},
-       {"parametric_band_1_type",165.f,358.f},
-       {"parametric_band_1_freq",221.f,225.f},
-       {"parametric_band_1_q",345.f,225.f},
-       {"parametric_band_1_gain",100.f,225.f},
-       {"parametric_band_2_type",563.f,358.f},
-       {"parametric_band_2_freq",619.f,225.f},
-       {"parametric_band_2_q",743.f,225.f},
-       {"parametric_band_2_gain",498.f,225.f},
-       {"parametric_band_3_type",919.f,358.f},
-       {"parametric_band_3_freq",975.f,225.f},
-       {"parametric_band_3_q",1099.f,225.f},
-       {"parametric_band_3_gain",854.f,225.f},
-       {"parametric_band_4_type",1270.f,358.f},
-       {"parametric_band_4_freq",1326.f,225.f},
-       {"parametric_band_4_q",1450.f,225.f},
-       {"parametric_band_4_gain",1205.f,225.f},
-       {"stereo_routing",616.f,228.f},
-       {"stereo_link",838.f,226.f},
+        {"global_in", 72.f, 423.f},
+        {"global_input_db", 155.f, 422.f},
+        {"global_output_db", 250.f, 422.f},
+        {"global_oversampling", 399.f, 445.f},
+        {"ocean_in", 93.f, 95.f},
+        {"ocean_threshold_db", 144.f, 78.f},
+        {"ocean_ratio", 212.f, 78.f},
+        {"ocean_attack_ms", 281.f, 78.f},
+        {"ocean_recovery", 351.f, 78.f},
+        {"ocean_sc_hpf", 418.f, 78.f},
+        {"ocean_mix", 476.f, 78.f},
+        {"furnace_in", 669.f, 95.f},
+        {"furnace_threshold_db", 715.f, 78.f},
+        {"furnace_ratio", 783.f, 78.f},
+        {"furnace_attack", 851.f, 78.f},
+        {"furnace_release", 918.f, 78.f},
+        {"furnace_sc_hpf", 986.f, 78.f},
+        {"furnace_mix", 1053.f, 78.f},
+        {"parametric_in", 132.f, 102.f},
+        {"parametric_mix", 1084.f, 71.f},
+        {"parametric_output_db", 1014.f, 78.f},
+        {"pultec_in", 109.f, 91.f},
+        {"pultec_low_freq", 245.f, 76.f},
+        {"pultec_low_boost", 328.f, 76.f},
+        {"pultec_low_atten", 413.f, 76.f},
+        {"pultec_high_boost_freq", 496.f, 76.f},
+        {"pultec_high_boost", 578.f, 76.f},
+        {"pultec_high_atten_freq", 664.f, 76.f},
+        {"pultec_high_atten", 746.f, 76.f},
+        {"pultec_bandwidth", 827.f, 76.f},
+        {"pultec_output_db", 910.f, 76.f},
+        {"pultec_mix", 990.f, 76.f},
+        {"shadow_in", 1030.f, 114.f},
+        {"shadow_mix", 975.f, 114.f},
+        {"shadow_optical_in", 182.f, 42.f},
+        {"shadow_optical_threshold", 229.f, 83.f},
+        {"shadow_optical_makeup", 313.f, 83.f},
+        {"shadow_discrete_in", 976.f, 42.f},
+        {"shadow_discrete_threshold", 648.f, 83.f},
+        {"shadow_discrete_gain", 706.f, 83.f},
+        {"shadow_discrete_ratio", 778.f, 84.f},
+        {"shadow_discrete_attack", 845.f, 85.f},
+        {"shadow_discrete_recovery", 913.f, 85.f},
+        {"shadow_sc_hpf", 608.f, 126.f},
+        {"shadow_output_db", 982.f, 111.f},
+        {"exciter_in", 89.f, 71.f},
+        {"exciter_mix", 941.f, 50.f},
+        {"exciter_mode", 243.f, 50.f},
+        {"exciter_low_drive", 351.f, 50.f},
+        {"exciter_low_freq", 419.f, 50.f},
+        {"exciter_high_drive", 656.f, 50.f},
+        {"exciter_high_freq", 718.f, 50.f},
+        {"exciter_crossover", 786.f, 50.f},
+        {"exciter_output_db", 860.f, 50.f},
+        {"bax_mid_in", 84.f, 100.f},
+        {"bax_mid_hpf", 218.f, 105.f},
+        {"bax_mid_low_freq", 355.f, 105.f},
+        {"bax_mid_low_gain", 470.f, 105.f},
+        {"bax_mid_high_freq", 690.f, 105.f},
+        {"bax_mid_high_gain", 575.f, 105.f},
+        {"bax_mid_lpf", 806.f, 105.f},
+        {"bax_mid_output_db", 945.f, 105.f},
+        {"bax_side_in", 84.f, 175.f},
+        {"bax_side_hpf", 218.f, 176.f},
+        {"bax_side_low_freq", 355.f, 176.f},
+        {"bax_side_low_gain", 470.f, 176.f},
+        {"bax_side_high_freq", 690.f, 176.f},
+        {"bax_side_high_gain", 575.f, 176.f},
+        {"bax_side_lpf", 806.f, 176.f},
+        {"bax_side_output_db", 945.f, 176.f},
+        {"stereo_routing", 126.f, 105.f},
+        {"stereo_link", 126.f, 175.f},
+        {"tape_in", 360.f, 56.f},
+        {"tape_mix", 779.f, 73.f},
+        {"tape_type", 405.f, 73.f},
+        {"tape_speed", 484.f, 73.f},
+        {"tape_drive_db", 594.f, 73.f},
+        {"tape_bias", 655.f, 73.f},
+        {"tape_hf_trim_db", 715.f, 73.f},
+        {"stereo_mono_maker_hz", 235.f, 120.f},
+        {"stereo_width_percent", 395.f, 120.f},
+        {"stereo_width_freq", 555.f, 120.f},
+        {"limiter_in", 760.f, 118.f},
+        {"limiter_mode", 907.f, 159.f},
+        {"limiter_threshold_db", 790.f, 120.f},
+        {"limiter_ceiling_dbtp", 870.f, 120.f},
+        {"limiter_release_ms", 945.f, 120.f},
+        {"limiter_auto_release", 992.f, 172.f},
+        {"limiter_lookahead_ms", 1020.f, 120.f},
+        {"limiter_stereo_link", 1082.f, 120.f},
+        {"limiter_true_peak", 1054.f, 170.f},
+        {"parametric_band_1_gain", 198.f, 72.f},
+        {"parametric_band_1_freq", 261.f, 72.f},
+        {"parametric_band_1_q", 319.f, 72.f},
+        {"parametric_band_1_type", 261.f, 113.f},
+        {"parametric_band_2_gain", 397.f, 72.f},
+        {"parametric_band_2_freq", 461.f, 72.f},
+        {"parametric_band_2_q", 519.f, 72.f},
+        {"parametric_band_2_type", 461.f, 113.f},
+        {"parametric_band_3_gain", 602.f, 72.f},
+        {"parametric_band_3_freq", 664.f, 72.f},
+        {"parametric_band_3_q", 723.f, 72.f},
+        {"parametric_band_3_type", 664.f, 113.f},
+        {"parametric_band_4_gain", 804.f, 72.f},
+        {"parametric_band_4_freq", 869.f, 72.f},
+        {"parametric_band_4_q", 927.f, 72.f},
+        {"parametric_band_4_type", 869.f, 113.f},
     };
-    for(const auto& p:positions) if(id==p.id)return {p.x,p.y};
+    for (const auto& p:positions) if(id==p.id) return {p.x,p.y};
     return {-1.f,-1.f};
 }
 
@@ -637,142 +639,62 @@ void SteamMasterEditor::Page::ArtCanvas::paintMovingParts(juce::Graphics& g) {
     }
 }
 void SteamMasterEditor::Page::paint(juce::Graphics& g) {
+    // No independent title bar, border or meter boxes. Artwork is one rack.
     g.fillAll(deep);
-    g.setColour(brass);
-    g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(3),8.f,1.6f);
-    g.setFont(juce::Font(juce::FontOptions(17.f,juce::Font::bold)));
-    g.setColour(ivory);
-    g.drawText(section.toUpperCase(),getLocalBounds().removeFromTop(27).reduced(12,0),
-               juce::Justification::centredLeft);
-    // Tiny independent steampunk instrument: no audio thread paints directly.
-    // These measurements represent real processor telemetry, not knob positions.
-    auto meter = [this,&g](const juce::String& label,float value,float low,float high,int x) {
-       if(getWidth()<800)return;
-       const float normalized=juce::jlimit(0.f,1.f,(value-low)/(high-low));
-       juce::Rectangle<float> plate((float)x,4.f,128.f,21.f);
-       g.setColour(juce::Colour(0xff3d2d23));g.fillRoundedRectangle(plate,4.f);
-       g.setColour(brass);g.drawRoundedRectangle(plate,4.f,1.f);
-       g.setFont(juce::Font(juce::FontOptions(9.5f,juce::Font::bold)));
-       g.setColour(ivory);g.drawText(label,plate.withWidth(49.f),juce::Justification::centred,true);
-       auto active=plate.withTrimmedLeft(51.f).reduced(4.f);
-       g.setColour(juce::Colour(0xff131a1c));g.fillRect(active);
-       g.setColour(juce::Colour(0xffd7ac69));
-       g.fillRect(active.withWidth(active.getWidth()*normalized));
-       g.setColour(juce::Colour(0xffffe4a3));
-       const float needleX=active.getX()+active.getWidth()*normalized;
-       g.drawLine(needleX,active.getY()-2.f,needleX,active.getBottom()+2.f,1.5f);
-    };
-    const auto read=[](const std::atomic<float>& p){return p.load(std::memory_order_relaxed);};
-    int pos=getWidth()-279;
-    if(section=="Ocean")meter("GR dB",-read(source.meterOceanGr),0.f,20.f,pos+145);
-    else if(section=="Furnace")meter("GR dB",-read(source.meterFurnaceGr),0.f,20.f,pos+145);
-    else if(section=="Shadow") {
-       meter("OPTO",-read(source.meterShadowOpticalGr),0.f,20.f,pos);
-       meter("DISC",-read(source.meterShadowDiscreteGr),0.f,20.f,pos+145);
-    }
-    else if(section=="Stereo + Limiter") {
-       meter("CORR",read(source.meterCorrelation),-1.f,1.f,pos);
-       meter("GR dB",read(source.meterLimiterGr),0.f,20.f,pos+145);
-    }
-    else if(section=="Global")meter("dBFS",read(source.meterOutputDb),-60.f,0.f,pos+145);
 }
 void SteamMasterEditor::Page::resized() {
-    auto area=getLocalBounds().reduced(10);
-    area.removeFromTop(28);
-    contents.setBounds(area);
-    const bool artValid=contents.art.isValid();
-    const int artWidth=juce::jmax(500,area.getWidth()-15);
-    const int artHeight=artValid
-        ?juce::jmax(140,juce::roundToInt(artWidth*(double)contents.art.getHeight()/contents.art.getWidth()))
-        :260;
-    const float sx=artValid?(float)artWidth/contents.art.getWidth():1.f;
-    const float sy=artValid?(float)artHeight/contents.art.getHeight():1.f;
-    int overflow=0;
-    for(int i=0;i<(int)controls.size();++i)
-       if(approvedPosition(ids[(size_t)i]).x<0)++overflow;
-    const int cellW=140,cellH=105;
-    const int cols=juce::jmax(1,artWidth/cellW);
-    const int extraRows=(overflow+cols-1)/cols;
-    const int totalHeight=artHeight+(extraRows?extraRows*cellH+28:0);
-    contents.artHeight=artHeight;
-    contents.setBounds(area.getX(),area.getY(),artWidth,totalHeight);
-    if(section=="Global" && contents.art.isValid() && headerButtons.size()==5) {
-       // Original uploaded header art uses untrimmed 2048x682 source coordinates.
-       const auto scaled=[sx,sy](int x,int y,int w,int h) {
-          return juce::Rectangle<int>(juce::roundToInt(x*sx),juce::roundToInt(y*sy),
-                                      juce::jmax(18,juce::roundToInt(w*sx)),
-                                      juce::jmax(18,juce::roundToInt(h*sy)));
-       };
-       headerButtons[0]->setBounds(scaled(966,423,78,62));
-       headerButtons[1]->setBounds(scaled(1046,423,78,62));
-       headerButtons[2]->setBounds(scaled(1177,424,52,62));
-       headerButtons[3]->setBounds(scaled(1463,424,52,62));
-       headerButtons[4]->setBounds(scaled(1531,424,54,62));
-       if(presetLabel)presetLabel->setBounds(scaled(1238,430,220,51));
+    auto area=getLocalBounds();
+    const bool valid=contents.art.isValid();
+    const int sourceW=valid?contents.art.getWidth():1145;
+    const int sourceH=valid?contents.art.getHeight():140;
+    const int width=area.getWidth();
+    const int height=juce::roundToInt((double)width*sourceH/sourceW);
+    contents.artHeight=height;
+    contents.setBounds(0,0,width,height);
+    const float sx=(float)width/1145.f;
+    const float sy=(float)height/((float)sourceH*1145.f/sourceW);
+    if(section=="Global" && headerButtons.size()==5) {
+        auto button=[&](int index,int x,int y,int w,int h) {
+            headerButtons[(size_t)index]->setBounds(juce::roundToInt(x*sx),
+                juce::roundToInt(y*sy),juce::roundToInt(w*sx),juce::roundToInt(h*sy));
+        };
+        button(0,655,420,45,30);button(1,707,420,45,30);
+        button(2,794,420,35,30);button(3,997,420,35,30);
+        button(4,1037,420,45,30);
+        if(presetLabel) presetLabel->setBounds(juce::roundToInt(834*sx),
+            juce::roundToInt(421*sy),juce::roundToInt(155*sx),juce::roundToInt(28*sy));
     }
-
-    int extra=0;
-    for(int i=0;i<(int)controls.size();++i) {
-        auto p=approvedPosition(ids[(size_t)i]);
-        if (section == "Ocean + Furnace") {
-            static constexpr float oceanXs[] = { 180.f, 290.f, 410.f, 530.f, 650.f, 775.f, 895.f };
-            static constexpr float furnaceXs[] = { 1290.f, 1395.f, 1515.f, 1635.f, 1760.f, 1880.f, 2010.f };
-            const juce::String oceanIDs[] = {"ocean_in","ocean_threshold_db","ocean_ratio",
-                                              "ocean_attack_ms","ocean_recovery","ocean_sc_hpf","ocean_mix"};
-            const juce::String furnaceIDs[] = {"furnace_in","furnace_threshold_db","furnace_ratio",
-                                                "furnace_attack","furnace_release","furnace_sc_hpf","furnace_mix"};
-            for (int k = 0; k < 7; ++k) {
-                if (ids[(size_t)i] == oceanIDs[k]) p = {oceanXs[k], 180.f};
-                if (ids[(size_t)i] == furnaceIDs[k]) p = {furnaceXs[k], 180.f};
-            }
+    for(size_t i=0;i<controls.size();++i) {
+        const auto id=ids[i];
+        const auto p=approvedPosition(id);
+        auto* control=controls[i].get();
+        if(p.x<0.f || p.y<0.f) {
+            // Never create a second row of controls outside the faceplate.
+            control->setVisible(false);
+            labels[i]->setVisible(false);
+            continue;
         }
-        // Remap the legacy artwork coordinates to the approved replacement
-        // faceplates. All positions are in native image pixels before scaling.
-        if (p.x >= 0.f && section == "Parametric") { p.x *= 2.92f; p.y *= 1.02f; }
-        else if (p.x >= 0.f && section == "Shadow") { p.x *= 3.05f; p.y *= 0.70f; }
-        else if (p.x >= 0.f && section == "Exciter") { p.x *= 3.00f; p.y *= 0.88f; }
-        else if (p.x >= 0.f && section == "Bax") { p.x *= 1.15f; p.y = (p.y - 300.f) * 0.44f; }
-        else if (p.x >= 0.f && section == "Tape") { p.x *= 3.05f; p.y *= 0.85f; }
-        else if (p.x >= 0.f && section == "Stereo + Limiter") { p.x *= 1.64f; p.y *= 1.05f; }
-        else if (p.x >= 0.f && section == "Global") { p.x *= 0.82f; p.y *= 1.10f; }
-        const bool embedded=artValid&&p.x>=0&&p.y>=0;
-        int x,y,w,h;
-        if(embedded) {
-            const bool isToggle=dynamic_cast<juce::ToggleButton*>(controls[(size_t)i].get())!=nullptr;
-            const bool isCombo=dynamic_cast<juce::ComboBox*>(controls[(size_t)i].get())!=nullptr;
-            w=juce::jlimit(36,112,juce::roundToInt((isToggle?87.f:(isCombo?110.f:128.f))*sx));
-            h=juce::jlimit(32,115,juce::roundToInt((isToggle?55.f:(isCombo?48.f:130.f))*sy));
-            x=juce::roundToInt(p.x*sx)-w/2;
-            y=juce::roundToInt(p.y*sy)-h/2;
-            x=juce::jlimit(0,juce::jmax(0,artWidth-w),x);
-            y=juce::jlimit(0,juce::jmax(0,artHeight-h),y);
-            labels[(size_t)i]->setBounds(x,y-18,w,17);
-            labels[(size_t)i]->setVisible(false);
-        } else {
-            x=(extra%cols)*cellW+2;
-            y=artHeight+20+(extra/cols)*cellH;
-            w=cellW-6;h=76;
-            labels[(size_t)i]->setBounds(x,y,w,22);
-            labels[(size_t)i]->setVisible(true);
-            y+=22;
-            ++extra;
-        }
-        auto* control=controls[(size_t)i].get();
+        const bool toggle=dynamic_cast<juce::ToggleButton*>(control)!=nullptr;
+        const bool combo=dynamic_cast<juce::ComboBox*>(control)!=nullptr;
+        const bool small=toggle || combo || id.endsWith("_type") ||
+                         id=="limiter_mode" || id=="exciter_mode";
+        const float diameter=small?(toggle?25.f:(combo?53.f:30.f)):38.f;
+        const int w=juce::jmax(14,juce::roundToInt(diameter*sx));
+        const int h=juce::jmax(14,juce::roundToInt((combo?24.f:diameter)*sy));
+        const int x=juce::roundToInt(p.x*sx)-w/2;
+        const int y=juce::roundToInt(p.y*sy)-h/2;
         control->setBounds(x,y,w,h);
-        control->setName(labels[(size_t)i]->getText());
+        control->setVisible(true);
+        labels[i]->setVisible(false);
+        control->setName(labels[i]->getText());
     }
 }
 int SteamMasterEditor::Page::desiredHeight(int width) const {
-    const int artW=juce::jmax(500,width-35);
-    const auto& art=contents.art;
-    const int artH=art.isValid()
-      ?juce::jmax(140,juce::roundToInt(artW*(double)art.getHeight()/art.getWidth()))
-      :260;
-    int missing=0;
-    for(const auto& id:ids) if(approvedPosition(id).x<0) ++missing;
-    const int cols=juce::jmax(1,artW/140);
-    return artH+62+(missing?((missing+cols-1)/cols)*105+28:0);
+    const auto& image=contents.art;
+    if(!image.isValid()) return 140;
+    return juce::jmax(1,juce::roundToInt((double)width*image.getHeight()/image.getWidth()));
 }
+
 SteamMasterEditor::SteamMasterEditor(SteamMasterProcessor& p)
 :AudioProcessorEditor(&p),processor(p) {
     setOpaque(true);
@@ -800,12 +722,12 @@ void SteamMasterEditor::paint(juce::Graphics& g) {
     g.fillAll(deep);
     auto r=getLocalBounds().toFloat().reduced(3.f);
     g.setColour(brass);
-    g.drawRoundedRectangle(r,8.f,2.f);
+    // Rack edges are supplied by the artwork; avoid double borders.
 }
 void SteamMasterEditor::resized(){
-    auto r=getLocalBounds().reduced(9);
+    auto r=getLocalBounds();
     rackViewport.setBounds(r);
-    const int width=juce::jmax(540,r.getWidth()-18);
+    const int width=juce::jmax(540,r.getWidth());
     int y=0;
     for(auto& module:modules){
        const int height=module->desiredHeight(width);
