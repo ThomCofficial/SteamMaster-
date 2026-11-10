@@ -228,14 +228,37 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
         contents.addAndMakeVisible(*label);
         labels.push_back(std::move(label));
         if(auto* choice=dynamic_cast<juce::AudioParameterChoice*>(p)) {
-            auto c=std::make_unique<juce::ComboBox>();
-            c->addItemList(choice->choices,1);
-            contents.addAndMakeVisible(*c);
-            combos.push_back(std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(state,id,*c));
-            controls.push_back(std::move(c));
+            // Rotary detents for frequency selectors and vintage switch banks.
+            // Multi-mode buttons remain a readable popup selector.
+            const bool popup=id=="global_oversampling" || id=="exciter_mode" ||
+                             id=="limiter_mode" || id=="stereo_routing";
+            if(popup) {
+                auto box=std::make_unique<juce::ComboBox>();
+                box->addItemList(choice->choices,1);
+                contents.addAndMakeVisible(*box);
+                combos.push_back(std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(state,id,*box));
+                controls.push_back(std::move(box));
+            } else {
+                auto slider=std::make_unique<juce::Slider>();
+                slider->setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+                slider->setTextBoxStyle(juce::Slider::TextBoxBelow,false,108,23);
+                slider->setRange(0,juce::jmax(0,choice->choices.size()-1),1);
+                slider->setRotaryParameters(juce::MathConstants<float>::pi*1.25f,
+                                             juce::MathConstants<float>::pi*2.75f,true);
+                const auto choices=choice->choices;
+                slider->textFromValueFunction=[choices](double v) {
+                    return choices[juce::jlimit(0,choices.size()-1,juce::roundToInt(v))];
+                };
+                slider->valueFromTextFunction=[choices](const juce::String& text) {
+                    return (double)juce::jmax(0,choices.indexOf(text));
+                };
+                contents.addAndMakeVisible(*slider);
+                sliders.push_back(std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(state,id,*slider));
+                controls.push_back(std::move(slider));
+            }
         } else if(dynamic_cast<juce::AudioParameterBool*>(p)) {
             auto b=std::make_unique<juce::ToggleButton>();
-            b->setButtonText("ACTIVE");
+            b->setButtonText(id.endsWith("_in")?"IN":id.contains("link")?"LINK":id.contains("auto")?"AUTO":id.contains("peak")?"TP":"ON");
             contents.addAndMakeVisible(*b);
             buttons.push_back(std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(state,id,*b));
             controls.push_back(std::move(b));
