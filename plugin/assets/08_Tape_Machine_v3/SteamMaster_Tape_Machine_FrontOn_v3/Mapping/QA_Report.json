@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "sprite_checks": "square centered circular alpha, transparent corners",
+  "png_count": 23,
+  "missing_controls": [],
+  "known_limitations": [
+    "faceplate is derived from low-resolution approved rack reference",
+    "new front-on sprites are artistic recreations, not pixel-perfect crops of the original",
+    "source metal highlights are baked into sprites; JUCE rotation will rotate highlights",
+    "DSP ID mapping not checked against live repository"
+  ]
+}
