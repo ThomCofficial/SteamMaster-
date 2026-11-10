@@ -204,7 +204,7 @@ juce::Point<float> approvedPosition(const juce::String& id) {
        {"parametric_band_4_type",1270.f,358.f},
        {"parametric_band_4_freq",1326.f,225.f},
        {"parametric_band_4_q",1450.f,225.f},
-       {"parametric_band_4_gain",1205.f,225.f}
+       {"parametric_band_4_gain",1205.f,225.f},
        {"stereo_routing",616.f,228.f},
        {"stereo_link",838.f,226.f},
     };
