@@ -46,6 +46,8 @@ jobs:
           }
       - name: Install original-artwork compositor
         run: python -m pip install --disable-pip-version-check --quiet numpy pillow opencv-python-headless
+      - name: Verify every DSP control is covered once, with correct source geometry
+        run: python tools/validate_ui_layout.py
       - name: Prepare all nine real faceplates and 100+ hardware rotors
         run: python tools/prepare_unified_ui.py
       - name: Verify generated art assets and control manifest
