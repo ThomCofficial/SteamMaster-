@@ -215,9 +215,19 @@ public:
         setColour(juce::Label::textColourId, ivory);
         setColour(juce::ToggleButton::textColourId, ivory);
     }
-    void drawComboBox(juce::Graphics&, int, int, bool,
-                      int, int, int, int, juce::ComboBox&) override {
-        // The faceplate provides the switch housing. No JUCE rectangle or arrow.
+    void drawComboBox(juce::Graphics& g, int w, int h, bool,
+                      int, int, int, int, juce::ComboBox& box) override {
+        if(box.getComponentID()=="global_oversampling") {
+#ifdef STEAMMASTER_HAS_ARTWORK
+            const int index=juce::jlimit(0,3,box.getSelectedItemIndex());
+            auto it=oversamplingArt.find(index);
+            if(it!=oversamplingArt.end()&&it->second.isValid()) {
+                g.drawImageWithin(it->second,0,0,w,h,
+                    juce::RectanglePlacement::stretchToFit,false);
+                return;
+            }
+#endif
+        }
     }
     void drawButtonBackground(juce::Graphics& g, juce::Button& button,
                               const juce::Colour&, bool over, bool down) override {
@@ -318,10 +328,10 @@ void paintPanel(juce::Graphics& g,juce::Rectangle<int> b,const juce::String& tit
 juce::Point<float> approvedPosition(const juce::String& id) {
     struct Placement { const char* id; float x,y; };
     static constexpr Placement positions[] = {
-        {"global_in", 82.f, 414.f},
+        {"global_in", 77.f, 451.f},
         {"global_input_db", 145.f, 422.f},
         {"global_output_db", 268.f, 422.f},
-        {"global_oversampling", 476.f, 465.f},
+        {"global_oversampling", 476.f, 501.f},
         {"ocean_in", 93.f, 95.f},
         {"ocean_threshold_db", 144.f, 78.f},
         {"ocean_ratio", 212.f, 78.f},
@@ -518,6 +528,9 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
                              id=="limiter_mode" || id=="stereo_routing";
             if(popup) {
                 auto box=std::make_unique<juce::ComboBox>();
+                box->setComponentID(id);
+                box->setColour(juce::ComboBox::textColourId,juce::Colours::transparentBlack);
+
                 box->addItemList(choice->choices,1);
                 contents.addAndMakeVisible(*box);
                 combos.push_back(std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(state,id,*box));
@@ -703,11 +716,8 @@ void SteamMasterEditor::Page::ArtCanvas::paintHeaderInstruments(juce::Graphics& 
     text(juce::String(output,1)+" dBFS",727,353,201,35,27,gold);
     meter(738,389,180,output,-60.f,6.f);
     // Lower three instrument windows: mode and two compressor GR meters.
-    text("OVERSAMPLING",404,441,151,17,12,dim);
-    text(juce::String(juce::roundToInt(read("global_oversampling"))==0?"OFF":
-          juce::roundToInt(read("global_oversampling"))==1?"2x":
-          juce::roundToInt(read("global_oversampling"))==2?"4x":"8x"),
-          411,462,138,28,23,gold);
+    text("OVERSAMPLING",404,449,151,17,12,dim);
+    // The selected OFF/2x/4x/8x brass sprite is painted by the ComboBox itself.
     const float ocean=processor->meterOceanGr.load(std::memory_order_relaxed);
     const float furnace=processor->meterFurnaceGr.load(std::memory_order_relaxed);
     text("OCEAN GR",578,441,170,17,12,dim);
@@ -773,11 +783,16 @@ void SteamMasterEditor::Page::resized() {
             headerButtons[(size_t)index]->setBounds(juce::roundToInt(x*sx),
                 juce::roundToInt(y*sy),juce::roundToInt(w*sx),juce::roundToInt(h*sy));
         };
-        button(0,655,420,45,30);button(1,707,420,45,30);
-        button(2,794,420,35,30);button(3,997,420,35,30);
-        button(4,1037,420,45,30);
-        if(presetLabel) presetLabel->setBounds(juce::roundToInt(834*sx),
-            juce::roundToInt(421*sy),juce::roundToInt(155*sx),juce::roundToInt(28*sy));
+        // All preset controls fit within the right-hand preset bay.
+        button(0,994,325,58,39);button(1,1057,325,58,39);
+        button(2,996,384,56,43);button(3,1059,384,56,43);
+        button(4,1004,444,107,43);
+        if(presetLabel) {
+            presetLabel->setBounds(juce::roundToInt(999*sx),
+                juce::roundToInt(506*sy),juce::roundToInt(119*sx),
+                juce::roundToInt(27*sy));
+            presetLabel->setFont(juce::Font(juce::FontOptions(11.f*sx)));
+        }
     }
     for(size_t i=0;i<controls.size();++i) {
         const auto id=ids[i];
@@ -793,9 +808,11 @@ void SteamMasterEditor::Page::resized() {
         const bool combo=dynamic_cast<juce::ComboBox*>(control)!=nullptr;
         const bool small=toggle || combo || id.endsWith("_type") ||
                          id=="limiter_mode" || id=="exciter_mode";
-        const float diameter=small?(toggle?25.f:(combo?53.f:30.f)):38.f;
-        const int w=juce::jmax(14,juce::roundToInt(diameter*sx));
-        const int h=juce::jmax(14,juce::roundToInt((combo?24.f:diameter)*sy));
+        const float diameter=(section=="Global")
+             ? (id=="global_in"?185.f:(combo?72.f:56.f))
+             : (small?(toggle?25.f:(combo?56.f:30.f)):38.f);
+        const int w=juce::jmax(14,juce::roundToInt((id=="global_in"?94.f:diameter)*sx));
+        const int h=juce::jmax(14,juce::roundToInt((id=="global_in"?185.f:(combo?34.f:diameter))*sy));
         const int x=juce::roundToInt(p.x*sx)-w/2;
         const int y=juce::roundToInt(p.y*sy)-h/2;
         control->setBounds(x,y,w,h);
