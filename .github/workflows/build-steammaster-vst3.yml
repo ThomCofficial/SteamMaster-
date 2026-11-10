@@ -18,6 +18,14 @@ jobs:
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
+      - name: Exercise the embedded-artwork compiler path
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path plugin/assets -Force | Out-Null
+          $png = [Convert]::FromBase64String('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/EioAAAAASUVORK5CYII=')
+          foreach ($name in @('global_header','ocean','furnace','parametric','pultec','shadow','exciter','bax','tape','stereo_limiter')) {
+            [IO.File]::WriteAllBytes((Join-Path (Resolve-Path plugin/assets).Path "$name.png"),$png)
+          }
       - name: Configure Release VST3 and test suite
         run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DSTEAMMASTER_BUILD_VST3=ON -DBUILD_TESTING=ON
       - name: Build Release
