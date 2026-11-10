@@ -125,11 +125,13 @@ void SteamMasterProcessor::processBlock(juce::AudioBuffer<float>& buffer,juce::M
     if(buffer.getNumChannels()<2)return;
     updateDSP();
     auto* left=buffer.getWritePointer(0);auto* right=buffer.getWritePointer(1);
-    float peak=0.f;
+    float peak=0.f, peakLeft=0.f, peakRight=0.f;
     for(int i=0;i<buffer.getNumSamples();++i){
         const auto y=rack->process({double(left[i]),double(right[i])});
         left[i]=float(y.l);right[i]=float(y.r);
-        peak=juce::jmax(peak,std::abs(left[i]),std::abs(right[i]));
+        peakLeft=juce::jmax(peakLeft,std::abs(left[i]));
+        peakRight=juce::jmax(peakRight,std::abs(right[i]));
+        peak=juce::jmax(peak,peakLeft,peakRight);
     }
     for(int channel=2;channel<buffer.getNumChannels();++channel)
         buffer.clear(channel,0,buffer.getNumSamples());
@@ -137,6 +139,8 @@ void SteamMasterProcessor::processBlock(juce::AudioBuffer<float>& buffer,juce::M
         // GUI telemetry is lock-free, published only once per processing block.
         // No file access, allocations, locks, or message-thread calls here.
         meterOutputDb.store(20.f*std::log10(juce::jmax(1.0e-6f,peak)),std::memory_order_relaxed);
+        meterLeftDb.store(20.f*std::log10(juce::jmax(1.0e-6f,peakLeft)),std::memory_order_relaxed);
+        meterRightDb.store(20.f*std::log10(juce::jmax(1.0e-6f,peakRight)),std::memory_order_relaxed);
         meterOceanGr.store((float)rack->firstSix.ocean.gainReductionDb(),std::memory_order_relaxed);
         meterFurnaceGr.store((float)rack->firstSix.furnace.gainReductionDb(),std::memory_order_relaxed);
         meterShadowOpticalGr.store((float)rack->firstSix.shadow.opticalReductionDb(),std::memory_order_relaxed);
