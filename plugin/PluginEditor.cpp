@@ -660,9 +660,9 @@ void SteamMasterEditor::Page::ArtCanvas::paintHeaderInstruments(juce::Graphics& 
     const float ocean=processor->meterOceanGr.load(std::memory_order_relaxed);
     const float furnace=processor->meterFurnaceGr.load(std::memory_order_relaxed);
     text("OCEAN GR",578,441,170,17,12,dim);
-    text(juce::String(juce::abs(ocean),1)+" dB",591,461,142,28,22,cream);
+    text(juce::String(std::abs(ocean),1)+" dB",591,461,142,28,22,cream);
     text("FURNACE GR",788,441,166,17,12,dim);
-    text(juce::String(juce::abs(furnace),1)+" dB",798,461,144,28,22,cream);
+    text(juce::String(std::abs(furnace),1)+" dB",798,461,144,28,22,cream);
     // Exact control identifiers remain in the JUCE overlay, not painted as
     // decorative, nonfunctional widgets.
     text("INPUT",119,372,75,20,14,cream);
