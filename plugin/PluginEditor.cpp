@@ -70,6 +70,59 @@ void paintPanel(juce::Graphics& g,juce::Rectangle<int> b,const juce::String& tit
 }
 }
 
+
+// Positions are in the approved source-art pixel coordinate system.
+// Never use them as DSP ranges: value ranges come solely from APVTS.
+// A missing position is placed in the fully functional auxiliary control row.
+juce::Point<float> approvedPosition(const juce::String& section,int i) {
+    using P=juce::Point<float>;
+    auto pick=[i](std::initializer_list<P> positions)->P {
+       return i>=0 && i<(int)positions.size()?*(positions.begin()+i):P(-1,-1);
+    };
+    if(section=="Global") return pick({{130,384},{284,413},{465,413},{751,464}});
+    if(section=="Ocean") return pick({{214,282},{586,292},{129,176},{289,176},{430,176},{586,176},{344,292}});
+    if(section=="Furnace") return pick({{210,283},{587,293},{109,177},{268,176},{429,176},{584,176},{343,293}});
+    if(section=="Parametric") return pick({
+        {88,414},{1377,412},{607,411},
+        {175,358},{100,225},{345,225},{221,225},
+        {573,356},{498,225},{724,225},{619,225},
+        {963,356},{854,225},{1107,225},{980,225},
+        {1321,356},{1205,225},{1450,225},{1325,225}
+    });
+    if(section=="Pultec") return pick({
+        {224,567},{1960,555},{237,330},{538,328},{841,328},
+        {1143,328},{1360,328},{1555,328},{1770,328},{1970,327},{1651,557}
+    });
+    if(section=="Shadow") return pick({
+        {103,669},{1279,673},{131,275},{159,376},{421,375},
+        {1391,287},{1045,288},{1385,377},{1262,287},
+        {1050,377},{1240,379},{274,674},{1010,677}
+    });
+    if(section=="Exciter") return pick({
+        {123,399},{1450,399},{123,310},{286,311},{428,311},
+        {858,310},{998,310},{1198,309},{1321,395}
+    });
+    if(section=="Bax Mid") return pick({
+        {136,467},{290,466},{476,471},{670,471},
+        {865,471},{1063,471},{1255,470},{1421,472}
+    });
+    if(section=="Bax Side") return pick({
+        {136,781},{290,786},{476,789},{670,789},
+        {865,789},{1063,789},{1255,787},{1421,789}
+    });
+    if(section=="Tape") return pick({
+        {102,339},{1425,341},{289,377},{493,339},{739,343},{973,344},{1196,344}
+    });
+    if(section=="Stereo") return pick({
+        {-1,-1},{-1,-1},{507,150},{758,150},{996,150}
+    });
+    if(section=="Limiter") return pick({
+        {360,351},{1312,356},{486,346},{650,346},{810,349},
+        {957,357},{1091,353},{1198,354},{1260,406}
+    });
+    return P(-1,-1);
+}
+
 SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcessorValueTreeState& state,
                                const juce::String& s):section(s) {
     // Decode the approved source art once, on the message thread, never in paint/audio callbacks.
@@ -87,7 +140,7 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
     else if(section == "Tape") { asset=BinaryData::tape_png; assetSize=BinaryData::tape_pngSize; }
     else if(section == "Stereo" || section == "Limiter") { asset=BinaryData::stereo_limiter_png; assetSize=BinaryData::stereo_limiter_pngSize; }
     if (asset != nullptr && assetSize > 0) {
-       art = juce::ImageFileFormat::loadFrom(asset, (size_t)assetSize);
+       contents.art = juce::ImageFileFormat::loadFrom(asset, (size_t)assetSize);
     }
 #endif
     addAndMakeVisible(viewport);
@@ -128,31 +181,63 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
         }
     }
 }
+
 void SteamMasterEditor::Page::paint(juce::Graphics& g) {
     g.fillAll(deep);
-    paintPanel(g,getLocalBounds(),section);
-    if(art.isValid()){
-       auto area = getLocalBounds().reduced(23);
-       area.removeFromTop(55);
-       area.setHeight(juce::jmin(180,juce::jmax(95,getHeight()/3)));
-       g.setColour(brass.darker(0.55f));
-       g.fillRoundedRectangle(area.toFloat().expanded(3),6.f);
-       g.drawImageWithin(art,area.getX(),area.getY(),area.getWidth(),area.getHeight(),juce::RectanglePlacement::centred);
-    }
+    g.setColour(brass);
+    g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(3),8.f,1.6f);
+    g.setFont(juce::Font(juce::FontOptions(17.f,juce::Font::bold)));
+    g.setColour(ivory);
+    g.drawText(section.toUpperCase(),getLocalBounds().removeFromTop(27).reduced(12,0),
+               juce::Justification::centredLeft);
 }
 void SteamMasterEditor::Page::resized() {
-    auto area=getLocalBounds().reduced(16);
-    area.removeFromTop(art.isValid() ? juce::jmin(247,juce::jmax(160,getHeight()/3+55)) : 55);
+    auto area=getLocalBounds().reduced(10);
+    area.removeFromTop(28);
     viewport.setBounds(area);
-    const int cellW=158,cellH=145;
-    const int cols=juce::jmax(1,(area.getWidth()-20)/cellW);
-    const int rows=(int(controls.size())+cols-1)/cols;
-    const int contentW=juce::jmax(area.getWidth()-18,cols*cellW);
-    contents.setSize(contentW,juce::jmax(area.getHeight(),rows*cellH+14));
-    for(int i=0;i<int(controls.size());++i){
-       const int x=(i%cols)*cellW,y=(i/cols)*cellH;
-       labels[(size_t)i]->setBounds(x+3,y+2,cellW-6,27);
-       controls[(size_t)i]->setBounds(x+9,y+31,cellW-18,105);
+    const bool artValid=contents.art.isValid();
+    const int artWidth=juce::jmax(500,area.getWidth()-15);
+    const int artHeight=artValid
+        ?juce::jmax(140,juce::roundToInt(artWidth*(double)contents.art.getHeight()/contents.art.getWidth()))
+        :260;
+    const float sx=artValid?(float)artWidth/contents.art.getWidth():1.f;
+    const float sy=artValid?(float)artHeight/contents.art.getHeight():1.f;
+    int overflow=0;
+    for(int i=0;i<(int)controls.size();++i)
+       if(approvedPosition(section,i).x<0)++overflow;
+    const int cellW=140,cellH=105;
+    const int cols=juce::jmax(1,artWidth/cellW);
+    const int extraRows=(overflow+cols-1)/cols;
+    const int totalHeight=artHeight+(extraRows?extraRows*cellH+28:0);
+    contents.setSize(artWidth,totalHeight);
+    int extra=0;
+    for(int i=0;i<(int)controls.size();++i) {
+        auto p=approvedPosition(section,i);
+        const bool embedded=artValid&&p.x>=0&&p.y>=0;
+        int x,y,w,h;
+        if(embedded) {
+            const bool isToggle=dynamic_cast<juce::ToggleButton*>(controls[(size_t)i].get())!=nullptr;
+            const bool isCombo=dynamic_cast<juce::ComboBox*>(controls[(size_t)i].get())!=nullptr;
+            w=juce::jlimit(36,112,juce::roundToInt((isToggle?87.f:(isCombo?110.f:128.f))*sx));
+            h=juce::jlimit(32,115,juce::roundToInt((isToggle?55.f:(isCombo?48.f:130.f))*sy));
+            x=juce::roundToInt(p.x*sx)-w/2;
+            y=juce::roundToInt(p.y*sy)-h/2;
+            x=juce::jlimit(0,juce::jmax(0,artWidth-w),x);
+            y=juce::jlimit(0,juce::jmax(0,artHeight-h),y);
+            labels[(size_t)i]->setBounds(x,y-18,w,17);
+            labels[(size_t)i]->setVisible(false);
+        } else {
+            x=(extra%cols)*cellW+2;
+            y=artHeight+20+(extra/cols)*cellH;
+            w=cellW-6;h=76;
+            labels[(size_t)i]->setBounds(x,y,w,22);
+            labels[(size_t)i]->setVisible(true);
+            y+=22;
+            ++extra;
+        }
+        auto* control=controls[(size_t)i].get();
+        control->setBounds(x,y,w,h);
+        control->setTooltip(labels[(size_t)i]->getText());
     }
 }
 SteamMasterEditor::SteamMasterEditor(SteamMasterProcessor& p):AudioProcessorEditor(&p),processor(p) {
