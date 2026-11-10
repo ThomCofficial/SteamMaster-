@@ -16,6 +16,7 @@ private:
         void resized() override;
         void paint(juce::Graphics&) override;
         juce::String section;
+        juce::Image art;
         juce::Viewport viewport;
         juce::Component contents;
         std::vector<std::unique_ptr<juce::Component>> controls;
