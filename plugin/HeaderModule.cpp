@@ -243,7 +243,6 @@ void SteamMasterHeader::savePreset() {
 void SteamMasterHeader::previousOrNextPreset(int dir) {
     auto files=presetDirectory().findChildFiles(juce::File::findFiles,false,"*.xml");
     if(files.isEmpty()){presetName="NO SAVED PRESETS";repaint();return;}
-    files.sort();
     int i=-1;
     for(int n=0;n<files.size();++n)if(files[n].getFileNameWithoutExtension()==presetName){i=n;break;}
     const auto next=(i+dir+files.size())%files.size();
