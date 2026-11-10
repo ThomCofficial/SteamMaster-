@@ -47,7 +47,7 @@ public:
                 addAndMakeVisible(*knob);
                 sa=std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(state,id,*knob);
             }
-            setTooltip(p->getName(100));
+            label.setTooltip(p->getName(100));
         }
         void resized() override {
             auto b=getLocalBounds().reduced(2);
