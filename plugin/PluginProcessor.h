@@ -3,6 +3,7 @@
 #include "steammaster/Mastering.hpp"
 #include <memory>
 #include <array>
+#include <atomic>
 
 class SteamMasterProcessor final : public juce::AudioProcessor {
 public:
@@ -27,8 +28,16 @@ public:
     void setStateInformation(const void*,int) override;
     juce::AudioProcessorValueTreeState state;
     std::unique_ptr<steammaster::MasteringRack> rack;
+    struct MeterSnapshot {float leftPeak=0.f,rightPeak=0.f,limiterReductionDb=0.f,truePeak=0.f,correlation=0.f;};
+    MeterSnapshot getMeterSnapshot() const noexcept {
+        return {meterLeft_.load(std::memory_order_relaxed),meterRight_.load(std::memory_order_relaxed),
+                meterReduction_.load(std::memory_order_relaxed),meterTruePeak_.load(std::memory_order_relaxed),
+                meterCorrelation_.load(std::memory_order_relaxed)};
+    }
 private:
     static juce::AudioProcessorValueTreeState::ParameterLayout makeLayout();
+    std::atomic<float> meterLeft_{0.f},meterRight_{0.f},meterReduction_{0.f};
+    std::atomic<float> meterTruePeak_{0.f},meterCorrelation_{0.f};
     std::array<juce::AudioProcessorParameter*,107> monitored_{};
     std::array<float,107> previous_{};
     bool snapshotValid_=false;

@@ -3,6 +3,7 @@
 #include "PluginProcessor.h"
 #include <array>
 #include <memory>
+#include <vector>
 
 /**
  * SteamMaster UI-development milestone 1: a native, proportionally resizable
@@ -29,6 +30,10 @@ private:
                                   const juce::Colour&, bool, bool) override;
     };
 
+    class RackPanel;
+    juce::Viewport rackViewport;
+    juce::Component rackCanvas;
+    std::vector<std::unique_ptr<RackPanel>> rackPanels;
     SteamMasterProcessor& processor;
     MetalLookAndFeel metalLook;
 

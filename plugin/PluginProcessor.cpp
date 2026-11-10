@@ -119,13 +119,23 @@ SteamMasterProcessor::SteamMasterProcessor():juce::AudioProcessor(juce::AudioPro
     for(size_t i=0;i<monitored_.size() && i<size_t(params.size());++i)monitored_[i]=params[int(i)];
 }
 bool SteamMasterProcessor::isBusesLayoutSupported(const BusesLayout& l) const {return l.getMainInputChannelSet()==juce::AudioChannelSet::stereo() && l.getMainOutputChannelSet()==juce::AudioChannelSet::stereo();}
-void SteamMasterProcessor::prepareToPlay(double fs,int){rack->prepare(fs);snapshotValid_=false;updateDSP();setLatencySamples(int(rack->latencySamples()));}
+void SteamMasterProcessor::prepareToPlay(double fs,int){rack->prepare(fs);snapshotValid_=false;updateDSP();setLatencySamples(int(rack->latencySamples()));meterLeft_.store(0.f);meterRight_.store(0.f);meterReduction_.store(0.f);meterTruePeak_.store(0.f);meterCorrelation_.store(0.f);}
 void SteamMasterProcessor::processBlock(juce::AudioBuffer<float>& buffer,juce::MidiBuffer&){
     juce::ScopedNoDenormals noDenormals;
     if(buffer.getNumChannels()<2)return;
     updateDSP();
     auto* left=buffer.getWritePointer(0);auto* right=buffer.getWritePointer(1);
     for(int i=0;i<buffer.getNumSamples();++i){const auto y=rack->process({double(left[i]),double(right[i])});left[i]=float(y.l);right[i]=float(y.r);}
+
+    float pL=0.f,pR=0.f;
+    for(int i=0;i<buffer.getNumSamples();++i){
+        pL=juce::jmax(pL,std::abs(left[i]));pR=juce::jmax(pR,std::abs(right[i]));
+    }
+    meterLeft_.store(pL,std::memory_order_relaxed);meterRight_.store(pR,std::memory_order_relaxed);
+    const auto red=rack->limiter.gainReductionDb();
+    meterReduction_.store(float(juce::jmax(std::abs(red.l),std::abs(red.r))),std::memory_order_relaxed);
+    meterTruePeak_.store(float(rack->limiter.measuredOutputTruePeak()),std::memory_order_relaxed);
+    meterCorrelation_.store(float(rack->stereo.correlation()),std::memory_order_relaxed);
     for(int c=2;c<buffer.getNumChannels();++c)buffer.clear(c,0,buffer.getNumSamples());
 }
 juce::AudioProcessorEditor* SteamMasterProcessor::createEditor(){return new SteamMasterEditor(*this);}
