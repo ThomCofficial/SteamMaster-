@@ -7,7 +7,7 @@
 class SteamMasterProcessor final : public juce::AudioProcessor {
 public:
     SteamMasterProcessor();
-    const juce::String getName() const override {return "SteamMaster Test Bench";}
+    const juce::String getName() const override {return "SteamMaster";}
     void prepareToPlay(double sampleRate,int samplesPerBlock) override;
     void releaseResources() override {}
     void processBlock(juce::AudioBuffer<float>&,juce::MidiBuffer&) override;
@@ -27,6 +27,15 @@ public:
     void setStateInformation(const void*,int) override;
     juce::AudioProcessorValueTreeState state;
     std::unique_ptr<steammaster::MasteringRack> rack;
+    std::atomic<float> meterOutputDb{-90.f};
+    std::atomic<float> meterLeftDb{-90.f};
+    std::atomic<float> meterRightDb{-90.f};
+    std::atomic<float> meterOceanGr{0.f};
+    std::atomic<float> meterFurnaceGr{0.f};
+    std::atomic<float> meterShadowOpticalGr{0.f};
+    std::atomic<float> meterShadowDiscreteGr{0.f};
+    std::atomic<float> meterLimiterGr{0.f};
+    std::atomic<float> meterCorrelation{0.f};
 private:
     static juce::AudioProcessorValueTreeState::ParameterLayout makeLayout();
     std::array<juce::AudioProcessorParameter*,107> monitored_{};
