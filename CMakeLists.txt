@@ -118,6 +118,8 @@ if(STEAMMASTER_BUILD_VST3)
     "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_BaxandallEQ_Module_Kit_v1/01_reference/baxandall_module_trimmed_reference.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Tape_Complete_Module_Kit_v1/source/Tape_Module_Reference_1536x469.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_StereoImage_Limiter_Module_Kit_v1/00_source/stereo_limiter_approved_source.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/knob_input_silver.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/knob_output_silver.png"
   )
   foreach(ART_FILE IN LISTS STEAMMASTER_ART_FILES)
     if(NOT EXISTS "${ART_FILE}")
