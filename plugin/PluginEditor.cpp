@@ -846,14 +846,32 @@ void SteamMasterEditor::Page::ArtCanvas::paintMovingParts(juce::Graphics& g) {
     } else if(section=="Shadow") {
         const float reduction=juce::jmax(0.f,-read(processor->meterShadowOpticalGr))
                             +juce::jmax(0.f,-read(processor->meterShadowDiscreteGr));
+        juce::Graphics::ScopedSaveState keep(g);
+        g.reduceClipRegion(juce::Rectangle<int>(juce::roundToInt(358*sx),
+             juce::roundToInt(39*sy),juce::roundToInt(205*sx),
+             juce::roundToInt(95*sy)));
         drawMeterNeedle(g,shadowNeedle,462.f*sx,127.f*sy,75.f*sx,
                         juce::jlimit(0.f,1.f,reduction/20.f));
     } else if(section=="Exciter") {
+        juce::Graphics::ScopedSaveState keep(g);
+        g.reduceClipRegion(juce::Rectangle<int>(juce::roundToInt(458*sx),
+             juce::roundToInt(24*sy),juce::roundToInt(167*sx),
+             juce::roundToInt(67*sy)));
         drawMeterNeedle(g,exciterNeedle,565.f*sx,76.f*sy,70.f*sx,
                         juce::jlimit(0.f,1.f,(read(processor->meterOutputDb)+60.f)/60.f));
     } else if(section=="Stereo + Limiter") {
-        drawMeterNeedle(g,correlationNeedle,363.f*sx,133.f*sy,75.f*sx,
-                        (read(processor->meterCorrelation)+1.f)*0.5f);
+        juce::Graphics::ScopedSaveState keep(g);
+        {
+            juce::Graphics::ScopedSaveState meterClip(g);
+            g.reduceClipRegion(juce::Rectangle<int>(juce::roundToInt(271*sx),
+                juce::roundToInt(78*sy),juce::roundToInt(188*sx),
+                juce::roundToInt(101*sy)));
+            drawMeterNeedle(g,correlationNeedle,363.f*sx,133.f*sy,75.f*sx,
+                            (read(processor->meterCorrelation)+1.f)*0.5f);
+        }
+        g.reduceClipRegion(juce::Rectangle<int>(juce::roundToInt(946*sx),
+            juce::roundToInt(78*sy),juce::roundToInt(193*sx),
+            juce::roundToInt(101*sy)));
         drawMeterNeedle(g,limiterNeedle,1040.f*sx,133.f*sy,75.f*sx,
                         juce::jlimit(0.f,1.f,read(processor->meterLimiterGr)/20.f));
     }
@@ -962,7 +980,7 @@ void SteamMasterEditor::resized(){
     for(auto& module:modules){
        const int height=module->desiredHeight(width);
        module->setBounds(0,y,width,height);
-       y+=height+8;
+       y+=height;
     }
     rackContent.setSize(width,y);
 }
