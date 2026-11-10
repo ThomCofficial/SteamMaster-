@@ -105,24 +105,32 @@ if(STEAMMASTER_BUILD_VST3)
   target_sources(SteamMasterVST3 PRIVATE plugin/PluginProcessor.cpp plugin/PluginProcessor.h plugin/PluginEditor.cpp plugin/PluginEditor.h)
   target_link_libraries(SteamMasterVST3 PRIVATE steammaster_dsp juce::juce_audio_utils juce::juce_audio_processors juce::juce_gui_extra juce::juce_dsp)
   target_compile_definitions(SteamMasterVST3 PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0)
-  # Include uploaded approved artwork when the full local art kit is installed.
+  # Every source panel is embedded from the ORIGINAL uploaded GitHub asset folders.
+  # Fail closed rather than shipping the 1x1 placeholder-artwork plugin.
   set(STEAMMASTER_ART_FILES
-      global_header.png ocean.png furnace.png parametric.png pultec.png
-      shadow.png exciter.png bax.png tape.png stereo_limiter.png)
-  set(STEAMMASTER_ART_PATHS "")
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Global_Header_Complete_v2/header_faceplate_blank_candidate.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Ocean_Furnace_Asset_Prep_v1/ocean_module_source.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Ocean_Furnace_Asset_Prep_v1/furnace_module_source.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_ParametricEQ_Asset_Prep_v1/parametric_eq_module_source.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Pultec_EQ_DSP_Locked_Handoff/artwork/Pultec_Approved_Reference.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Shadow_Complete_Module_Kit_v1/01_reference/Shadow_Source_Locked.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Exciter_Complete_Asset_Prep_v1/SteamMaster_Exciter_Complete_Asset_Prep_v1/source/Exciter_panel_uncorrected_1536x402.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_BaxandallEQ_Module_Kit_v1/01_reference/baxandall_module_trimmed_reference.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_Tape_Complete_Module_Kit_v1/source/Tape_Module_Reference_1536x469.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/SteamMaster_StereoImage_Limiter_Module_Kit_v1/00_source/stereo_limiter_approved_source.png"
+  )
   foreach(ART_FILE IN LISTS STEAMMASTER_ART_FILES)
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/${ART_FILE}")
-      list(APPEND STEAMMASTER_ART_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/${ART_FILE}")
+    if(NOT EXISTS "${ART_FILE}")
+      message(FATAL_ERROR "STEAMMASTER MISSING APPROVED ASSET: ${ART_FILE}")
+    endif()
+    file(SIZE "${ART_FILE}" ART_BYTES)
+    if(ART_BYTES LESS 10240)
+      message(FATAL_ERROR "STEAMMASTER INVALID SMALL ARTWORK: ${ART_FILE}")
     endif()
   endforeach()
-  list(LENGTH STEAMMASTER_ART_PATHS STEAMMASTER_ART_COUNT)
-  if(STEAMMASTER_ART_COUNT EQUAL 10)
-    juce_add_binary_data(SteamMasterArtwork SOURCES ${STEAMMASTER_ART_PATHS})
-    target_link_libraries(SteamMasterVST3 PRIVATE SteamMasterArtwork)
-    target_compile_definitions(SteamMasterVST3 PRIVATE STEAMMASTER_HAS_ARTWORK=1)
-  else()
-    message(STATUS "SteamMaster artwork absent or incomplete: using vector UI")
-  endif()
+  juce_add_binary_data(SteamMasterArtwork SOURCES ${STEAMMASTER_ART_FILES})
+  target_link_libraries(SteamMasterVST3 PRIVATE SteamMasterArtwork)
+  target_compile_definitions(SteamMasterVST3 PRIVATE STEAMMASTER_HAS_ARTWORK=1)
   juce_generate_juce_header(SteamMasterVST3)
   if(BUILD_TESTING)
     add_executable(steammaster_plugin_host_smoke tests/TestPluginHost.cpp)
