@@ -42,6 +42,10 @@ jobs:
           if (-not $vst) { throw "VST3 bundle missing after build" }
           New-Item -ItemType Directory -Path dist -Force | Out-Null
           Copy-Item -Path $vst.FullName -Destination dist -Recurse
+          $preview = Join-Path 'build' 'SteamMaster-UI-Preview.png'
+          if (!(Test-Path $preview)) { throw "Full-rack JUCE visual preview missing" }
+          Copy-Item -Path $preview -Destination 'dist/SteamMaster-UI-Preview.png'
+          Write-Host "UI visual audit snapshot staged."
           Write-Host "Output: $($vst.FullName)"
       - uses: actions/upload-artifact@v4
         with:
