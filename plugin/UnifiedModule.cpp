@@ -73,7 +73,7 @@ SteamMasterModule::SteamMasterModule(SteamMasterProcessor& p,const juce::String&
     const auto json=juce::String::fromUTF8(BinaryData::ui_layout_json,BinaryData::ui_layout_jsonSize);
     const auto root=juce::JSON::parse(json);
     const auto mods=root.getProperty("modules",juce::var());
-    const auto spec=mods.getProperty(id,juce::var());
+    const auto spec=mods.getProperty(juce::Identifier(id),juce::var());
     sourceWidth=(int)spec.getProperty("width",1536);
     sourceHeight=(int)spec.getProperty("height",512);
     if(!plate.isValid() || !rotorAtlas.isValid()) {
