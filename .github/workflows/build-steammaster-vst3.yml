@@ -1,8 +1,8 @@
 name: SteamMaster Windows VST3 — real artwork
 on:
   workflow_dispatch:
-  push:
-    branches: [ui-development-assets-integration]
+  pull_request:
+    branches: [vst3/v1.7-performance-character]
     paths:
       - 'plugin/**'
       - 'CMakeLists.txt'
