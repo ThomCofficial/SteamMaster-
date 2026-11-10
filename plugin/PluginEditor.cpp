@@ -312,9 +312,7 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
        contents.art = juce::ImageFileFormat::loadFrom(asset, (size_t)assetSize);
     }
 #endif
-    addAndMakeVisible(viewport);
-    viewport.setViewedComponent(&contents,false);
-    viewport.setScrollBarsShown(true,false);
+    addAndMakeVisible(contents);
     for(auto* p:processor.getParameters()) {
         auto* withID=dynamic_cast<juce::AudioProcessorParameterWithID*>(p);
         if(!withID)continue;
@@ -504,7 +502,7 @@ void SteamMasterEditor::Page::paint(juce::Graphics& g) {
 void SteamMasterEditor::Page::resized() {
     auto area=getLocalBounds().reduced(10);
     area.removeFromTop(28);
-    viewport.setBounds(area);
+    contents.setBounds(area);
     const bool artValid=contents.art.isValid();
     const int artWidth=juce::jmax(500,area.getWidth()-15);
     const int artHeight=artValid
@@ -520,7 +518,7 @@ void SteamMasterEditor::Page::resized() {
     const int extraRows=(overflow+cols-1)/cols;
     const int totalHeight=artHeight+(extraRows?extraRows*cellH+28:0);
     contents.artHeight=artHeight;
-    contents.setSize(artWidth,totalHeight);
+    contents.setBounds(area.getX(),area.getY(),artWidth,totalHeight);
     if(section=="Global" && contents.art.isValid() && headerButtons.size()==5) {
        // Original uploaded header art uses untrimmed 2048x682 source coordinates.
        const auto scaled=[sx,sy](int x,int y,int w,int h) {
