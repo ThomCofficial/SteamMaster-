@@ -221,6 +221,14 @@ if(STEAMMASTER_BUILD_VST3)
     "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band4_Frequency.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band4_Q.png"
   )
+  list(APPEND STEAMMASTER_ART_FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Buttons/Optical_IN_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Buttons/Optical_IN_OFF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Buttons/Discrete_IN_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Buttons/Discrete_IN_OFF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Buttons/IN_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Buttons/IN_OFF.png"
+  )
   foreach(ART_FILE IN LISTS STEAMMASTER_ART_FILES)
     if(NOT EXISTS "${ART_FILE}")
       message(FATAL_ERROR "STEAMMASTER MISSING APPROVED ASSET: ${ART_FILE}")
