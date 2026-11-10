@@ -1,4 +1,5 @@
 #include "PluginProcessor.h"
+#include "PluginEditor.h"
 #include <cmath>
 #include <iostream>
 #include <memory>
@@ -89,6 +90,16 @@ int main(){
     {
       std::unique_ptr<juce::AudioProcessorEditor> editor(p->createEditor());
       if(!editor || editor->getWidth()<300)throw std::runtime_error("editor invalid");
+      if(fs==44100.) {
+        auto* rackEditor=dynamic_cast<SteamMasterEditor*>(editor.get());
+        if(!rackEditor)throw std::runtime_error("SteamMaster custom rack editor absent");
+        const auto preview=juce::File::getCurrentWorkingDirectory()
+                            .getChildFile("SteamMaster-UI-Preview.png");
+        if(!rackEditor->saveFullRackPreview(preview))
+            throw std::runtime_error("Could not save full SteamMaster rack preview");
+        std::cout<<"UI preview rendered: "<<preview.getFullPathName()<<"\\n";
+      }
+
     }
     juce::AudioBuffer<float> audio(2,512);
     juce::MidiBuffer midi;
