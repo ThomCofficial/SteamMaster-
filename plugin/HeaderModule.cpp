@@ -177,6 +177,21 @@ void SteamMasterHeader::paintOverChildren(juce::Graphics& g) {
     text(presetName+(usingB?" [B]":" [A]"),1240,432,225,60,33.f,
          juce::Justification::centred);
 
+    // Replace the concept-art's static sample numbers with live measured values.
+    const auto readout=[this,&g](float value,float x,float y,float width) {
+        auto zone=mapped(x,y,width,34).toFloat();
+        g.setColour(juce::Colour(0xff17160d));
+        g.fillRect(zone);
+        const juce::String v=value<=-85.f?"--.-":juce::String(value,1);
+        g.setColour(juce::Colour(0xfff9de9b));
+        g.setFont(juce::Font(juce::FontOptions(
+            juce::jmax(8.f,28.f*(float)getWidth()/sourceWidth),
+            juce::Font::bold)));
+        g.drawFittedText(v,zone.toNearestInt(),juce::Justification::centredRight,1);
+    };
+    readout(processor.meterIntegratedLufs.load(std::memory_order_relaxed),1726,353,77);
+    readout(processor.meterShortTermLufs.load(std::memory_order_relaxed),1726,415,77);
+    readout(processor.meterTruePeakDb.load(std::memory_order_relaxed),1726,467,77);
     // The design's LUFS values were static mockup numbers; no fictitious
     // loudness values are displayed in the running plugin.
     const auto meter=[this,&g](float db,float x) {
@@ -203,6 +218,12 @@ void SteamMasterHeader::paintOverChildren(juce::Graphics& g) {
 }
 
 void SteamMasterHeader::timerCallback() {
+    if(input && output) {
+        const auto* i=processor.state.getRawParameterValue("global_input_db");
+        const auto* o=processor.state.getRawParameterValue("global_output_db");
+        if(i) input->setTooltip("INPUT "+juce::String(i->load(std::memory_order_relaxed),1)+" dB");
+        if(o) output->setTooltip("OUTPUT "+juce::String(o->load(std::memory_order_relaxed),1)+" dB");
+    }
     const auto* choice=processor.state.getRawParameterValue("global_oversampling");
     const int active=choice?juce::jlimit(0,3,(int)std::round(choice->load())):0;
     for(int i=0;i<4;++i)
