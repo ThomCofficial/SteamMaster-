@@ -68,6 +68,7 @@ SteamMasterModule::SteamMasterModule(SteamMasterProcessor& p,const juce::String&
     :processor(p),id(name) {
     plate=panel(id);
     rotorAtlas=sprites(id);
+    if(id=="tape") reelAtlas=decode(BinaryData::tape_reels_png,BinaryData::tape_reels_pngSize);
     lampLook=std::make_unique<LampLook>();
     const auto json=juce::String::fromUTF8(BinaryData::ui_layout_json,BinaryData::ui_layout_jsonSize);
     const auto root=juce::JSON::parse(json);
@@ -180,6 +181,19 @@ void SteamMasterModule::paint(juce::Graphics& g) {
     g.fillAll(juce::Colour(0xff10171b));
     if(plate.isValid())
         g.drawImage(plate,artRect(),juce::RectanglePlacement::stretchToFit);
+    if(id=="tape" && reelAtlas.isValid()) {
+        const float scale=artRect().getWidth()/sourceWidth;
+        for(int i=0;i<2;++i) {
+            auto reel=reelAtlas.getClippedImage({i*256,0,256,256});
+            const auto center=pointAt(i==0?395.f:1151.f,141.f);
+            const float theta=(i==0?-1.f:1.f)*reelPhase;
+            auto matrix=juce::AffineTransform::translation(-128.f,-128.f)
+                            .rotated(theta).scaled(scale)
+                            .translated(center.x,center.y);
+            g.drawImageTransformed(reel,matrix);
+        }
+    }
+
     else {
         g.setColour(juce::Colour(0xffe1b775));
         g.drawText(heading(id),getLocalBounds(),juce::Justification::centred);
@@ -217,6 +231,17 @@ void SteamMasterModule::paintOverChildren(juce::Graphics& g) {
     }
 }
 void SteamMasterModule::timerCallback(){
+    if(id=="tape") {
+        const auto* enabled=processor.state.getRawParameterValue("tape_in");
+        const auto* speed=processor.state.getRawParameterValue("tape_speed");
+        const bool running=enabled!=nullptr && enabled->load(std::memory_order_relaxed)>.5f &&
+            processor.meterOutputDb.load(std::memory_order_relaxed)>-70.f;
+        if(running) {
+            const float choice=speed?speed->load(std::memory_order_relaxed):1.f;
+            reelPhase=std::fmod(reelPhase+(.025f+.021f*choice),juce::MathConstants<float>::twoPi);
+            repaint();
+        }
+    }
     for(auto& c:controls) {
         if(c->kind!="cycle")continue;
         auto* b=dynamic_cast<juce::TextButton*>(c->widget.get());
