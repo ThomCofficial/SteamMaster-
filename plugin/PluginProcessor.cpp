@@ -206,6 +206,7 @@ void SteamMasterProcessor::processBlock(juce::AudioBuffer<float>& buffer,juce::M
         meterOutputDb.store(20.f*std::log10(juce::jmax(1.0e-6f,peak)),std::memory_order_relaxed);
         meterLeftDb.store(20.f*std::log10(juce::jmax(1.0e-6f,peakLeft)),std::memory_order_relaxed);
         meterRightDb.store(20.f*std::log10(juce::jmax(1.0e-6f,peakRight)),std::memory_order_relaxed);
+        meterTruePeakDb.store((float)(20.*std::log10(juce::jmax(1.0e-6,rack->limiter.measuredOutputTruePeak()))),std::memory_order_relaxed);
         meterOceanGr.store((float)rack->firstSix.ocean.gainReductionDb(),std::memory_order_relaxed);
         meterFurnaceGr.store((float)rack->firstSix.furnace.gainReductionDb(),std::memory_order_relaxed);
         meterShadowOpticalGr.store((float)rack->firstSix.shadow.opticalReductionDb(),std::memory_order_relaxed);
