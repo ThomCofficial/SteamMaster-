@@ -11,11 +11,13 @@ public:
     void resized() override;
     void paint(juce::Graphics&) override;
 private:
-    struct Page final : juce::Component {
+    struct Page final : juce::Component, private juce::Timer {
         explicit Page(juce::AudioProcessor&,juce::AudioProcessorValueTreeState&,const juce::String&);
         void resized() override;
         void paint(juce::Graphics&) override;
         int desiredHeight(int width) const;
+        void timerCallback() override;
+        SteamMasterProcessor& source;
         juce::String section;
         juce::Viewport viewport;
         struct ArtCanvas final : juce::Component {
