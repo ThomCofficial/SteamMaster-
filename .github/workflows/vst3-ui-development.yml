@@ -1,0 +1,27 @@
+name: Windows VST3 UI Development
+on:
+  push:
+    branches: [ui-development]
+  workflow_dispatch:
+jobs:
+  build-ui-vst3:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure SteamMaster VST3
+        run: cmake -S . -B build-vst3 -DSTEAMMASTER_BUILD_VST3=ON -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release
+      - name: Build VST3 and host smoke test
+        run: cmake --build build-vst3 --config Release --target SteamMasterVST3_VST3 steammaster_plugin_host_smoke --parallel 2
+      - name: Run plugin host smoke test
+        run: ctest --test-dir build-vst3 -C Release -R SteamMasterPluginHostSmoke --output-on-failure
+      - name: Package VST3
+        shell: pwsh
+        run: |
+          $plugin = Get-ChildItem build-vst3 -Recurse -Directory -Filter 'SteamMaster Test Bench.vst3' | Select-Object -First 1
+          if (-not $plugin) { throw 'VST3 bundle missing' }
+          Compress-Archive -Path $plugin.FullName -DestinationPath SteamMaster-UI-Preview-Windows-VST3.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SteamMaster-UI-Preview-Windows-VST3
+          path: SteamMaster-UI-Preview-Windows-VST3.zip
+          if-no-files-found: error
