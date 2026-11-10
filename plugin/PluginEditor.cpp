@@ -417,6 +417,11 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
     auto loadImage=[](const void* p,size_t bytes) {
         return juce::ImageFileFormat::loadFrom(p,bytes);
     };
+    if(section=="Global") {
+        contents.headerMeterAtlas=loadImage(
+            BinaryData::nautical_steampunk_meter_and_display_sprite_sheet_png,
+            (size_t)BinaryData::nautical_steampunk_meter_and_display_sprite_sheet_pngSize);
+    }
     if(section=="Tape") {
         contents.leftReel=loadImage(BinaryData::Reel_Left_FrontOn_png,
                                    (size_t)BinaryData::Reel_Left_FrontOn_pngSize);
@@ -604,6 +609,65 @@ void SteamMasterEditor::Page::ArtCanvas::drawMeterNeedle(
     auto transform=juce::AffineTransform::rotation(angle,sw*0.5f,sh*0.82f)
         .scaled(scale).translated(cx-sw*scale*0.5f,cy-sh*scale*0.82f);
     g.drawImageTransformed(needle,transform,false);
+}
+void SteamMasterEditor::Page::ArtCanvas::paintHeaderInstruments(juce::Graphics& g) {
+    if (!processor || !art.isValid()) return;
+    // Original header faceplate supplies the brass bezels. These are live,
+    // lightweight readouts and meters inside the existing empty instruments.
+    const float sx=(float)getWidth()/1145.f;
+    const float sy=(float)artHeight/((float)art.getHeight()*1145.f/art.getWidth());
+    juce::Graphics::ScopedSaveState saved(g);
+    g.addTransform(juce::AffineTransform::scale(sx,sy));
+    const auto gold=juce::Colour(0xffffd995);
+    const auto cream=juce::Colour(0xfff2e5c6);
+    const auto dim=juce::Colour(0xffc29d65);
+    auto text=[&](const juce::String& t,float x,float y,float w,float h,float size,
+                  juce::Colour colour=juce::Colour(0xfff2e5c6)) {
+        g.setColour(colour);
+        g.setFont(juce::Font(juce::FontOptions(size)));
+        g.drawFittedText(t,juce::Rectangle<int>((int)x,(int)y,(int)w,(int)h),
+                         juce::Justification::centred,1);
+    };
+    auto read=[&](const char* id)->float {
+        if(auto* value=processor->state.getRawParameterValue(id))
+            return value->load(std::memory_order_relaxed);
+        return 0.f;
+    };
+    auto meter=[&](float x,float y,float w,float value,float minimum,float maximum) {
+        const float fraction=juce::jlimit(0.f,1.f,(value-minimum)/(maximum-minimum));
+        g.setColour(juce::Colour(0xff142a2c));
+        g.fillRoundedRectangle(x,y,w,12.f,3.f);
+        g.setColour(juce::Colour(0xff7c592e));
+        g.drawRoundedRectangle(x,y,w,12.f,3.f,1.f);
+        g.setColour(juce::Colour(0xffd6a454));
+        g.fillRoundedRectangle(x+2.f,y+2.f,(w-4.f)*fraction,8.f,2.f);
+    };
+    // Two large brass-rimmed display apertures in the supplied faceplate.
+    const float input=read("global_input_db");
+    const float output=processor->meterOutputDb.load(std::memory_order_relaxed);
+    text("INPUT TRIM",405,332,243,20,15,dim);
+    text(juce::String(input,1)+" dB",418,353,215,35,27,gold);
+    meter(438,389,175,input,-24.f,24.f);
+    text("OUTPUT LEVEL",713,332,232,20,15,dim);
+    text(juce::String(output,1)+" dBFS",727,353,201,35,27,gold);
+    meter(738,389,180,output,-60.f,6.f);
+    // Lower three instrument windows: mode and two compressor GR meters.
+    text("OVERSAMPLING",404,441,151,17,12,dim);
+    text(juce::String(juce::roundToInt(read("global_oversampling"))==0?"OFF":
+          juce::roundToInt(read("global_oversampling"))==1?"2x":
+          juce::roundToInt(read("global_oversampling"))==2?"4x":"8x"),
+          411,462,138,28,23,gold);
+    const float ocean=processor->meterOceanGr.load(std::memory_order_relaxed);
+    const float furnace=processor->meterFurnaceGr.load(std::memory_order_relaxed);
+    text("OCEAN GR",578,441,170,17,12,dim);
+    text(juce::String(juce::abs(ocean),1)+" dB",591,461,142,28,22,cream);
+    text("FURNACE GR",788,441,166,17,12,dim);
+    text(juce::String(juce::abs(furnace),1)+" dB",798,461,144,28,22,cream);
+    // Exact control identifiers remain in the JUCE overlay, not painted as
+    // decorative, nonfunctional widgets.
+    text("INPUT",119,372,75,20,14,cream);
+    text("OUTPUT",212,372,75,20,14,cream);
+    text("IN",51,385,36,20,14,gold);
 }
 void SteamMasterEditor::Page::ArtCanvas::paintMovingParts(juce::Graphics& g) {
     if (!processor || !art.isValid()) return;
