@@ -274,7 +274,81 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
             controls.push_back(std::move(slider));
         }
     }
+    if(section=="Global"){
+        slotA=source.state.copyState();
+        slotB=slotA.createCopy();
+        auto addButton=[this](juce::String title,juce::String name,std::function<void()> callback) {
+            auto button=std::make_unique<juce::TextButton>(title);
+            button->setName(name);
+            button->setColour(juce::TextButton::buttonColourId,juce::Colour(0xff4a3524));
+            button->setColour(juce::TextButton::buttonOnColourId,juce::Colour(0xffc18c39));
+            button->setColour(juce::TextButton::textColourOffId,juce::Colour(0xffffe2a6));
+            button->onClick=std::move(callback);
+            contents.addAndMakeVisible(*button);
+            headerButtons.push_back(std::move(button));
+        };
+        addButton("A","slotA",[this]{switchSlot(false);});
+        addButton("B","slotB",[this]{switchSlot(true);});
+        addButton("<","previous",[this]{navigatePreset(-1);});
+        addButton(">","next",[this]{navigatePreset(1);});
+        addButton("SAVE","save",[this]{savePreset();});
+        presetLabel=std::make_unique<juce::Label>();
+        presetLabel->setJustificationType(juce::Justification::centred);
+        presetLabel->setFont(juce::Font(juce::FontOptions(17.f,juce::Font::italic)));
+        presetLabel->setColour(juce::Label::backgroundColourId,juce::Colour(0xff292319));
+        presetLabel->setColour(juce::Label::textColourId,juce::Colour(0xffedd6a0));
+        presetLabel->setText(presetTitle,juce::dontSendNotification);
+        contents.addAndMakeVisible(*presetLabel);
+    }
     startTimerHz(30);
+}
+
+juce::File SteamMasterEditor::Page::presetDirectory() {
+    return juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+           .getChildFile("ThomC").getChildFile("SteamMaster").getChildFile("Presets");
+}
+void SteamMasterEditor::Page::switchSlot(bool toB) {
+    if(usingB==toB)return;
+    if(usingB) slotB=source.state.copyState();
+    else slotA=source.state.copyState();
+    auto state=toB?slotB:slotA;
+    if(state.isValid()) source.state.replaceState(state.createCopy());
+    usingB=toB;
+    if(presetLabel) presetLabel->setText(presetTitle+(toB?" [B]":" [A]"),juce::dontSendNotification);
+}
+void SteamMasterEditor::Page::savePreset() {
+    const auto folder=presetDirectory();
+    if(folder.createDirectory().failed()) {
+       if(presetLabel)presetLabel->setText("Cannot write preset folder",juce::dontSendNotification);
+       return;
+    }
+    const auto stamp=juce::Time::getCurrentTime().formatted("%Y%m%d_%H%M%S");
+    const auto destination=folder.getChildFile("SteamMaster_"+stamp+".xml");
+    auto xml=source.state.copyState().createXml();
+    if(xml!=nullptr && xml->writeTo(destination)) {
+       presetTitle=destination.getFileNameWithoutExtension();
+       if(presetLabel)presetLabel->setText(presetTitle,juce::dontSendNotification);
+    } else if(presetLabel)presetLabel->setText("Preset save failed",juce::dontSendNotification);
+}
+void SteamMasterEditor::Page::navigatePreset(int direction) {
+    const auto dir=presetDirectory();
+    auto files=dir.findChildFiles(juce::File::findFiles,false,"*.xml");
+    files.sort();
+    if(files.isEmpty()){
+       if(presetLabel)presetLabel->setText("No saved presets",juce::dontSendNotification);
+       return;
+    }
+    int index=-1;
+    for(int i=0;i<files.size();++i)
+       if(files.getReference(i).getFileNameWithoutExtension()==presetTitle){index=i;break;}
+    const int nextIndex=(index+direction+files.size())%files.size();
+    auto xml=juce::XmlDocument::parse(files.getReference(nextIndex));
+    if(xml!=nullptr && xml->hasTagName(source.state.state.getType().toString())) {
+       source.state.replaceState(juce::ValueTree::fromXml(*xml));
+       presetTitle=files.getReference(nextIndex).getFileNameWithoutExtension();
+       if(usingB)slotB=source.state.copyState();else slotA=source.state.copyState();
+       if(presetLabel)presetLabel->setText(presetTitle,juce::dontSendNotification);
+    } else if(presetLabel) presetLabel->setText("Invalid preset",juce::dontSendNotification);
 }
 
 void SteamMasterEditor::Page::timerCallback(){repaint(juce::Rectangle<int>(getWidth()-295,0,290,30));}
@@ -338,6 +412,21 @@ void SteamMasterEditor::Page::resized() {
     const int totalHeight=artHeight+(extraRows?extraRows*cellH+28:0);
     contents.artHeight=artHeight;
     contents.setSize(artWidth,totalHeight);
+    if(section=="Global" && contents.art.isValid() && headerButtons.size()==5) {
+       // Artwork was trimmed by 120 source pixels at the top in the build kit.
+       const auto scaled=[sx,sy](int x,int y,int w,int h) {
+          return juce::Rectangle<int>(juce::roundToInt(x*sx),juce::roundToInt(y*sy),
+                                      juce::jmax(18,juce::roundToInt(w*sx)),
+                                      juce::jmax(18,juce::roundToInt(h*sy)));
+       };
+       headerButtons[0]->setBounds(scaled(966,303,78,62));
+       headerButtons[1]->setBounds(scaled(1046,303,78,62));
+       headerButtons[2]->setBounds(scaled(1177,304,52,62));
+       headerButtons[3]->setBounds(scaled(1463,304,52,62));
+       headerButtons[4]->setBounds(scaled(1531,304,54,62));
+       if(presetLabel)presetLabel->setBounds(scaled(1238,310,220,51));
+    }
+
     int extra=0;
     for(int i=0;i<(int)controls.size();++i) {
         auto p=approvedPosition(section,i);
