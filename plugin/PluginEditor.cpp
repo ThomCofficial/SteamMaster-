@@ -1134,6 +1134,30 @@ void SteamMasterEditor::paint(juce::Graphics& g) {
     g.setColour(brass);
     // Rack edges are supplied by the artwork; avoid double borders.
 }
+bool SteamMasterEditor::verifyResizeAnchors(){
+    // Real JUCE resize regression: every control must retain its 1x socket
+    // centre at narrow, reference and wide editor sizes (no image-space drift).
+    const int originalW=getWidth(), originalH=getHeight();
+    bool aligned=true;
+    for(const int testWidth:{760,1120,1500}){
+        setSize(testWidth,780);
+        for(const auto& page:modules){
+            const float inverse=1145.f/(float)juce::jmax(1,page->getWidth());
+            for(size_t i=0;i<page->controls.size();++i){
+                const auto expected=approvedPosition(page->ids[i]);
+                const auto* control=page->controls[i].get();
+                if(expected.x<0.f || !control->isVisible())continue;
+                const auto centre=control->getBounds().getCentre();
+                const float x=(float)centre.x*inverse;
+                const float y=(float)centre.y*inverse;
+                if(std::abs(x-expected.x)>3.f || std::abs(y-expected.y)>3.f)
+                    aligned=false;
+            }
+        }
+    }
+    setSize(originalW,originalH);
+    return aligned;
+}
 bool SteamMasterEditor::saveFullRackPreview(const juce::File& destination){
     // Snapshot the actual assembled JUCE control tree, not an asset collage.
     // The complete rack is captured, including panels below the viewport.
