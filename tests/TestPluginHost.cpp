@@ -93,6 +93,8 @@ int main(){
       if(fs==44100.) {
         auto* rackEditor=dynamic_cast<SteamMasterEditor*>(editor.get());
         if(!rackEditor)throw std::runtime_error("SteamMaster custom rack editor absent");
+        if(!rackEditor->verifyResizeAnchors())
+            throw std::runtime_error("Knob centre drifted when resizing SteamMaster rack");
         const auto preview=juce::File::getCurrentWorkingDirectory()
                             .getChildFile("SteamMaster-UI-Preview.png");
         if(!rackEditor->saveFullRackPreview(preview))
