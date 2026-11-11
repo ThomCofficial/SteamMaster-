@@ -1073,7 +1073,9 @@ void SteamMasterEditor::Page::resized() {
                 id=="parametric_output_db"?48.f:
                 id=="parametric_mix"?43.f:35.f;
         } else if(section=="Pultec") diameter=33.f;
-        else if(section=="Shadow") diameter=41.f;
+        else if(section=="Shadow")
+            diameter=(id=="shadow_sc_hpf" || id=="shadow_output_db"
+                       || id=="shadow_mix")?27.f:41.f;
         else if(section=="Exciter") diameter=id=="exciter_mode"?133.f:42.f;
         else if(section=="Bax") diameter=id=="stereo_routing"?104.f:50.f;
         else if(section=="Tape") diameter=44.f;
