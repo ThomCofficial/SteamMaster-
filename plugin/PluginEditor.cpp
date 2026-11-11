@@ -611,6 +611,9 @@ SteamMasterEditor::Page::Page(juce::AudioProcessor& processor,juce::AudioProcess
         contents.art = juce::ImageFileFormat::loadFrom(asset, (size_t)assetSize);
         if (contents.art.isValid()) {
             // Crop native artwork rather than stretching large empty PNG margins.
+            if (section == "Global" && contents.art.getWidth() == 1672
+                && contents.art.getHeight() >= 875)
+                contents.art = contents.art.getClippedImage({0,0,1672,875});
             if (section == "Ocean + Furnace")
                 contents.art=contents.art.getClippedImage({0,224,2172,276});
             else if (section == "Pultec")
@@ -994,7 +997,7 @@ void SteamMasterEditor::Page::resized() {
     contents.artHeight=height;
     contents.setBounds(0,0,width,height);
     const float sx=(float)width/1145.f;
-    const float sy=(float)height/((float)sourceH*1145.f/sourceW);
+    const float sy=(float)width/1145.f; // same source coordinate system as sx
     if(section=="Global" && headerButtons.size()==5) {
         auto button=[&](int index,int x,int y,int w,int h) {
             headerButtons[(size_t)index]->setBounds(juce::roundToInt(x*sx),
@@ -1023,16 +1026,37 @@ void SteamMasterEditor::Page::resized() {
         }
         const bool toggle=dynamic_cast<juce::ToggleButton*>(control)!=nullptr;
         const bool combo=dynamic_cast<juce::ComboBox*>(control)!=nullptr;
-        const bool small=toggle || combo || id.endsWith("_type") ||
-                         id=="limiter_mode" || id=="exciter_mode";
-        const float diameter=(section=="Global")
-             ? (id=="global_in"?185.f:(combo?72.f:56.f))
-             : (id.startsWith("parametric_band_") && id.endsWith("_type")?156.f:
-                (id=="exciter_mode"?133.f:(id=="limiter_mode"?169.f:
-                (id=="stereo_routing"?104.f:
-                (small?(toggle?25.f:(combo?56.f:30.f)):38.f)))));
-        const int w=juce::jmax(14,juce::roundToInt((id=="global_in"?94.f:diameter)*sx));
-        const int h=juce::jmax(14,juce::roundToInt((id=="global_in"?185.f:(combo?(id=="exciter_mode"?26.f:(id=="limiter_mode"?36.f:(id.startsWith("parametric_band_")?23.f:34.f))):diameter))*sy));
+        // The native reference layout is 1145px wide for every module.
+        // Use ONE uniform scale for faceplates, knob sprites and bounds:
+        // this preserves each control's socket centre at every window size.
+        const float unit=(float)width/1145.f;
+        float diameter=34.f;
+        if(section=="Global") diameter=(id=="global_in"?185.f:(combo?72.f:52.f));
+        else if(section=="Ocean + Furnace") diameter=32.f;
+        else if(section=="Parametric"){
+            diameter=id.endsWith("_type")?152.f:
+                id.endsWith("_q")?29.f:
+                id=="parametric_output_db"?48.f:
+                id=="parametric_mix"?43.f:35.f;
+        } else if(section=="Pultec") diameter=33.f;
+        else if(section=="Shadow") diameter=41.f;
+        else if(section=="Exciter") diameter=id=="exciter_mode"?133.f:42.f;
+        else if(section=="Bax") diameter=id=="stereo_routing"?104.f:50.f;
+        else if(section=="Tape") diameter=44.f;
+        else if(section=="Stereo + Limiter") diameter=id=="limiter_mode"?169.f:53.f;
+        if(toggle && section!="Global") diameter=28.f;
+        float logicalW=diameter,logicalH=diameter;
+        if(id=="global_in"){logicalW=94.f;logicalH=185.f;}
+        else if(combo){
+            if(id=="global_oversampling")logicalH=38.f;
+            else if(id.startsWith("parametric_band_"))logicalH=23.f;
+            else if(id=="exciter_mode")logicalH=26.f;
+            else if(id=="limiter_mode")logicalH=36.f;
+            else if(id=="stereo_routing")logicalH=43.f;
+            else logicalH=34.f;
+        }
+        const int w=juce::jmax(12,juce::roundToInt(logicalW*unit));
+        const int h=juce::jmax(12,juce::roundToInt(logicalH*unit));
         const int x=juce::roundToInt(p.x*sx)-w/2;
         const int y=juce::roundToInt(p.y*sy)-h/2;
         control->setBounds(x,y,w,h);
