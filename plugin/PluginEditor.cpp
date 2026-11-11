@@ -432,16 +432,32 @@ public:
         const auto& id=slider.getComponentID();
         // Ring and knob share the same fixed, artwork-relative control rectangle.
         const auto ring=valueRings.find(id);
-        if(ring!=valueRings.end() && ring->second.isValid())
+        const bool hasRing=ring!=valueRings.end() && ring->second.isValid();
+        // The Bax rings are labeled CONCEPT ONLY by the asset author and
+        // contain demonstrably incorrect HPF frequencies. Never display
+        // misleading numeric artwork as if it came from the processor.
+        const bool certifiedRing=hasRing && !id.startsWith("bax_");
+        // At narrow rack widths, a 250px dial image scaled to 20px becomes
+        // an unreadable opaque blotch. Suppress ONLY the tiny ring overlay;
+        // the interactive slider and its accurate JUCE value popup remain.
+        const bool renderRing=certifiedRing && juce::jmin(w,h)>=38;
+        if(renderRing) {
+            juce::Graphics::ScopedSaveState ringState(g);
+            g.setOpacity(0.82f);
             g.drawImageWithin(ring->second,x,y,w,h,
                 juce::RectanglePlacement::centred,false);
+        }
         const auto it = knobs.find(id);
         if (it != knobs.end() && it->second.isValid()) {
             const auto& sprite = it->second;
             // Maintain a ring-to-knob size relationship; avoid giant controls
             // and keep the visible knob centred when the editor is resized.
-            const float diameter = (float) juce::jmin(w, h) *
-                 (ring!=valueRings.end()?0.50f:0.74f);
+            // Readable hardware knobs at compact sizes. For Baxandall
+            // keep the knob inside the original socket with NO false ring.
+            // A rendered value ring reserves space for its labels.
+            const float knobFraction = id.startsWith("bax_") ? 0.69f
+                                      : (renderRing ? 0.71f : 0.82f);
+            const float diameter=(float)juce::jmin(w,h)*knobFraction;
             const float scale = diameter / (float) juce::jmax(sprite.getWidth(), sprite.getHeight());
             const float angle = start + position * (end - start);
             const float imageW = (float) sprite.getWidth(), imageH = (float) sprite.getHeight();
