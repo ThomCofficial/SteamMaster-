@@ -12,6 +12,7 @@ public:
     void resized() override;
     void paint(juce::Graphics&) override;
     bool saveFullRackPreview(const juce::File& destination);
+    bool verifyResizeAnchors();
 private:
     struct Page final : juce::Component, private juce::Timer {
         explicit Page(juce::AudioProcessor&,juce::AudioProcessorValueTreeState&,const juce::String&);
