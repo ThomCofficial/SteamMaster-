@@ -1,0 +1,55 @@
+name: SteamMaster Windows VST3 — real artwork
+on:
+  workflow_dispatch:
+  push:
+    branches: [ui-development-assets-integration]
+  pull_request:
+    branches: [vst3/v1.7-performance-character]
+    paths:
+      - 'plugin/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/build-steammaster-vst3.yml'
+concurrency:
+  group: steammaster-vst3-real-art-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  windows-vst3:
+    runs-on: windows-2022
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify uploaded UI assets
+        shell: pwsh
+        run: |
+          $packs = @('01_Header','02_Ocean_Furnace','03_Parametric_EQ','04_Pultec_EQ','05_Shadow_Compressor','06_Exciter','07_Baxandall_EQ','08_Tape_Machine_v3','09_Stereo_Limiter_v3')
+          foreach ($pack in $packs) {
+            $folder = Join-Path 'plugin/assets' $pack
+            if (!(Test-Path $folder)) { throw "MISSING UI MODULE: $pack" }
+            $pngs = @(Get-ChildItem $folder -Filter '*.png' -File -Recurse)
+            if ($pngs.Count -lt 1) { throw "MISSING PNG ASSETS: $pack" }
+            Write-Host "$pack : $($pngs.Count) PNG files"
+          }
+      - name: Configure Release VST3
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DSTEAMMASTER_BUILD_VST3=ON -DBUILD_TESTING=ON
+      - name: Compile SteamMaster with original artwork
+        run: cmake --build build --config Release --parallel 4
+      - name: Run DSP and host regression tests
+        run: ctest --test-dir build -C Release --output-on-failure
+      - name: Stage and verify VST3
+        shell: pwsh
+        run: |
+          $vst = Get-ChildItem -Path build -Directory -Recurse -Filter '*.vst3' | Select-Object -First 1
+          if (-not $vst) { throw "VST3 bundle missing after build" }
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
+          Copy-Item -Path $vst.FullName -Destination dist -Recurse
+          $preview = Join-Path 'build' 'SteamMaster-UI-Preview.png'
+          if (!(Test-Path $preview)) { throw "Full-rack JUCE visual preview missing" }
+          Copy-Item -Path $preview -Destination 'dist/SteamMaster-UI-Preview.png'
+          Write-Host "UI visual audit snapshot staged."
+          Write-Host "Output: $($vst.FullName)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SteamMaster-Windows-VST3-Real-Artwork
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30

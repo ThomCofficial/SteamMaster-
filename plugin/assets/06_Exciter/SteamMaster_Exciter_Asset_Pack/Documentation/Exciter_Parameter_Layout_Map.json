@@ -1,0 +1,231 @@
+{
+  "module": "Exciter - Harmonic Enhancer (The Lighthouse)",
+  "source": "User-supplied approved artwork /mnt/data/Exciter.png",
+  "reference_size_px": [
+    1145,
+    92
+  ],
+  "hires_assets_are_upscaled": true,
+  "audit_basis": "Agreed UI/DSP specification in conversation; live repository code not verified",
+  "expected_rotary_count": 7,
+  "found_rotary_count": 7,
+  "expected_mode_options": [
+    "Tube",
+    "Tape",
+    "Transformer"
+  ],
+  "found_mode_options": [
+    "Tube",
+    "Tape",
+    "Transformer"
+  ],
+  "has_IN_button": true,
+  "has_central_VU_meter": true,
+  "controls": [
+    {
+      "id": "Low_Drive",
+      "parameter_id_hint": "low_drive",
+      "type": "continuous",
+      "value_range": "0 to 20",
+      "exact_endpoints": [
+        0,
+        20
+      ],
+      "units": "",
+      "center_px": [
+        351,
+        50
+      ],
+      "center_uv": [
+        0.30655,
+        0.543478
+      ],
+      "knob_sprite": "Knobs/Low_Drive_Brass_Transparent.png",
+      "value_dial_sprite": "Value_Dials/Low_Drive_Exact_Value_Ring.png"
+    },
+    {
+      "id": "Low_Frequency",
+      "parameter_id_hint": "low_frequency",
+      "type": "continuous",
+      "value_range": "20 to 800 Hz",
+      "exact_endpoints": [
+        20,
+        800
+      ],
+      "units": "Hz",
+      "center_px": [
+        419,
+        50
+      ],
+      "center_uv": [
+        0.365939,
+        0.543478
+      ],
+      "knob_sprite": "Knobs/Low_Frequency_Brass_Transparent.png",
+      "value_dial_sprite": "Value_Dials/Low_Frequency_Exact_Value_Ring.png"
+    },
+    {
+      "id": "High_Drive",
+      "parameter_id_hint": "high_drive",
+      "type": "continuous",
+      "value_range": "0 to 20",
+      "exact_endpoints": [
+        0,
+        20
+      ],
+      "units": "",
+      "center_px": [
+        656,
+        50
+      ],
+      "center_uv": [
+        0.572926,
+        0.543478
+      ],
+      "knob_sprite": "Knobs/High_Drive_Brass_Transparent.png",
+      "value_dial_sprite": "Value_Dials/High_Drive_Exact_Value_Ring.png"
+    },
+    {
+      "id": "High_Frequency",
+      "parameter_id_hint": "high_frequency",
+      "type": "continuous",
+      "value_range": "1000 to 18000 Hz",
+      "exact_endpoints": [
+        1000,
+        18000
+      ],
+      "units": "Hz",
+      "center_px": [
+        718,
+        50
+      ],
+      "center_uv": [
+        0.627074,
+        0.543478
+      ],
+      "knob_sprite": "Knobs/High_Frequency_Brass_Transparent.png",
+      "value_dial_sprite": "Value_Dials/High_Frequency_Exact_Value_Ring.png"
+    },
+    {
+      "id": "Crossover",
+      "parameter_id_hint": "crossover",
+      "type": "continuous",
+      "value_range": "100 to 5000 Hz",
+      "exact_endpoints": [
+        100,
+        5000
+      ],
+      "units": "Hz",
+      "center_px": [
+        786,
+        50
+      ],
+      "center_uv": [
+        0.686463,
+        0.543478
+      ],
+      "knob_sprite": "Knobs/Crossover_Brass_Transparent.png",
+      "value_dial_sprite": "Value_Dials/Crossover_Exact_Value_Ring.png"
+    },
+    {
+      "id": "Output",
+      "parameter_id_hint": "output",
+      "type": "continuous",
+      "value_range": "-12 to +12 dB",
+      "exact_endpoints": [
+        -12,
+        12
+      ],
+      "units": "dB",
+      "center_px": [
+        860,
+        50
+      ],
+      "center_uv": [
+        0.751092,
+        0.543478
+      ],
+      "knob_sprite": "Knobs/Output_Brass_Transparent.png",
+      "value_dial_sprite": "Value_Dials/Output_Exact_Value_Ring.png"
+    },
+    {
+      "id": "Mix",
+      "parameter_id_hint": "mix",
+      "type": "continuous",
+      "value_range": "0 to 100%",
+      "exact_endpoints": [
+        0,
+        100
+      ],
+      "units": "%",
+      "center_px": [
+        941,
+        50
+      ],
+      "center_uv": [
+        0.821834,
+        0.543478
+      ],
+      "knob_sprite": "Knobs/Mix_Brass_Transparent.png",
+      "value_dial_sprite": "Value_Dials/Mix_Exact_Value_Ring.png"
+    }
+  ],
+  "buttons": [
+    {
+      "id": "IN",
+      "bounds_px": [
+        146,
+        43,
+        188,
+        65
+      ],
+      "ON": "Buttons/IN_ON.png",
+      "OFF": "Buttons/IN_OFF.png"
+    },
+    {
+      "id": "Tube",
+      "bounds_px": [
+        198,
+        43,
+        238,
+        65
+      ],
+      "ON": "Buttons/Tube_ON.png",
+      "OFF": "Buttons/Tube_OFF.png"
+    },
+    {
+      "id": "Tape",
+      "bounds_px": [
+        238,
+        43,
+        269,
+        65
+      ],
+      "ON": "Buttons/Tape_ON.png",
+      "OFF": "Buttons/Tape_OFF.png"
+    },
+    {
+      "id": "Transformer",
+      "bounds_px": [
+        270,
+        43,
+        328,
+        65
+      ],
+      "ON": "Buttons/Transformer_ON.png",
+      "OFF": "Buttons/Transformer_OFF.png"
+    }
+  ],
+  "VU_meter_bounds_px": [
+    458,
+    25,
+    624,
+    92
+  ],
+  "authored_concept_discrepancies": [
+    "AI-generated concept sheets used incorrect parameters (e.g. HARMONICS and SOLID); they are included as concept-only and must not be used as parameter mappings.",
+    "Original reference is only 1145x92 px. 4x assets are upscaled; source does not contain native high-resolution surface details.",
+    "The approved reference VU meter needle is baked into the original static artwork; standalone animated needle is provided with a separate concept meter.",
+    "Exact source-code APVTS identifier names were not verified."
+  ]
+}

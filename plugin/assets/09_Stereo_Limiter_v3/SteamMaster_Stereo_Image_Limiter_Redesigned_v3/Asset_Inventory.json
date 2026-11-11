@@ -1,0 +1,478 @@
+[
+  {
+    "path": "Buttons/Mode_CLEAN_Off.png",
+    "size": [
+      300,
+      154
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      9,
+      10,
+      291,
+      141
+    ]
+  },
+  {
+    "path": "Buttons/Mode_CLEAN_On.png",
+    "size": [
+      300,
+      154
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      8,
+      9,
+      291,
+      141
+    ]
+  },
+  {
+    "path": "Buttons/Mode_MODERN_Off.png",
+    "size": [
+      300,
+      154
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      9,
+      10,
+      291,
+      141
+    ]
+  },
+  {
+    "path": "Buttons/Mode_MODERN_On.png",
+    "size": [
+      300,
+      154
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      8,
+      9,
+      291,
+      141
+    ]
+  },
+  {
+    "path": "Buttons/Mode_PUNCH_Off.png",
+    "size": [
+      300,
+      154
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      9,
+      10,
+      291,
+      141
+    ]
+  },
+  {
+    "path": "Buttons/Mode_PUNCH_On.png",
+    "size": [
+      300,
+      154
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      8,
+      9,
+      291,
+      141
+    ]
+  },
+  {
+    "path": "Faceplate/StereoImage_Limiter_Clean_Redesigned.png",
+    "size": [
+      2172,
+      724
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      0,
+      9,
+      2172,
+      724
+    ]
+  },
+  {
+    "path": "Knobs/Ceiling_FrontFacing_Transparent.png",
+    "size": [
+      360,
+      360
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      0,
+      0,
+      360,
+      360
+    ]
+  },
+  {
+    "path": "Knobs/Lookahead_FrontFacing_Transparent.png",
+    "size": [
+      360,
+      360
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      0,
+      0,
+      360,
+      360
+    ]
+  },
+  {
+    "path": "Knobs/Mono_Maker_FrontFacing_Transparent.png",
+    "size": [
+      360,
+      360
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      0,
+      0,
+      360,
+      360
+    ]
+  },
+  {
+    "path": "Knobs/Release_FrontFacing_Transparent.png",
+    "size": [
+      360,
+      360
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      0,
+      0,
+      360,
+      360
+    ]
+  },
+  {
+    "path": "Knobs/Stereo_Link_FrontFacing_Transparent.png",
+    "size": [
+      360,
+      360
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      0,
+      0,
+      360,
+      360
+    ]
+  },
+  {
+    "path": "Knobs/Stereo_Width_FrontFacing_Transparent.png",
+    "size": [
+      360,
+      360
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      0,
+      0,
+      360,
+      360
+    ]
+  },
+  {
+    "path": "Knobs/Threshold_FrontFacing_Transparent.png",
+    "size": [
+      360,
+      360
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      0,
+      0,
+      360,
+      360
+    ]
+  },
+  {
+    "path": "Knobs/Width_Frequency_FrontFacing_Transparent.png",
+    "size": [
+      360,
+      360
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      0,
+      0,
+      360,
+      360
+    ]
+  },
+  {
+    "path": "Meters/Correlation_Meter_Static_NoNeedle.png",
+    "size": [
+      1448,
+      1086
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      0,
+      23,
+      1432,
+      1068
+    ]
+  },
+  {
+    "path": "Meters/Correlation_Needle_Separate.png",
+    "size": [
+      444,
+      1123
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      20,
+      23,
+      425,
+      1109
+    ]
+  },
+  {
+    "path": "Meters/Gain_Reduction_Meter_Static_NoNeedle.png",
+    "size": [
+      1448,
+      1086
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      41,
+      19,
+      1416,
+      1086
+    ]
+  },
+  {
+    "path": "Meters/Gain_Reduction_Needle_Separate.png",
+    "size": [
+      444,
+      1123
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      20,
+      23,
+      425,
+      1109
+    ]
+  },
+  {
+    "path": "References/Approved_StereoImage_Limiter_Source.png",
+    "size": [
+      1143,
+      166
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      0,
+      0,
+      1143,
+      166
+    ]
+  },
+  {
+    "path": "Toggles/Auto_Release_Off.png",
+    "size": [
+      190,
+      210
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      25,
+      31,
+      166,
+      205
+    ]
+  },
+  {
+    "path": "Toggles/Auto_Release_On.png",
+    "size": [
+      190,
+      210
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      25,
+      2,
+      166,
+      175
+    ]
+  },
+  {
+    "path": "Toggles/IN_Off.png",
+    "size": [
+      190,
+      210
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      25,
+      31,
+      166,
+      205
+    ]
+  },
+  {
+    "path": "Toggles/IN_On.png",
+    "size": [
+      190,
+      210
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      25,
+      2,
+      166,
+      175
+    ]
+  },
+  {
+    "path": "Toggles/True_Peak_Off.png",
+    "size": [
+      190,
+      210
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      25,
+      31,
+      166,
+      205
+    ]
+  },
+  {
+    "path": "Toggles/True_Peak_On.png",
+    "size": [
+      190,
+      210
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      25,
+      2,
+      166,
+      175
+    ]
+  },
+  {
+    "path": "ValueRings/Ceiling_Accurate_ValueRing.png",
+    "size": [
+      448,
+      448
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      25,
+      17,
+      424,
+      424
+    ]
+  },
+  {
+    "path": "ValueRings/Lookahead_Accurate_ValueRing.png",
+    "size": [
+      448,
+      448
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      25,
+      17,
+      424,
+      424
+    ]
+  },
+  {
+    "path": "ValueRings/Mono_Maker_Accurate_ValueRing.png",
+    "size": [
+      448,
+      448
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      25,
+      17,
+      424,
+      424
+    ]
+  },
+  {
+    "path": "ValueRings/Release_Accurate_ValueRing.png",
+    "size": [
+      448,
+      448
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      25,
+      17,
+      425,
+      424
+    ]
+  },
+  {
+    "path": "ValueRings/Stereo_Link_Accurate_ValueRing.png",
+    "size": [
+      448,
+      448
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      25,
+      17,
+      424,
+      424
+    ]
+  },
+  {
+    "path": "ValueRings/Stereo_Width_Accurate_ValueRing.png",
+    "size": [
+      448,
+      448
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      25,
+      17,
+      424,
+      424
+    ]
+  },
+  {
+    "path": "ValueRings/Threshold_Accurate_ValueRing.png",
+    "size": [
+      448,
+      448
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      25,
+      17,
+      424,
+      424
+    ]
+  },
+  {
+    "path": "ValueRings/Width_Frequency_Accurate_ValueRing.png",
+    "size": [
+      448,
+      448
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      25,
+      16,
+      424,
+      424
+    ]
+  }
+]

@@ -96,15 +96,218 @@ if (BUILD_TESTING)
 endif()
 
 # Optional JUCE VST3 test bench. Keeps the DSP-only CI path independent of JUCE.
-option(STEAMMASTER_BUILD_VST3 "Build the temporary tabbed VST3 test bench" OFF)
+option(STEAMMASTER_BUILD_VST3 "Build SteamMaster VST3 plugin" OFF)
 if(STEAMMASTER_BUILD_VST3)
   include(FetchContent)
   FetchContent_Declare(juce GIT_REPOSITORY https://github.com/juce-framework/JUCE.git GIT_TAG 8.0.10 GIT_SHALLOW TRUE)
   FetchContent_MakeAvailable(juce)
-  juce_add_plugin(SteamMasterVST3 COMPANY_NAME "ThomC" BUNDLE_ID "com.thomc.steammaster.testbench" PLUGIN_MANUFACTURER_CODE ThmC PLUGIN_CODE SmT1 FORMATS VST3 PRODUCT_NAME "SteamMaster Test Bench" IS_SYNTH FALSE NEEDS_MIDI_INPUT FALSE NEEDS_MIDI_OUTPUT FALSE COPY_PLUGIN_AFTER_BUILD FALSE)
+  juce_add_plugin(SteamMasterVST3 COMPANY_NAME "ThomC" BUNDLE_ID "com.thomc.steammaster.testbench" PLUGIN_MANUFACTURER_CODE ThmC PLUGIN_CODE SmT1 FORMATS VST3 PRODUCT_NAME "SteamMaster" IS_SYNTH FALSE NEEDS_MIDI_INPUT FALSE NEEDS_MIDI_OUTPUT FALSE COPY_PLUGIN_AFTER_BUILD FALSE)
   target_sources(SteamMasterVST3 PRIVATE plugin/PluginProcessor.cpp plugin/PluginProcessor.h plugin/PluginEditor.cpp plugin/PluginEditor.h)
   target_link_libraries(SteamMasterVST3 PRIVATE steammaster_dsp juce::juce_audio_utils juce::juce_audio_processors juce::juce_gui_extra juce::juce_dsp)
   target_compile_definitions(SteamMasterVST3 PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0)
+  # Every source panel is embedded from the ORIGINAL uploaded GitHub asset folders.
+  # Fail closed rather than shipping the 1x1 placeholder-artwork plugin.
+  # Embed the new, user-uploaded and audited asset folder structure.
+  # These filenames are intentionally explicit so a missing visual blocks compilation.
+  set(STEAMMASTER_ART_FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/01_Header/abyssal_steampunk_mastering_faceplate.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/01_Header/brass_steampunk_knob_sprite_sheet.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/01_Header/nautical_steampunk_meter_and_display_sprite_sheet.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/01_Header/steampunk_brass_ui_button_sprite_sheet.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/01_Header/steampunk_global_in_toggle_set.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/02_Ocean_Furnace/01_Combined_Faceplate/Ocean_Furnace_Clean_Faceplate.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/02_Ocean_Furnace/02_Knobs/Ocean_Furnace_Knobs_Sprite_Sheet.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/02_Ocean_Furnace/03_Buttons_Ornaments/Ocean_Furnace_Buttons_Porthole_Ornaments.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/02_Ocean_Furnace/04_Value_Dials/Ocean_Furnace_12_Value_Dial_Rings.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Faceplates/Parametric_EQ_Clean_Faceplate.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band1_Frequency.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band1_Gain.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band1_Q.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Output.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Mix.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band1_Peak_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/IN_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/04_Pultec_EQ/Faceplate/Pultec_EQ_Faceplate.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/04_Pultec_EQ/Controls/Pultec_EQ_Knobs_and_IN_Button_Sheet.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/04_Pultec_EQ/Dials/Pultec_EQ_10_Value_Dials_Sheet.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Faceplates/Shadow_Clean_Faceplate_EmptySockets_4x.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Knobs/Continuous_Large_Brass.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Knobs/Continuous_Small_Brass.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Knobs/Stepped_Lever_Brass.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Meter/GainReduction_Meter_Face_NoNeedle.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Meter/GainReduction_Needle.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Buttons/Global_IN_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Buttons/Global_IN_OFF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Faceplates/Exciter_Empty_Socket_Faceplate_4x.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Knobs/Low_Drive_Brass_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Meter/VU_Meter_Face_No_Animated_Needle_Concept.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Meter/VU_Animated_Needle_Brass.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Buttons/Tube_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Buttons/Tube_OFF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Buttons/Tape_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Buttons/Tape_OFF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Buttons/Transformer_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Buttons/Transformer_OFF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/07_Baxandall_EQ/SteamMaster_Baxandall_EQ_Asset_Pack/Faceplate/Baxandall_Rack_Faceplate_Cropped.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/07_Baxandall_EQ/SteamMaster_Baxandall_EQ_Asset_Pack/Knobs/Bax_HPF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/07_Baxandall_EQ/SteamMaster_Baxandall_EQ_Asset_Pack/Knobs/Bax_LPF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/07_Baxandall_EQ/SteamMaster_Baxandall_EQ_Asset_Pack/Knobs/Bax_High_Shelf_Frequency.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/07_Baxandall_EQ/SteamMaster_Baxandall_EQ_Asset_Pack/Knobs/Bax_High_Shelf_Gain.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/07_Baxandall_EQ/SteamMaster_Baxandall_EQ_Asset_Pack/Knobs/Bax_Low_Shelf_Frequency.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/07_Baxandall_EQ/SteamMaster_Baxandall_EQ_Asset_Pack/Knobs/Bax_Low_Shelf_Gain.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/07_Baxandall_EQ/SteamMaster_Baxandall_EQ_Asset_Pack/Knobs/Bax_Output.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/07_Baxandall_EQ/SteamMaster_Baxandall_EQ_Asset_Pack/Buttons/Bax_Channel_IN_Lit.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/07_Baxandall_EQ/SteamMaster_Baxandall_EQ_Asset_Pack/Buttons/Bax_Channel_IN_Unlit.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/07_Baxandall_EQ/SteamMaster_Baxandall_EQ_Asset_Pack/Buttons/Bax_Link_On_Lit.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/07_Baxandall_EQ/SteamMaster_Baxandall_EQ_Asset_Pack/Buttons/Bax_Link_Off_Unlit.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/08_Tape_Machine_v3/SteamMaster_Tape_Machine_FrontOn_v3/Faceplate/TapeMachine_Faceplate_Clean_4x.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/08_Tape_Machine_v3/SteamMaster_Tape_Machine_FrontOn_v3/Knobs/Drive_FrontOn.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/08_Tape_Machine_v3/SteamMaster_Tape_Machine_FrontOn_v3/Knobs/Bias_FrontOn.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/08_Tape_Machine_v3/SteamMaster_Tape_Machine_FrontOn_v3/Knobs/HF_Trim_FrontOn.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/08_Tape_Machine_v3/SteamMaster_Tape_Machine_FrontOn_v3/Knobs/Mix_FrontOn.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/08_Tape_Machine_v3/SteamMaster_Tape_Machine_FrontOn_v3/Selectors/Type_FrontOn.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/08_Tape_Machine_v3/SteamMaster_Tape_Machine_FrontOn_v3/Selectors/Speed_FrontOn.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/08_Tape_Machine_v3/SteamMaster_Tape_Machine_FrontOn_v3/Reels/Reel_Left_FrontOn.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/08_Tape_Machine_v3/SteamMaster_Tape_Machine_FrontOn_v3/Reels/Reel_Right_FrontOn.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/08_Tape_Machine_v3/SteamMaster_Tape_Machine_FrontOn_v3/Buttons/IN_On_FrontOn.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/08_Tape_Machine_v3/SteamMaster_Tape_Machine_FrontOn_v3/Buttons/IN_Off_FrontOn.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Faceplate/StereoImage_Limiter_Clean_Redesigned.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Knobs/Mono_Maker_FrontFacing_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Knobs/Stereo_Width_FrontFacing_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Knobs/Width_Frequency_FrontFacing_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Knobs/Threshold_FrontFacing_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Knobs/Ceiling_FrontFacing_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Knobs/Release_FrontFacing_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Knobs/Lookahead_FrontFacing_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Knobs/Stereo_Link_FrontFacing_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Meters/Correlation_Meter_Static_NoNeedle.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Meters/Correlation_Needle_Separate.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Meters/Gain_Reduction_Meter_Static_NoNeedle.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Meters/Gain_Reduction_Needle_Separate.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Buttons/Mode_CLEAN_On.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Buttons/Mode_CLEAN_Off.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Buttons/Mode_PUNCH_On.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Buttons/Mode_PUNCH_Off.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Buttons/Mode_MODERN_On.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Buttons/Mode_MODERN_Off.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Toggles/IN_On.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Toggles/IN_Off.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Toggles/True_Peak_On.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Toggles/True_Peak_Off.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Toggles/Auto_Release_On.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/Toggles/Auto_Release_Off.png"
+  )
+  list(APPEND STEAMMASTER_ART_FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Knobs/Optical_Threshold.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Knobs/Optical_Gain.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Knobs/Discrete_Threshold.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Knobs/Discrete_Gain.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Knobs/Discrete_Ratio.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Knobs/Discrete_Attack.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Knobs/Discrete_Recovery.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Knobs/Sidechain_HPF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Knobs/Low_Frequency_Brass_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Knobs/High_Drive_Brass_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Knobs/High_Frequency_Brass_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Knobs/Crossover_Brass_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Knobs/Output_Brass_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Knobs/Mix_Brass_Transparent.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band2_Gain.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band2_Frequency.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band2_Q.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band3_Gain.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band3_Frequency.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band3_Q.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band4_Gain.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band4_Frequency.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Knobs/Band4_Q.png"
+  )
+  list(APPEND STEAMMASTER_ART_FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Buttons/Optical_IN_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Buttons/Optical_IN_OFF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Buttons/Discrete_IN_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Buttons/Discrete_IN_OFF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Buttons/IN_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Buttons/IN_OFF.png"
+  )
+  list(APPEND STEAMMASTER_ART_FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band1_Peak_OFF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band1_Low_Shelf_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band1_Low_Shelf_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band1_High_Shelf_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band1_High_Shelf_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band2_Peak_OFF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band2_Peak_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band2_Low_Shelf_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band2_Low_Shelf_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band2_High_Shelf_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band2_High_Shelf_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band3_Peak_OFF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band3_Peak_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band3_Low_Shelf_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band3_Low_Shelf_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band3_High_Shelf_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band3_High_Shelf_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band4_Peak_OFF.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band4_Peak_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band4_Low_Shelf_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band4_Low_Shelf_OriginalState.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band4_High_Shelf_ON.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/03_Parametric_EQ/SteamMaster_Parametric_EQ_Asset_Pack/Sprites/Buttons/Band4_High_Shelf_OriginalState.png"
+  )
+  # Approved, accurate stationary value-ring assets: render below animated knob sprites.
+  list(APPEND STEAMMASTER_ART_FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Value_Dials/Optical_Threshold_Exact_Scale.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Value_Dials/Optical_Gain_Exact_Scale.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Value_Dials/Discrete_Threshold_Exact_Scale.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Value_Dials/Discrete_Gain_Exact_Scale.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Value_Dials/Discrete_Ratio_Exact_Scale.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Value_Dials/Discrete_Attack_Exact_Scale.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Value_Dials/Discrete_Recovery_Exact_Scale.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Value_Dials/Sidechain_HPF_Exact_Scale.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Value_Dials/Output_Exact_Scale.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/05_Shadow_Compressor/SteamMaster_Shadow_Compressor_Asset_Pack/Value_Dials/Mix_Exact_Scale.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Value_Dials/Low_Drive_Exact_Value_Ring.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Value_Dials/Low_Frequency_Exact_Value_Ring.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Value_Dials/High_Drive_Exact_Value_Ring.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Value_Dials/High_Frequency_Exact_Value_Ring.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Value_Dials/Crossover_Exact_Value_Ring.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Value_Dials/Output_Exact_Value_Ring.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/06_Exciter/SteamMaster_Exciter_Asset_Pack/Value_Dials/Mix_Exact_Value_Ring.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/07_Baxandall_EQ/SteamMaster_Baxandall_EQ_Asset_Pack/Value_Rings/Bax_HPF_Scale_Concept.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/07_Baxandall_EQ/SteamMaster_Baxandall_EQ_Asset_Pack/Value_Rings/Bax_Low_Shelf_Frequency_Scale_Concept.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/07_Baxandall_EQ/SteamMaster_Baxandall_EQ_Asset_Pack/Value_Rings/Bax_Low_Shelf_Gain_Scale_Concept.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/07_Baxandall_EQ/SteamMaster_Baxandall_EQ_Asset_Pack/Value_Rings/Bax_High_Shelf_Gain_Scale_Concept.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/07_Baxandall_EQ/SteamMaster_Baxandall_EQ_Asset_Pack/Value_Rings/Bax_High_Shelf_Frequency_Scale_Concept.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/07_Baxandall_EQ/SteamMaster_Baxandall_EQ_Asset_Pack/Value_Rings/Bax_LPF_Scale_Concept.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/07_Baxandall_EQ/SteamMaster_Baxandall_EQ_Asset_Pack/Value_Rings/Bax_Output_Scale_Concept.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/08_Tape_Machine_v3/SteamMaster_Tape_Machine_FrontOn_v3/Rings/Type_ValueRing.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/08_Tape_Machine_v3/SteamMaster_Tape_Machine_FrontOn_v3/Rings/Speed_ValueRing.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/08_Tape_Machine_v3/SteamMaster_Tape_Machine_FrontOn_v3/Rings/Drive_ValueRing.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/08_Tape_Machine_v3/SteamMaster_Tape_Machine_FrontOn_v3/Rings/Bias_ValueRing.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/08_Tape_Machine_v3/SteamMaster_Tape_Machine_FrontOn_v3/Rings/HF_Trim_ValueRing.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/08_Tape_Machine_v3/SteamMaster_Tape_Machine_FrontOn_v3/Rings/Mix_ValueRing.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/ValueRings/Mono_Maker_Accurate_ValueRing.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/ValueRings/Stereo_Width_Accurate_ValueRing.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/ValueRings/Width_Frequency_Accurate_ValueRing.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/ValueRings/Threshold_Accurate_ValueRing.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/ValueRings/Ceiling_Accurate_ValueRing.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/ValueRings/Release_Accurate_ValueRing.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/ValueRings/Lookahead_Accurate_ValueRing.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/plugin/assets/09_Stereo_Limiter_v3/SteamMaster_Stereo_Image_Limiter_Redesigned_v3/ValueRings/Stereo_Link_Accurate_ValueRing.png"
+  )
+  foreach(ART_FILE IN LISTS STEAMMASTER_ART_FILES)
+    if(NOT EXISTS "${ART_FILE}")
+      message(FATAL_ERROR "STEAMMASTER MISSING APPROVED ASSET: ${ART_FILE}")
+    endif()
+    file(SIZE "${ART_FILE}" ART_BYTES)
+    if(ART_BYTES LESS 400)
+      message(FATAL_ERROR "STEAMMASTER INVALID SMALL ARTWORK: ${ART_FILE}")
+    endif()
+  endforeach()
+  juce_add_binary_data(SteamMasterArtwork SOURCES ${STEAMMASTER_ART_FILES})
+  target_link_libraries(SteamMasterVST3 PRIVATE SteamMasterArtwork)
+  target_compile_definitions(SteamMasterVST3 PRIVATE STEAMMASTER_HAS_ARTWORK=1)
   juce_generate_juce_header(SteamMasterVST3)
   if(BUILD_TESTING)
     add_executable(steammaster_plugin_host_smoke tests/TestPluginHost.cpp)

@@ -1,0 +1,148 @@
+{
+  "source_reference": "Tape Machine.png",
+  "faceplate_size": [
+    1145,
+    141
+  ],
+  "has_baked_values": false,
+  "reels_as_separate_sprites": true,
+  "approved_rack_design_retained": true,
+  "sprite_sources": "fresh front-facing art sheet; individually alpha masked and circle-centered",
+  "dsp_code_audited": false,
+  "controls": [
+    {
+      "parameter": "Type",
+      "center_1x": [
+        405,
+        73
+      ],
+      "center_normalized": [
+        0.35371,
+        0.51773
+      ],
+      "kind": "stepped selector",
+      "sprite": "Selectors/Type_FrontOn.png",
+      "ring": "Rings/Type_ValueRing.png",
+      "positions": [
+        "STUDIO",
+        "VINTAGE",
+        "MODERN"
+      ],
+      "unit": ""
+    },
+    {
+      "parameter": "Speed",
+      "center_1x": [
+        484,
+        73
+      ],
+      "center_normalized": [
+        0.42271,
+        0.51773
+      ],
+      "kind": "stepped selector",
+      "sprite": "Selectors/Speed_FrontOn.png",
+      "ring": "Rings/Speed_ValueRing.png",
+      "positions": [
+        "7.5",
+        "15",
+        "30"
+      ],
+      "unit": "IPS"
+    },
+    {
+      "parameter": "Drive",
+      "center_1x": [
+        594,
+        73
+      ],
+      "center_normalized": [
+        0.51878,
+        0.51773
+      ],
+      "kind": "continuous rotary",
+      "sprite": "Knobs/Drive_FrontOn.png",
+      "ring": "Rings/Drive_ValueRing.png",
+      "positions": [
+        "−10",
+        "0",
+        "+10"
+      ],
+      "unit": "dB"
+    },
+    {
+      "parameter": "Bias",
+      "center_1x": [
+        655,
+        73
+      ],
+      "center_normalized": [
+        0.57205,
+        0.51773
+      ],
+      "kind": "continuous rotary",
+      "sprite": "Knobs/Bias_FrontOn.png",
+      "ring": "Rings/Bias_ValueRing.png",
+      "positions": [
+        "−5",
+        "0",
+        "+5"
+      ],
+      "unit": ""
+    },
+    {
+      "parameter": "HF_Trim",
+      "center_1x": [
+        715,
+        73
+      ],
+      "center_normalized": [
+        0.62445,
+        0.51773
+      ],
+      "kind": "continuous rotary",
+      "sprite": "Knobs/HF_Trim_FrontOn.png",
+      "ring": "Rings/HF_Trim_ValueRing.png",
+      "positions": [
+        "−6",
+        "0",
+        "+6"
+      ],
+      "unit": "dB"
+    },
+    {
+      "parameter": "Mix",
+      "center_1x": [
+        779,
+        73
+      ],
+      "center_normalized": [
+        0.68035,
+        0.51773
+      ],
+      "kind": "continuous rotary",
+      "sprite": "Knobs/Mix_FrontOn.png",
+      "ring": "Rings/Mix_ValueRing.png",
+      "positions": [
+        "0",
+        "50",
+        "100"
+      ],
+      "unit": "%"
+    }
+  ],
+  "reels": {
+    "left_center": [
+      174,
+      70
+    ],
+    "right_center": [
+      969,
+      70
+    ]
+  },
+  "in_button_center": [
+    360,
+    56
+  ]
+}

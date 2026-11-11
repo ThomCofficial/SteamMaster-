@@ -1,0 +1,7 @@
+name,kind,x,y,sprite,ring
+Type,stepped selector,405,73,Selectors/Type_FrontOn.png,Rings/Type_ValueRing.png
+Speed,stepped selector,484,73,Selectors/Speed_FrontOn.png,Rings/Speed_ValueRing.png
+Drive,continuous rotary,594,73,Knobs/Drive_FrontOn.png,Rings/Drive_ValueRing.png
+Bias,continuous rotary,655,73,Knobs/Bias_FrontOn.png,Rings/Bias_ValueRing.png
+HF_Trim,continuous rotary,715,73,Knobs/HF_Trim_FrontOn.png,Rings/HF_Trim_ValueRing.png
+Mix,continuous rotary,779,73,Knobs/Mix_FrontOn.png,Rings/Mix_ValueRing.png
