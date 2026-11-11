@@ -335,6 +335,40 @@ public:
         valueRings["bax_side_output_db"]=juce::ImageFileFormat::loadFrom(BinaryData::Bax_Output_Scale_Concept_png,
            (size_t)BinaryData::Bax_Output_Scale_Concept_pngSize);
 #endif
+#ifdef STEAMMASTER_HAS_ARTWORK
+        // Precisely isolated original value dial atlases (pixel boxes audited).
+        // No sprite sheet is painted whole and no dial graphic is rotated.
+        const auto oceanDials=juce::ImageFileFormat::loadFrom(
+            BinaryData::Ocean_Furnace_12_Value_Dial_Rings_png,
+            (size_t)BinaryData::Ocean_Furnace_12_Value_Dial_Rings_pngSize);
+        const auto pultecDials=juce::ImageFileFormat::loadFrom(
+            BinaryData::Pultec_EQ_10_Value_Dials_Sheet_png,
+            (size_t)BinaryData::Pultec_EQ_10_Value_Dials_Sheet_pngSize);
+        if(oceanDials.isValid()){
+            const char* ringIDs[]={
+                "ocean_threshold_db","ocean_ratio","ocean_attack_ms",
+                "ocean_recovery","ocean_sc_hpf","ocean_mix",
+                "furnace_threshold_db","furnace_ratio","furnace_attack",
+                "furnace_release","furnace_sc_hpf","furnace_mix"};
+            for(int i=0;i<12;++i){
+                const int col=i%6, row=i/6;
+                const int x=22+col*236, y=260+row*337;
+                valueRings[ringIDs[i]]=oceanDials.getClippedImage({x,y,222,231});
+            }
+        }
+        if(pultecDials.isValid()){
+            const char* ringIDs[]={
+                "pultec_low_freq","pultec_low_boost","pultec_low_atten",
+                "pultec_high_boost_freq","pultec_high_boost",
+                "pultec_high_atten_freq","pultec_high_atten",
+                "pultec_bandwidth","pultec_output_db","pultec_mix"};
+            for(int i=0;i<10;++i){
+                const int col=i%5, row=i/5;
+                const int x=3+col*288, y=183+row*401;
+                valueRings[ringIDs[i]]=pultecDials.getClippedImage({x,y,286,310});
+            }
+        }
+#endif
         setColour(juce::Slider::textBoxTextColourId, ivory);
         setColour(juce::Slider::textBoxBackgroundColourId, deep);
         setColour(juce::Slider::textBoxOutlineColourId, brass.withAlpha(0.45f));
