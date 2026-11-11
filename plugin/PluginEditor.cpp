@@ -440,7 +440,10 @@ public:
         // At narrow rack widths, a 250px dial image scaled to 20px becomes
         // an unreadable opaque blotch. Suppress ONLY the tiny ring overlay;
         // the interactive slider and its accurate JUCE value popup remain.
-        const bool renderRing=certifiedRing && juce::jmin(w,h)>=38;
+        // Small screens cannot render a 250-640px annotated ring legibly.
+        // The original ring artwork remains available on wider layouts;
+        // accurate numeric values appear in JUCE's slider popup on interaction.
+        const bool renderRing=certifiedRing && juce::jmin(w,h)>=44;
         if(renderRing) {
             juce::Graphics::ScopedSaveState ringState(g);
             g.setOpacity(0.82f);
@@ -456,7 +459,7 @@ public:
             // keep the knob inside the original socket with NO false ring.
             // A rendered value ring reserves space for its labels.
             const float knobFraction = id.startsWith("bax_") ? 0.69f
-                                      : (renderRing ? 0.71f : 0.82f);
+                                      : (renderRing ? 0.65f : 0.84f);
             const float diameter=(float)juce::jmin(w,h)*knobFraction;
             const float scale = diameter / (float) juce::jmax(sprite.getWidth(), sprite.getHeight());
             const float angle = start + position * (end - start);
@@ -1082,17 +1085,17 @@ void SteamMasterEditor::Page::resized() {
         const float unit=(float)width/1145.f;
         float diameter=34.f;
         if(section=="Global") diameter=(id=="global_in"?185.f:(combo?72.f:52.f));
-        else if(section=="Ocean + Furnace") diameter=32.f;
+        else if(section=="Ocean + Furnace") diameter=40.f;
         else if(section=="Parametric"){
             diameter=id.endsWith("_type")?152.f:
-                id.endsWith("_q")?29.f:
+                id.endsWith("_q")?35.f:
                 id=="parametric_output_db"?48.f:
-                id=="parametric_mix"?43.f:35.f;
-        } else if(section=="Pultec") diameter=33.f;
+                id=="parametric_mix"?43.f:41.f;
+        } else if(section=="Pultec") diameter=41.f;
         else if(section=="Shadow")
             diameter=(id=="shadow_sc_hpf" || id=="shadow_output_db"
-                       || id=="shadow_mix")?27.f:41.f;
-        else if(section=="Exciter") diameter=id=="exciter_mode"?133.f:42.f;
+                       || id=="shadow_mix")?30.f:44.f;
+        else if(section=="Exciter") diameter=id=="exciter_mode"?133.f:45.f;
         else if(section=="Bax") diameter=id=="stereo_routing"?104.f:50.f;
         else if(section=="Tape") diameter=44.f;
         else if(section=="Stereo + Limiter") diameter=id=="limiter_mode"?169.f:53.f;
